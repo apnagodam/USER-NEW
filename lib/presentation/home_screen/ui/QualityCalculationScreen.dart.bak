@@ -1,0 +1,615 @@
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/presentation/MandiTaxProfile/Model/DistrictsResponseModel.dart';
+import 'package:apnagodam/presentation/MandiTaxProfile/Model/StatesResponseModel.dart';
+import 'package:apnagodam/presentation/MandiTaxProfile/Service/MandiTaxProfileService.dart';
+import 'package:apnagodam/presentation/home_screen/models/QualityParamsModel.dart';
+import 'package:apnagodam/presentation/home_screen/models/warehouse_response_model.dart';
+import 'package:apnagodam/presentation/home_screen/service/home_screen_service.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:dropdown_search/dropdown_search.dart';
+import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class Qualitycalculationscreen extends ConsumerStatefulWidget {
+  const Qualitycalculationscreen({super.key});
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _QualitycalculationscreenState();
+}
+
+class _QualitycalculationscreenState
+    extends ConsumerState<Qualitycalculationscreen> {
+  var statesProvider = StateProvider<StatesDatum?>((ref) => null);
+  var districtProvider = StateProvider<DistrictDatum?>((ref) => null);
+  var commodityDropDownProvider = StateProvider<Commodite?>((ref) => null);
+  var textControllerListProvider =
+      StateProvider<List<TextEditingController>>((ref) => []);
+  var qualityParamList = StateProvider<List<QualityParamDatum>?>((ref) => []);
+  var qvPrice = StateProvider<String>((ref) => '0');
+
+  var formkey = GlobalKey<FormState>();
+
+  TextEditingController priceController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.calculateQuality),
+      ),
+      body: SingleChildScrollView(
+        padding: Pad(all: 10),
+        child: Form(
+            key: formkey,
+            child: Column(
+              children: [
+                ref.watch(statesListProvider).when(
+                    data: (data) {
+                      return DropdownSearch<StatesDatum?>(
+                        compareFn: (states, states2) =>
+                            states?.id == states2?.id,
+                        popupProps: PopupPropsMultiSelection.menu(
+                            constraints:
+                                BoxConstraints(maxHeight: Get.height / 1.5),
+                            searchFieldProps: TextFieldProps(
+                                autofocus: false,
+                                cursorColor: ColorConstant.maingreen,
+                                padding: Pad(left: 10, right: 10),
+                                decoration: InputDecoration(
+                                  contentPadding: Pad(left: 10, right: 10),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  disabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  errorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  border: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                )),
+                            menuProps: MenuProps(
+                                shape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                        color: ColorConstant.maingreen),
+                                    borderRadius: BorderRadius.circular(8))),
+                            containerBuilder: (context, popupWidget) =>
+                                ElevarmNeutralCard(child: popupWidget),
+                            itemBuilder: (context, terminal, isVisible, _) =>
+                                ColumnSuper(
+                                    alignment: Alignment.centerLeft,
+                                    children: [
+                                      Padding(
+                                        padding: Pad(all: 10),
+                                        child: Text(
+                                          "${terminal?.name}",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: Adaptive.sp(16)),
+                                        ),
+                                      ),
+                                      ElevarmDivider()
+                                    ]),
+                            title: Padding(
+                              padding: Pad(all: 10),
+                              child: Text(
+                                'Select State'.tr,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            showSearchBox: true,
+                            searchDelay: Duration(microseconds: 500)),
+                        filterFn: (user, filter) =>
+                            user?.stateFilterByName(filter) ?? false,
+                        // asyncItems: (String filter) => getData(filter),
+
+                        items: (d, c) => data.data!,
+                        itemAsString: (StatesDatum? u) => u?.name ?? "",
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Please select State'.tr;
+                          }
+                          return null;
+                        },
+                        onChanged: (data) =>
+                            ref.watch(statesProvider.notifier).state = data,
+                        decoratorProps: DropDownDecoratorProps(
+                          decoration: InputDecoration(
+                              contentPadding: Pad(left: 10, bottom: 5, top: 5),
+                              hintText: "Select State".tr,
+                              border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(8)),
+                                  borderSide: BorderSide(
+                                      color: ColorConstant.maingreen))),
+                        ),
+                      );
+                    },
+                    error: (e, s) => Container(),
+                    loading: () => Container()),
+                SizedBox(
+                  height: 10,
+                ),
+                if (ref.watch(statesProvider) != null)
+                  ref
+                      .watch(districtListProvider(
+                          code: "${ref.watch(statesProvider)?.code}"))
+                      .when(
+                          data: (data) {
+                            return DropdownSearch<DistrictDatum?>(
+                              compareFn: (district, district2) =>
+                                  district?.id == district2?.id,
+                              popupProps: PopupPropsMultiSelection.menu(
+                                  constraints: BoxConstraints(
+                                      maxHeight: Get.height / 1.5),
+                                  searchFieldProps: TextFieldProps(
+                                      autofocus: false,
+                                      cursorColor: ColorConstant.maingreen,
+                                      padding: Pad(left: 10, right: 10),
+                                      decoration: InputDecoration(
+                                        contentPadding:
+                                            Pad(left: 10, right: 10),
+                                        focusedErrorBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                style: BorderStyle.solid,
+                                                color:
+                                                    ColorConstant.maingreen)),
+                                        disabledBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                style: BorderStyle.solid,
+                                                color:
+                                                    ColorConstant.maingreen)),
+                                        errorBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                style: BorderStyle.solid,
+                                                color:
+                                                    ColorConstant.maingreen)),
+                                        focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                style: BorderStyle.solid,
+                                                color:
+                                                    ColorConstant.maingreen)),
+                                        border: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                style: BorderStyle.solid,
+                                                color:
+                                                    ColorConstant.maingreen)),
+                                        enabledBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                style: BorderStyle.solid,
+                                                color:
+                                                    ColorConstant.maingreen)),
+                                      )),
+                                  menuProps: MenuProps(
+                                      shape: RoundedRectangleBorder(
+                                          side: BorderSide(
+                                              color: ColorConstant.maingreen),
+                                          borderRadius:
+                                              BorderRadius.circular(8))),
+                                  containerBuilder: (context, popupWidget) =>
+                                      ElevarmNeutralCard(child: popupWidget),
+                                  itemBuilder: (context, terminal, isVisible,
+                                          _) =>
+                                      ColumnSuper(
+                                          alignment: Alignment.centerLeft,
+                                          children: [
+                                            Padding(
+                                              padding: Pad(all: 10),
+                                              child: Text(
+                                                "${terminal?.name}",
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: Adaptive.sp(16)),
+                                              ),
+                                            ),
+                                            ElevarmDivider()
+                                          ]),
+                                  title: Padding(
+                                    padding: Pad(all: 10),
+                                    child: Text(
+                                      'Select District'.tr,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w700),
+                                    ),
+                                  ),
+                                  showSearchBox: true,
+                                  searchDelay: Duration(microseconds: 500)),
+                              filterFn: (user, filter) =>
+                                  user?.districtFilterByName(filter) ?? false,
+                              // asyncItems: (String filter) => getData(filter),
+
+                              items: (i, s) => data.data!,
+                              itemAsString: (DistrictDatum? u) => u?.name ?? "",
+                              validator: (value) {
+                                if (value == null) {
+                                  return 'Please select District'.tr;
+                                }
+                                return null;
+                              },
+                              onChanged: (data) => ref
+                                  .watch(districtProvider.notifier)
+                                  .state = data,
+                              decoratorProps: DropDownDecoratorProps(
+                                decoration: InputDecoration(
+                                    contentPadding:
+                                        Pad(left: 10, bottom: 5, top: 5),
+                                    hintText: "Select District".tr,
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(8)),
+                                        borderSide: BorderSide(
+                                            color: ColorConstant.maingreen))),
+                              ),
+                            );
+                          },
+                          error: (e, s) => Container(),
+                          loading: () => Container()),
+                SizedBox(
+                  height: 10,
+                ),
+                if (ref.watch(statesProvider) != null &&
+                    ref.watch(districtProvider) != null)
+                  ref.watch(warehouseDataProvider).when(
+                      data: (data) => DropdownSearch<Commodite?>(
+                            compareFn: (comm1, comm2) => comm1?.id == comm2?.id,
+                            popupProps: PopupPropsMultiSelection.menu(
+                                constraints:
+                                    BoxConstraints(maxHeight: Get.height / 1.5),
+                                searchFieldProps: TextFieldProps(
+                                    autofocus: false,
+                                    cursorColor: ColorConstant.maingreen,
+                                    padding: Pad(left: 10, right: 10),
+                                    decoration: InputDecoration(
+                                      contentPadding: Pad(left: 10, right: 10),
+                                      focusedErrorBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              style: BorderStyle.solid,
+                                              color: ColorConstant.maingreen)),
+                                      disabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              style: BorderStyle.solid,
+                                              color: ColorConstant.maingreen)),
+                                      errorBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              style: BorderStyle.solid,
+                                              color: ColorConstant.maingreen)),
+                                      focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              style: BorderStyle.solid,
+                                              color: ColorConstant.maingreen)),
+                                      border: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              style: BorderStyle.solid,
+                                              color: ColorConstant.maingreen)),
+                                      enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              style: BorderStyle.solid,
+                                              color: ColorConstant.maingreen)),
+                                    )),
+                                menuProps: MenuProps(
+                                    shape: RoundedRectangleBorder(
+                                        side: BorderSide(
+                                            color: ColorConstant.maingreen),
+                                        borderRadius:
+                                            BorderRadius.circular(8))),
+                                containerBuilder: (context, popupWidget) =>
+                                    ElevarmNeutralCard(child: popupWidget),
+                                itemBuilder: (context, terminal, isVisible,
+                                        _) =>
+                                    ColumnSuper(
+                                        alignment: Alignment.centerLeft,
+                                        children: [
+                                          Padding(
+                                            padding: Pad(all: 10),
+                                            child: Text(
+                                              "${terminal?.category}",
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: Adaptive.sp(16)),
+                                            ),
+                                          ),
+                                          ElevarmDivider()
+                                        ]),
+                                title: Padding(
+                                  padding: Pad(all: 10),
+                                  child: Text(
+                                    AppLocalizations.of(context)!
+                                        .selectCommodity,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        fontSize: Adaptive.sp(16),
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                                showSearchBox: true,
+                                searchDelay: Duration(microseconds: 500)),
+                            filterFn: (user, filter) =>
+                                user?.userFilterByCreationDate(filter) ?? false,
+                            // asyncItems: (String filter) => getData(filter),
+
+                            items: (d, c) => data.commodites!,
+                            itemAsString: (Commodite? u) => u?.category ?? "",
+                            validator: (value) {
+                              if (value == null) {
+                                return AppLocalizations.of(context)!
+                                    .pleaseSelectCommodity;
+                              }
+                              return null;
+                            },
+                            onChanged: (data) => ref
+                                .watch(commodityDropDownProvider.notifier)
+                                .state = data,
+                            decoratorProps: DropDownDecoratorProps(
+                              decoration: InputDecoration(
+                                  contentPadding:
+                                      Pad(left: 10, bottom: 5, top: 5),
+                                  hintText: AppLocalizations.of(context)!
+                                      .selectCommodity,
+                                  border: OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(8)),
+                                      borderSide: BorderSide(
+                                          color: ColorConstant.maingreen))),
+                            ),
+                          ),
+                      error: (e, s) => Container(),
+                      loading: () => Container()),
+                SizedBox(
+                  height: 10,
+                ),
+                if (ref.watch(statesProvider) != null &&
+                    ref.watch(districtProvider) != null &&
+                    ref.watch(commodityDropDownProvider) != null)
+                  Column(
+                    children: [
+                      Container(
+                        padding: Pad(all: 10),
+                        decoration:
+                            BoxDecoration(color: ColorConstant.maingreen),
+                        child: IntrinsicHeight(
+                          child: Row(children: [
+                            Expanded(
+                                child: Text(
+                              "Paramarters.".tr,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: Adaptive.sp(16)),
+                            )),
+                            VerticalDivider(),
+                            Expanded(
+                                child: Text(
+                              "Max".tr,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: Adaptive.sp(16)),
+                            )),
+                            VerticalDivider(),
+                            Expanded(
+                                child: Text(
+                              "Min".tr,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: Adaptive.sp(16)),
+                            )),
+                            VerticalDivider(),
+                            Expanded(
+                                child: Text(
+                              "Enter".tr,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: Adaptive.sp(16)),
+                            )),
+                          ]),
+                        ),
+                      ),
+                      ref
+                          .watch(qualityParametersProvider(
+                              stateCode: "${ref.watch(statesProvider)?.code}",
+                              districtId: "${ref.watch(districtProvider)?.id}",
+                              commodityId:
+                                  "${ref.watch(commodityDropDownProvider)?.id}"))
+                          .when(
+                              data: (data) {
+                                return ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: data.data?.length ?? 0,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  itemBuilder: (context, index) {
+                                    Future.delayed(Duration.zero).then((_) {
+                                      ref
+                                          .watch(textControllerListProvider)
+                                          .add(TextEditingController());
+                                      ref
+                                          .watch(qualityParamList.notifier)
+                                          .state = data.data;
+
+                                      setState(() {});
+                                    });
+
+                                    return Container(
+                                      color: index % 2 == 0
+                                          ? Colors.grey.withOpacity(0.2)
+                                          : Colors.white,
+                                      padding: Pad(all: 10),
+                                      child: IntrinsicHeight(
+                                        child: Row(children: [
+                                          Expanded(
+                                              child: Text(
+                                            "${data.data![index].name}".tr,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: Adaptive.sp(16)),
+                                          )),
+                                          VerticalDivider(),
+                                          Expanded(
+                                              child: Text(
+                                            "${data.data![index].max}".tr,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: Adaptive.sp(16)),
+                                          )),
+                                          VerticalDivider(),
+                                          Expanded(
+                                              child: Text(
+                                            "${data.data![index].min}".tr,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: Adaptive.sp(16)),
+                                          )),
+                                          VerticalDivider(),
+                                          Expanded(
+                                              child: ElevarmTextInputField(
+                                            label: 'Value',
+                                            controller: ref.watch(
+                                                    textControllerListProvider)[
+                                                index],
+                                            keyboardType:
+                                                TextInputType.numberWithOptions(
+                                                    decimal: true),
+                                            validator: (value) {
+                                              if (value == null ||
+                                                  value.isEmpty) {
+                                                return 'Input valid value';
+                                              }
+                                              if (value.toString() == "0") {
+                                                return 'input valid value';
+                                              }
+                                              return null;
+                                            },
+                                          )),
+                                        ]),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                              error: (e, s) => Container(),
+                              loading: () => Container()),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      ElevarmTextInputField(
+                        label: 'Enter Amount'.tr,
+                        controller: priceController,
+                        keyboardType:
+                            TextInputType.numberWithOptions(decimal: true),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Input valid value'.tr;
+                          }
+                          if (value.toString() == "0") {
+                            return 'Input valid value'.tr;
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      ElevarmPrimaryButton.text(
+                        text: 'Calculate Price'.tr,
+                        onPressed: () {
+                          List<Map<dynamic, dynamic>> listOfParams = [];
+                          if (formkey.currentState!.validate()) {
+                            for (var i = 0;
+                                i < ref.watch(qualityParamList)!.length;
+                                i++) {
+                              ref.watch(qualityParamList)![i].value =
+                                  ref.watch(textControllerListProvider)[i].text;
+                            }
+
+                            for (var e in ref.watch(qualityParamList)!) {
+                              listOfParams.add(e.toJson());
+                            }
+                            Map<String, dynamic> data = {
+                              'state_code':
+                                  "${ref.watch(statesProvider)?.code}",
+                              "district_id":
+                                  "${ref.watch(districtProvider)?.id}",
+                              'commodity_id':
+                                  "${ref.watch(commodityDropDownProvider)?.id}",
+                              'price': priceController.text,
+                              "parameters": listOfParams
+                            };
+                            ref
+                                .watch(calculateQualityPriceProvider(data: data)
+                                    .future)
+                                .then((value) {
+                              if (value['status'].toString() == "1") {
+                                ref.watch(qvPrice.notifier).state =
+                                    value['final_qv'].toString();
+                                print(value['data']);
+                              }
+                            });
+                          }
+                        },
+                        buttonThemeData: ElevarmPrimaryButtonThemeData(
+                            primaryColor: ColorConstant.maingreen),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "QV Price : ${ref.watch(qvPrice) ?? ""}".tr,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: Adaptive.sp(17)),
+                          ),
+                          SizedBox(
+                            width: 20,
+                          ),
+                          Text(
+                            "Final Price : ${num.parse(priceController.text.isEmpty ? '0' : priceController.text) - num.parse(ref.watch(qvPrice))}"
+                                .tr,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: Adaptive.sp(17)),
+                          )
+                        ],
+                      )
+                    ],
+                  )
+              ],
+            )),
+      ),
+    );
+  }
+}

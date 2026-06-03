@@ -1,0 +1,844 @@
+import 'dart:io';
+
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/core/utils/theme/app_style.dart';
+import 'package:apnagodam/presentation/credit/credit_screen.dart';
+import 'package:apnagodam/presentation/sbt/ContractNotes/service/SbtContractNotesService.dart';
+import 'package:apnagodam/presentation/sbt/MarkDeliveryScreen.dart';
+import 'package:apnagodam/presentation/sbt/service/SbtService.dart';
+import 'package:apnagodam/presentation/sbt/service/model/MatchedOrdersModel.dart';
+import 'package:apnagodam/widgets/invoice.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:easy_pdf_viewer/easy_pdf_viewer.dart';
+import 'package:file_saver/file_saver.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:scrollview_observer/scrollview_observer.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class Sbtdeals extends ConsumerStatefulWidget {
+  Sbtdeals({super.key, this.selectedIndex, this.sbtOrderId});
+  int? selectedIndex = 1;
+  String? sbtOrderId = "";
+  @override
+  ConsumerState<Sbtdeals> createState() => _SbtdealsState();
+}
+
+class _SbtdealsState extends ConsumerState<Sbtdeals> {
+  var selectedTabIndex = StateProvider((ref) => 0);
+  ScrollController pageController = ScrollController();
+  ScrollController pageController2 = ScrollController();
+  late ListObserverController observerController;
+  late ListObserverController observerController2;
+  final buyOrdersListProvider = StateProvider((ref) => <MatchedOrdersDatum>[]);
+  final sellOrdersListProvider = StateProvider((ref) => <MatchedOrdersDatum>[]);
+  @override
+  void initState() {
+    super.initState();
+    observerController = ListObserverController(controller: pageController);
+    observerController2 = ListObserverController(controller: pageController2);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      ref.watch(selectedTabIndex.notifier).state = widget.selectedIndex ?? 0;
+      final value = await ref.watch(matchedOrdersProvider.future);
+      final buyOrders = value.data
+              ?.where(
+                  (element) => element.type.toString().toLowerCase() == "buy")
+              .toList() ??
+          [];
+      ref.watch(buyOrdersListProvider.notifier).state = buyOrders;
+
+      final sellerOrders = value.data
+              ?.where(
+                  (element) => element.type.toString().toLowerCase() == "sell")
+              .toList() ??
+          [];
+      ref.watch(sellOrdersListProvider.notifier).state = sellerOrders;
+
+      if (widget.selectedIndex == 1) {
+        // Find the index after the provider is updated
+        final sbtIndex = buyOrders.indexWhere(
+            (element) => element.orderId.toString() == widget.sbtOrderId);
+
+        // Wait for the next frame to ensure the list is built
+        if (sbtIndex != -1) {
+          Future.delayed(Duration(milliseconds: 300), () {
+            observerController.animateTo(
+              index: sbtIndex,
+              duration: Duration(seconds: 1),
+              curve: Curves.ease,
+            );
+          });
+        }
+      } else {
+        // Find the index after the provider is updated
+        final sbtIndex = sellerOrders.indexWhere(
+            (element) => element.orderId.toString() == widget.sbtOrderId);
+
+        // Wait for the next frame to ensure the list is built
+        if (sbtIndex != -1) {
+          Future.delayed(Duration(milliseconds: 300), () {
+            observerController2.animateTo(
+              index: sbtIndex,
+              duration: Duration(seconds: 1),
+              curve: Curves.ease,
+            );
+          });
+        }
+      }
+    });
+  }
+
+  var tabIndexProvider = StateProvider<int>((ref) => 0);
+
+  List<Map<String, dynamic>> get tabs => [
+        {
+          "label": AppLocalizations.of(context)!.sold,
+          "index": 0,
+          "icon": Icons.layers
+        },
+        {
+          "label": AppLocalizations.of(context)!.purchased,
+          "index": 1,
+          "icon": Icons.receipt_long
+        },
+      ];
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.deliveryMarking),
+      ),
+      body: DeliveryMarking(
+        isScreen: false,
+      ),
+    );
+  }
+}
+
+class DeliveryMarking extends ConsumerStatefulWidget {
+  const DeliveryMarking({super.key, required this.isScreen});
+  final bool isScreen;
+  @override
+  ConsumerState<DeliveryMarking> createState() => _DeliveryMarkingState();
+}
+
+class _DeliveryMarkingState extends ConsumerState<DeliveryMarking> {
+  var tabIndexProvider = StateProvider<int>((ref) => 0);
+
+  List<Map<String, dynamic>> get tabs => [
+        {
+          "label": AppLocalizations.of(context)!.sold,
+          "index": 0,
+          "icon": Icons.layers
+        },
+        {
+          "label": AppLocalizations.of(context)!.purchased,
+          "index": 1,
+          "icon": Icons.receipt_long
+        },
+      ];
+  var selectedTabIndex = StateProvider((ref) => 0);
+  ScrollController pageController = ScrollController();
+  ScrollController pageController2 = ScrollController();
+  late ListObserverController observerController;
+  late ListObserverController observerController2;
+  final buyOrdersListProvider = StateProvider((ref) => <MatchedOrdersDatum>[]);
+  final sellOrdersListProvider = StateProvider((ref) => <MatchedOrdersDatum>[]);
+  @override
+  void initState() {
+    super.initState();
+    observerController = ListObserverController(controller: pageController);
+    observerController2 = ListObserverController(controller: pageController2);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final value = await ref.watch(matchedOrdersProvider.future);
+      final buyOrders = value.data
+              ?.where(
+                  (element) => element.type.toString().toLowerCase() == "buy")
+              .toList() ??
+          [];
+      ref.watch(buyOrdersListProvider.notifier).state = buyOrders;
+
+      final sellerOrders = value.data
+              ?.where(
+                  (element) => element.type.toString().toLowerCase() == "sell")
+              .toList() ??
+          [];
+      ref.watch(sellOrdersListProvider.notifier).state = sellerOrders;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Padding(
+            padding: Pad(all: 10),
+            child: Wrap(
+              spacing: 8,
+              children: List.generate(tabs.length, (i) {
+                final tab = tabs[i];
+                final isSelected = ref.watch(tabIndexProvider) == tab['index'];
+
+                return InkWell(
+                  onTap: () {
+                    ref.watch(tabIndexProvider.notifier).state =
+                        int.parse(tab['index'].toString());
+                  },
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 250),
+                    padding: Pad(left: 12, right: 12, top: 8, bottom: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? ColorConstant.maingreen
+                          : ColorConstant.maingreen.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(5.0),
+                      border: Border.all(
+                          color: ColorConstant.maingreen, width: 1.5),
+                      boxShadow: isSelected
+                          ? [BoxShadow(color: Colors.black12, blurRadius: 4)]
+                          : [],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Icon(
+                        //   tab['icon'] as IconData,
+                        //   size: 16,
+                        //   color: isSelected
+                        //       ? Colors.white
+                        //       : ColorConstant.maingreen,
+                        // ),
+                        SizedBox(width: 6),
+                        Text(
+                          tab['label'] as String,
+                          style: TextStyle(
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isSelected ? Colors.white : Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
+        ref.watch(tabIndexProvider) == 0
+            ? (ref.watch(sellOrdersListProvider) ?? []).isEmpty
+                ? SizedBox(
+                    height: Get.height,
+                    child: Center(
+                      child: noStockData(context),
+                    ),
+                  )
+                : ref.watch(sellOrdersListProvider).isEmpty
+                    ? noStockData(context)
+                    : RefreshIndicator.adaptive(
+                        child: ListView.builder(
+                          physics: NeverScrollableScrollPhysics(),
+                          padding: Pad(all: 10),
+                          itemCount:
+                              ref.watch(sellOrdersListProvider).length ?? 0,
+                          shrinkWrap: true,
+                          itemBuilder: (contex, index) => Card(
+                            color: Colors.white,
+                            elevation: 8,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side:
+                                    BorderSide(color: ColorConstant.maingreen)),
+                            child: Padding(
+                              padding: Pad(all: 10),
+                              child: ColumnSuper(children: [
+                                Center(
+                                    child: Text(
+                                  "${ref.watch(sellOrdersListProvider)[index].orderId ?? 0}",
+                                  style: TextStyle(
+                                      fontSize: Adaptive.sp(16),
+                                      fontWeight: FontWeight.bold),
+                                )),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                        child: Text(
+                                      AppLocalizations.of(context)!.typeLabel,
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )),
+                                    Text(
+                                      "${ref.watch(sellOrdersListProvider)[index].type ?? 0}",
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                        child: Text(
+                                      AppLocalizations.of(context)!
+                                          .msgBuyername,
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )),
+                                    Text(
+                                      "${ref.watch(sellOrdersListProvider)[index].buyerName ?? ''}",
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                        child: Text(
+                                      AppLocalizations.of(context)!.msgDistrict,
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )),
+                                    Text(
+                                      "${ref.watch(sellOrdersListProvider)[index].districtName ?? 0}",
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                        child: Text(
+                                      AppLocalizations.of(context)!
+                                          .msgCommodityy,
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )),
+                                    Text(
+                                      "${ref.watch(sellOrdersListProvider)[index].commodityName ?? 0}",
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                        child: Text(
+                                      AppLocalizations.of(context)!.quantity,
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )),
+                                    Text(
+                                      "${ref.watch(sellOrdersListProvider)[index].qty ?? 0} Qtl.",
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                        child: Text(
+                                      AppLocalizations.of(context)!
+                                          .deliveryQuantity,
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )),
+                                    Text(
+                                      "${ref.watch(sellOrdersListProvider)[index].deliveryQty ?? 0} Qtl.",
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                        child: Text(
+                                      AppLocalizations.of(context)!.price,
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )),
+                                    Text(
+                                      "${currencyFormat.format(int.tryParse("${ref.watch(sellOrdersListProvider)[index].price ?? 0}"))} per Qtl.",
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )
+                                  ],
+                                ),
+                                SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                        child: Text(
+                                      AppLocalizations.of(context)!.showReport,
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w500),
+                                    )),
+                                    IconButton(
+                                        onPressed: () {
+                                          ref
+                                              .watch(sellerContractNoteSBTProvider(
+                                                      orderId:
+                                                          "${ref.watch(sellOrdersListProvider)[index].orderId}",
+                                                      type: "Seller")
+                                                  .future)
+                                              .then((value) async {
+                                            deliverySellerContractPdf(
+                                                    value, ref)
+                                                .then((file) async {
+                                              if (file != null) {
+                                                await FileSaver.instance
+                                                    .saveAs(
+                                                        name:
+                                                            'settlement_report_seller',
+                                                        file: file,
+                                                        mimeType: MimeType.pdf,
+                                                        ext: '.pdf')
+                                                    .then((value) async {
+                                                  if (value != null) {
+                                                    Fluttertoast.showToast(
+                                                        msg:
+                                                            'File saved successfully!',
+                                                        toastLength:
+                                                            Toast.LENGTH_LONG,
+                                                        backgroundColor:
+                                                            ColorConstant
+                                                                .maingreen);
+
+                                                    PDFDocument doc =
+                                                        await PDFDocument
+                                                            .fromFile(file ??
+                                                                File(''));
+
+                                                    Get.bottomSheet(
+                                                      Stack(
+                                                        children: [
+                                                          PDFViewer(
+                                                              document: doc),
+                                                          Padding(
+                                                            padding:
+                                                                Pad(all: 10),
+                                                            child: Align(
+                                                              alignment: Alignment
+                                                                  .bottomCenter,
+                                                              child:
+                                                                  ElevatedButton(
+                                                                      style: AppStyle
+                                                                          .buttonStyle,
+                                                                      onPressed:
+                                                                          () {},
+                                                                      child:
+                                                                          Text(
+                                                                        AppLocalizations.of(context)!
+                                                                            .download,
+                                                                        style: TextStyle(
+                                                                            fontSize:
+                                                                                Adaptive.sp(16),
+                                                                            color: Colors.white),
+                                                                      )),
+                                                            ),
+                                                          )
+                                                        ],
+                                                      ),
+                                                      isScrollControlled: true,
+                                                    );
+                                                  }
+                                                });
+                                              }
+                                            });
+                                          }).onError((e, s) {
+                                            print(e.toString());
+                                            // ProgressDialogUtils
+                                            //     .hideProgressDialog();
+                                          });
+                                        },
+                                        icon: Icon(
+                                          Icons.remove_red_eye_sharp,
+                                          color: ColorConstant.maingreen,
+                                        )),
+                                  ],
+                                ),
+                                SizedBox(
+                                  width: MediaQuery.of(context).size.width,
+                                  child: ref
+                                              .watch(
+                                                  sellOrdersListProvider)[index]
+                                              .type
+                                              .toString()
+                                              .toLowerCase() ==
+                                          "sell"
+                                      ? ElevatedButton(
+                                          onPressed: () {
+                                            Get.to(Markdeliveryscreen(
+                                              id: "${ref.watch(sellOrdersListProvider)[index].id}",
+                                              price:
+                                                  "${ref.watch(sellOrdersListProvider)[index].price}",
+                                              districtId:
+                                                  "${ref.watch(sellOrdersListProvider)[index].districtId}",
+                                              commodityId:
+                                                  "${ref.watch(sellOrdersListProvider)[index].commodityId}",
+                                              isScreen: widget.isScreen,
+                                            ));
+                                          },
+                                          style: AppStyle.buttonStyle,
+                                          child: Text(
+                                            AppLocalizations.of(context)!
+                                                .markDelivery,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                                fontSize: Adaptive.sp(16)),
+                                          ),
+                                        )
+                                      : SizedBox(),
+                                )
+                              ]),
+                            ),
+                          ),
+                        ),
+                        onRefresh: () {
+                          return Future.value((_) {
+                            ref.invalidate(matchedOrdersProvider);
+                          });
+                        })
+            : ref.watch(buyOrdersListProvider).isEmpty
+                ? SizedBox(
+                    height: Get.height,
+                    child: Center(
+                      child: noStockData(context),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: Pad(all: 10),
+                    itemCount: ref.watch(buyOrdersListProvider).length ?? 0,
+                    shrinkWrap: true,
+                    controller: pageController,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemBuilder: (contex, index) => Card(
+                      color: Colors.white,
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: ColorConstant.maingreen)),
+                      child: Padding(
+                        padding: Pad(all: 10),
+                        child: ColumnSuper(children: [
+                          Center(
+                              child: Text(
+                            "${ref.watch(buyOrdersListProvider)[index].orderId ?? 0}",
+                            style: TextStyle(
+                                fontSize: Adaptive.sp(16),
+                                fontWeight: FontWeight.bold),
+                          )),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: Text(
+                                AppLocalizations.of(context)!.typeLabel,
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )),
+                              Text(
+                                "${ref.watch(buyOrdersListProvider)[index].type ?? 0}",
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: Text(
+                                AppLocalizations.of(context)!.msgSellername,
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )),
+                              Text(
+                                "${ref.watch(buyOrdersListProvider)[index].sellerName ?? ''}",
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: Text(
+                                AppLocalizations.of(context)!.msgDistrict,
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )),
+                              Text(
+                                "${ref.watch(buyOrdersListProvider)[index].districtName ?? 0}",
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: Text(
+                                AppLocalizations.of(context)!.msgCommodityy,
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )),
+                              Text(
+                                "${ref.watch(buyOrdersListProvider)[index].commodityName ?? 0}",
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: Text(
+                                AppLocalizations.of(context)!.quantity,
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )),
+                              Text(
+                                "${ref.watch(buyOrdersListProvider)[index].qty ?? 0} Qtl.",
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: Text(
+                                AppLocalizations.of(context)!.deliveryQuantity,
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )),
+                              Text(
+                                "${ref.watch(buyOrdersListProvider)[index].deliveryQty ?? 0} Qtl.",
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: Text(
+                                AppLocalizations.of(context)!.price,
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )),
+                              Text(
+                                "${currencyFormat.format(int.tryParse("${ref.watch(buyOrdersListProvider)[index].price ?? 0}"))} per Qtl.",
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: Text(
+                                AppLocalizations.of(context)!.showReport,
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w500),
+                              )),
+                              IconButton(
+                                  onPressed: () {
+                                    ref
+                                        .watch(buyerContractNoteSBTProvider(
+                                                orderId:
+                                                    "${ref.watch(buyOrdersListProvider)[index].orderId}",
+                                                type: "Buyer")
+                                            .future)
+                                        .then((value) async {
+                                      buyerSbtsettlementPdf(
+                                              value, "222", "2222", ref)
+                                          .then((file) async {
+                                        if (file != null) {
+                                          await FileSaver.instance
+                                              .saveAs(
+                                                  name:
+                                                      'settlement_report_buyer',
+                                                  file: file,
+                                                  mimeType: MimeType.pdf,
+                                                  ext: '.pdf')
+                                              .then((value) async {
+                                            Fluttertoast.showToast(
+                                                msg: 'File saved successfully!',
+                                                toastLength: Toast.LENGTH_LONG,
+                                                backgroundColor:
+                                                    ColorConstant.maingreen);
+
+                                            PDFDocument doc =
+                                                await PDFDocument.fromFile(
+                                                    file ?? File(''));
+
+                                            Get.bottomSheet(
+                                              Stack(
+                                                children: [
+                                                  PDFViewer(document: doc),
+                                                  Padding(
+                                                    padding: Pad(all: 10),
+                                                    child: Align(
+                                                      alignment: Alignment
+                                                          .bottomCenter,
+                                                      child: ElevatedButton(
+                                                          style: AppStyle
+                                                              .buttonStyle,
+                                                          onPressed: () {},
+                                                          child: Text(
+                                                            AppLocalizations.of(
+                                                                    context)!
+                                                                .download,
+                                                            style: TextStyle(
+                                                                fontSize:
+                                                                    Adaptive.sp(
+                                                                        16),
+                                                                color: Colors
+                                                                    .white),
+                                                          )),
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                              isScrollControlled: true,
+                                            );
+                                          });
+                                        }
+                                      });
+                                    }).onError((e, s) {
+                                      print(e.toString());
+                                      // ProgressDialogUtils
+                                      //     .hideProgressDialog();
+                                    });
+                                  },
+                                  icon: Icon(
+                                    Icons.remove_red_eye_sharp,
+                                    color: ColorConstant.maingreen,
+                                  )),
+                            ],
+                          ),
+                          SizedBox(height: 10),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width,
+                            child: ref
+                                        .watch(buyOrdersListProvider)[index]
+                                        .type
+                                        .toString()
+                                        .toLowerCase() ==
+                                    "sell"
+                                ? ElevatedButton(
+                                    onPressed: () {
+                                      Get.to(Markdeliveryscreen(
+                                        id: "${ref.watch(buyOrdersListProvider)[index].id}",
+                                        price:
+                                            "${ref.watch(buyOrdersListProvider)[index].price}",
+                                        districtId:
+                                            "${ref.watch(buyOrdersListProvider)[index].districtId}",
+                                        commodityId:
+                                            "${ref.watch(buyOrdersListProvider)[index].commodityId}",
+                                        isScreen: widget.isScreen,
+                                      ));
+                                    },
+                                    style: AppStyle.buttonStyle,
+                                    child: Text(
+                                      AppLocalizations.of(context)!
+                                          .markDelivery,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          fontSize: Adaptive.sp(16)),
+                                    ),
+                                  )
+                                : SizedBox(),
+                          )
+                        ]),
+                      ),
+                    ),
+                  ),
+      ],
+    );
+  }
+}

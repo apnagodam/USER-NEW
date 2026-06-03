@@ -1,0 +1,272 @@
+import 'package:apnagodam/core/constants/constants.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../core/utils/color_constant.dart';
+import '../../core/utils/theme/app_style.dart';
+
+void EycCommanDialog(
+    String? commoditImage,
+    String? type,
+    String? buyerseller,
+    String? loaction,
+    String? commodity,
+    String? netweight,
+    String totalbages,
+    String? createdate,
+    BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) => Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+          titlePadding: EdgeInsets.zero,
+          insetPadding: EdgeInsets.zero,
+          contentPadding: EdgeInsets.zero,
+          surfaceTintColor: Colors.white,
+          content: Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: Container(
+              decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: const BorderRadius.all(Radius.circular(6))),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Wrap(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            Get.back();
+                          },
+                          child: Container(
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.red,
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: Icon(
+                                  Icons.close_outlined,
+                                  color: Colors.white,
+                                ),
+                              )),
+                        )
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          Expanded(
+                              child: Text(
+                            AppLocalizations.of(context)!.msgCommodityimg,
+                            style: AppStyle.lbleyepopup,
+                          )),
+                          const VerticalDivider(
+                            width: 5,
+                            thickness: 1,
+                            color: ColorConstant.grey,
+                          ),
+                          Expanded(
+                            child: IconButton(
+                                onPressed: () {
+                                  Get.defaultDialog(
+                                      title: '',
+                                      middleText: '',
+                                      backgroundColor: Colors.white,
+                                      content: Image.network(IMAGE_BASE_URL +
+                                          "category/" +
+                                          commoditImage.toString()));
+                                },
+                                icon: Icon(
+                                  Icons.remove_red_eye,
+                                  color: ColorConstant.maingreen,
+                                )),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(color: Colors.grey),
+                    IntrinsicHeight(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Expanded(
+                              child: Text(
+                            'Type',
+                            style: AppStyle.lbleyepopup,
+                          )),
+                          const Expanded(
+                            child: VerticalDivider(
+                              width: 5,
+                              thickness: 1,
+                              color: ColorConstant.grey,
+                            ),
+                          ),
+                          Expanded(
+                              child: Text(
+                            type!,
+                            style: AppStyle.lbleyepopupsecond,
+                          )),
+                        ],
+                      ),
+                    ),
+                    const Divider(color: Colors.grey),
+                    IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          Expanded(
+                              child: Text(
+                            AppLocalizations.of(context)!.msgBuysell,
+                            style: AppStyle.lbleyepopup,
+                          )),
+                          const Expanded(
+                            child: VerticalDivider(
+                              width: 5,
+                              thickness: 1,
+                              color: ColorConstant.grey,
+                            ),
+                          ),
+                          Expanded(
+                              child: Text(
+                            buyerseller!,
+                            style: AppStyle.lbleyepopupsecond,
+                          )),
+                        ],
+                      ),
+                    ),
+                    const Divider(color: Colors.grey),
+                    IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          Expanded(
+                              child: Text(
+                            AppLocalizations.of(context)!.msgLocation,
+                            style: AppStyle.lbleyepopup,
+                          )),
+                          const Expanded(
+                            child: VerticalDivider(
+                              width: 5,
+                              thickness: 1,
+                              color: ColorConstant.grey,
+                            ),
+                          ),
+                          Expanded(
+                              child: Text(
+                            loaction!,
+                            style: AppStyle.lbleyepopupsecond,
+                          )),
+                        ],
+                      ),
+                    ),
+                    const Divider(color: Colors.grey),
+                    IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          Expanded(
+                              child: Text(
+                            AppLocalizations.of(context)!.msgCommodity,
+                            style: AppStyle.lbleyepopup,
+                          )),
+                          const Expanded(
+                            child: VerticalDivider(
+                              width: 5,
+                              thickness: 1,
+                              color: ColorConstant.grey,
+                            ),
+                          ),
+                          Expanded(
+                              child: Text(
+                            commodity!,
+                            style: AppStyle.lbleyepopupsecond,
+                          )),
+                        ],
+                      ),
+                    ),
+                    const Divider(color: Colors.grey),
+                    IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          Expanded(
+                              child: Text(
+                            AppLocalizations.of(context)!.msgNetweight,
+                            style: AppStyle.lbleyepopup,
+                          )),
+                          const Expanded(
+                            child: VerticalDivider(
+                              width: 5,
+                              thickness: 1,
+                              color: ColorConstant.grey,
+                            ),
+                          ),
+                          Expanded(
+                              child: Text(
+                            netweight!,
+                            style: AppStyle.lbleyepopupsecond,
+                          )),
+                        ],
+                      ),
+                    ),
+                    const Divider(color: Colors.grey),
+                    IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          Expanded(
+                              child: Text(
+                            AppLocalizations.of(context)!.totalBages,
+                            style: AppStyle.lbleyepopup,
+                          )),
+                          const Expanded(
+                            child: VerticalDivider(
+                              width: 5,
+                              thickness: 1,
+                              color: ColorConstant.grey,
+                            ),
+                          ),
+                          Expanded(
+                              child: Text(
+                            totalbages != "" ? totalbages : "N/A",
+                            style: AppStyle.lbleyepopupsecond,
+                          )),
+                        ],
+                      ),
+                    ),
+                    const Divider(color: Colors.grey),
+                    IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          Expanded(
+                              child: Text(
+                            AppLocalizations.of(context)!.createDate,
+                            style: AppStyle.lbleyepopup,
+                          )),
+                          const Expanded(
+                            child: VerticalDivider(
+                              width: 5,
+                              thickness: 1,
+                              color: ColorConstant.grey,
+                            ),
+                          ),
+                          Expanded(
+                              child: Text(
+                            createdate!,
+                            style: AppStyle.lbleyepopupsecond,
+                          )),
+                        ],
+                      ),
+                    ),
+                    const Divider(color: Colors.grey),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        )),
+  );
+}

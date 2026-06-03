@@ -1,0 +1,865 @@
+import 'package:apnagodam/core/utils/string.dart';
+import 'package:apnagodam/presentation/mybuy_screen/model/ContractNoteModel.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:screenshot/screenshot.dart';
+
+import '../core/utils/color_constant.dart';
+import '../core/utils/helper.dart';
+import '../core/utils/theme/app_style.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class GlobalBottomSheet {
+  static void show(
+    BuildContext context, {
+    required Widget content,
+    required ContractNoteModel contractNote,
+    required Function(dynamic) callback,
+  }) {
+    var date = DateFormat('dd/MM/yyyy')
+        .format(DateTime.parse("${contractNote.data?.updatedAt}"));
+    var biddate = DateFormat('dd/MM/yyyy')
+        .format(DateTime.parse("${contractNote.data?.createdAt}"));
+    ScreenshotController controller = ScreenshotController();
+
+    showBarModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return Container(
+            color: Colors.white,
+            child: ListView(
+              children: [
+                Container(
+                  padding: EdgeInsets.only(left: 10, right: 10),
+                  color: ColorConstant.maingreen,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                          onPressed: () {
+                            callback(true);
+                          },
+                          icon: Icon(
+                            Icons.arrow_back_rounded,
+                            size: 25,
+                            color: CupertinoColors.white,
+                          )),
+                      Text(
+                        wareHouseTypeTag == "buy"
+                            ? AppLocalizations.of(context)!.customerCopy
+                            : AppLocalizations.of(context)!.sellerCopy,
+                        style: TextStyle(
+                            fontFamily: 'Roboto',
+                            color: Colors.white,
+                            fontSize: 20),
+                      ),
+                      TextButton(
+                          onPressed: () async {
+                            Map<Permission, PermissionStatus> statuses = await [
+                              Permission.storage,
+                              Permission.manageExternalStorage,
+                              Permission.accessMediaLocation
+                            ].request();
+                            SaveTOGalleryAndOpen(controller,
+                                    "contractnote_${contractNote.data!.uniqueId}")
+                                .then((value) {});
+                          },
+                          child: Text(
+                            AppLocalizations.of(context)!.msgPrint,
+                            style: AppStyle.lbldrawerbtn,
+                          ))
+                    ],
+                  ),
+                ),
+                Screenshot(
+                  controller: controller,
+                  child: RepaintBoundary(
+                    child: Padding(
+                      padding: EdgeInsets.all(6.0),
+                      child: Container(
+                        padding: EdgeInsets.all(08.0),
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black, width: 1.5),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(08.0)),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  wareHouseTypeTag == "buy"
+                                      ? AppLocalizations.of(context)!
+                                          .customerCopy
+                                      : AppLocalizations.of(context)!
+                                          .sellerCopy,
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Image.asset(
+                                    'assets/images/noimage.png',
+                                    height: 100,
+                                    width: 100,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 10,
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      AppLocalizations.of(context)!
+                                          .msgPrintername,
+                                      style: AppStyle.lblaccontdetail,
+                                    ),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          AppLocalizations.of(context)!.msgCin,
+                                          style: AppStyle.lblonbordingp
+                                              .copyWith(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          " U63030RJ2016PTC055509",
+                                          style: AppStyle.lblonbordingp
+                                              .copyWith(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                    FittedBox(
+                                      child: Text(
+                                        AppLocalizations.of(context)!.msgInfo,
+                                        style: AppStyle.aplayforloan.copyWith(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700),
+                                        textAlign: TextAlign.start,
+                                        // textDirection: TextDirection.ltr,
+                                        maxLines: 2,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                      child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Text(
+                                        AppLocalizations.of(context)!
+                                            .msgContractno,
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            fontFamily: 'Roboto',
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold
+                                            // fontWeight: FontWeight.w500,
+                                            ),
+                                      ),
+                                      Text(
+                                        " :- ${contractNote.data?.uniqueId ?? 0.0}",
+                                        style: AppStyle.lblsummary.copyWith(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black),
+                                      ),
+                                    ],
+                                  )),
+                                  Text(
+                                    contractNote.data?.salesStatus.toString() ==
+                                            "2"
+                                        ? "Primary Sale"
+                                        : "MTP Sale",
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Divider(
+                              color: Colors.green,
+                              thickness: 2,
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  AppLocalizations.of(context)!.msgBuyername,
+                                  style: AppStyle.lblonbordingp.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12),
+                                ),
+                                Expanded(
+                                    child: Text(
+                                  contractNote.data!.buyerName.toString(),
+                                  style: AppStyle.lblonbordingp.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12),
+                                  maxLines: 2,
+                                )),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                      child: Row(
+                                    children: [
+                                      Text(
+                                        AppLocalizations.of(context)!
+                                            .msgBiddate,
+                                        style: AppStyle.aplayforloan.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12),
+                                      ),
+                                      Text(
+                                        date,
+                                        style: AppStyle.aplayforloan.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12),
+                                      ),
+                                    ],
+                                  )),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Expanded(
+                                      child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        AppLocalizations.of(context)!
+                                            .msgPrintdate,
+                                        style: AppStyle.lblonbordingp.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12),
+                                      ),
+                                      Expanded(
+                                          child: Text(
+                                        biddate,
+                                        style: AppStyle.lblonbordingp.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12),
+                                      )),
+                                    ],
+                                  ))
+                                ]),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              children: [
+                                Expanded(
+                                    child: Row(
+                                  children: [
+                                    Text(
+                                      AppLocalizations.of(context)!.panNo,
+                                      style: AppStyle.lblonbordingp.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12),
+                                    ),
+                                    Text(
+                                      " ${contractNote.data?.pancardNo}",
+                                      style: AppStyle.lblonbordingp.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12),
+                                    ),
+                                  ],
+                                )),
+                                SizedBox(
+                                  width: 10,
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  AppLocalizations.of(context)!.msgSellername,
+                                  style: AppStyle.lblonbordingp.copyWith(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  "${contractNote.data?.sellerName}",
+                                  style: AppStyle.lblonbordingp.copyWith(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            RowSuper(
+                              alignment: Alignment.topLeft,
+                              fitHorizontally: true,
+                              shrinkLimit: 0.0,
+                              children: [
+                                Text(
+                                  AppLocalizations.of(context)!.msgCaseid,
+                                  style: AppStyle.aplayforloan.copyWith(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  "${contractNote.data?.caseId}",
+                                  style: AppStyle.aplayforloan.copyWith(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.start,
+                                  softWrap: true,
+                                  // textDirection: TextDirection.ltr,
+                                  maxLines: 2,
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Divider(
+                              color: Colors.green,
+                              thickness: 2,
+                            ),
+                            Container(
+                              alignment: Alignment.topLeft,
+                              child: Text(
+                                AppLocalizations.of(context)!.msgShipmentdet,
+                                style: AppStyle.lblaccontdetail,
+                              ),
+                            ),
+                            SizedBox(
+                              height: 5,
+                            ),
+                            /* Container(
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  left: BorderSide(
+                                    color: Colors.grey,
+                                    // width: 5.0,
+                                  ),
+                                  right: BorderSide(
+                                    color: Colors.grey,
+                                    // width: 15.0,
+                                  ),
+                                  top: BorderSide(
+                                    color: Colors.grey,
+                                    // width: 20.0,
+                                  ),
+                                ),
+                              ),
+                              padding: EdgeInsets.only(left: 6),
+                              height: 30,
+                              child: Row(
+                                children: [
+                                  Text(
+                                    AppLocalizations.of(context)!.msgCommodity,
+                                    style: TextStyle(fontFamily: 'Roboto', fontSize: 12),
+                                  ),
+                                  Text(
+                                    "${contractNote.data!.category.toString()}${contractNote.data!.salesStatus == "2"? " (Primary)" : " (MTP)"}",
+                                    style: TextStyle(fontFamily: 'Roboto', fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),*/
+                            FittedBox(
+                              fit: BoxFit.fitWidth,
+                              child: DataTable(
+                                  showBottomBorder: true,
+                                  dataRowMaxHeight: 100,
+                                  dataRowMinHeight: 40,
+                                  border: TableBorder.all(),
+                                  headingRowHeight: 100,
+                                  columns: [
+                                    DataColumn(
+                                      label: Text(
+                                        "${AppLocalizations.of(context)!.msgCommodity} ${contractNote.data?.category ?? 0.0}${contractNote.data?.salesStatus.toString() == "2" ? " (Primary)" : " (MTP)"}",
+                                        maxLines: 3,
+                                        style: TextStyle(
+                                            fontFamily: 'Roboto',
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                        label: Row(
+                                      children: [
+                                        Text(
+                                          "${AppLocalizations.of(context)!.msgTerminalname} : ${contractNote.data?.warehouse ?? 0.0}",
+                                          style: TextStyle(
+                                              fontFamily: 'Roboto',
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold),
+                                          maxLines: 3,
+                                        )
+                                      ],
+                                    )),
+                                  ],
+                                  rows: [
+                                    DataRow(cells: [
+                                      DataCell(Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Text(
+                                                AppLocalizations.of(context)!
+                                                    .msgWeight,
+                                                style: TextStyle(
+                                                    fontFamily: 'Roboto',
+                                                    fontSize: 22,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              Text(
+                                                " : ${contractNote.data?.quantity ?? 0.0}",
+                                                style: TextStyle(
+                                                    fontFamily: 'Roboto',
+                                                    fontSize: 22,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                AppLocalizations.of(context)!
+                                                    .msgBags,
+                                                style: TextStyle(
+                                                    fontFamily: 'Roboto',
+                                                    fontSize: 22,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              Text(
+                                                "${contractNote.data?.totalBags ?? 0.0}",
+                                                style: TextStyle(
+                                                    fontFamily: 'Roboto',
+                                                    fontSize: 22,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      )),
+                                      DataCell(Row(
+                                        children: [
+                                          Text(
+                                            AppLocalizations.of(context)!
+                                                .msgSellingprice,
+                                            style: TextStyle(
+                                                fontFamily: 'Roboto',
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          Text(
+                                            " : \u{20B9}${contractNote.data!.price.toString()}",
+                                            style: TextStyle(
+                                                fontFamily: 'Roboto',
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ],
+                                      )),
+                                    ]),
+                                    DataRow(cells: [
+                                      DataCell(FittedBox(
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              AppLocalizations.of(context)!
+                                                  .msgGatepass,
+                                              style: TextStyle(
+                                                  fontFamily: 'Roboto',
+                                                  fontSize: 22,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              " : ${contractNote.data?.gatePassWr ?? 0.0}",
+                                              style: TextStyle(
+                                                  fontFamily: 'Roboto',
+                                                  fontSize: 22,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ],
+                                        ),
+                                      )),
+                                      DataCell(
+                                        wareHouseTypeTag == "buy"
+                                            ? Container(
+                                                padding:
+                                                    EdgeInsets.only(left: 6),
+                                                height: 30,
+                                                child: Row(
+                                                  children: [
+                                                    Text(
+                                                        AppLocalizations.of(
+                                                                context)!
+                                                            .totalmandiamount,
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                'Roboto',
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 22)),
+                                                    Expanded(
+                                                        child: Text(
+                                                      " \u{20B9}${contractNote.data?.finalMandiAmount ?? 0.0}",
+                                                      style: TextStyle(
+                                                          fontFamily: 'Roboto',
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 22),
+                                                      maxLines: 2,
+                                                    )),
+                                                  ],
+                                                ),
+                                              )
+                                            : Container(
+                                                padding:
+                                                    EdgeInsets.only(left: 6),
+                                                height: 30,
+                                                child: Row(
+                                                  children: [
+                                                    Text(
+                                                        AppLocalizations.of(
+                                                                context)!
+                                                            .dealAmounttttt,
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                'Roboto',
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 22)),
+                                                    Expanded(
+                                                        child: Text(
+                                                      " \u{20B9}${contractNote.data?.finalMandiAmount ?? 0.0}",
+                                                      style: TextStyle(
+                                                          fontFamily: 'Roboto',
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 22),
+                                                      maxLines: 2,
+                                                    )),
+                                                  ],
+                                                ),
+                                              ),
+                                      ),
+                                    ]),
+                                    DataRow(cells: [
+                                      DataCell(
+                                        wareHouseTypeTag == "buy"
+                                            ? Container(
+                                                padding:
+                                                    EdgeInsets.only(left: 6),
+                                                child: Row(
+                                                  children: [
+                                                    Text(
+                                                      AppLocalizations.of(
+                                                              context)!
+                                                          .mandiSmaiti,
+                                                      style: TextStyle(
+                                                          fontFamily: 'Roboto',
+                                                          fontSize: 22,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                    ),
+                                                    Text(
+                                                        "${contractNote.data?.mandiSamitiName ?? 0.0}",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                'Roboto',
+                                                            fontSize: 22,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold)),
+                                                  ],
+                                                ))
+                                            : SizedBox(),
+                                      ),
+                                      DataCell(wareHouseTypeTag == "buy"
+                                          ? Container(
+                                              padding:
+                                                  EdgeInsets.only(left: 10),
+                                              child: Row(
+                                                children: [
+                                                  Text(
+                                                      AppLocalizations.of(
+                                                              context)!
+                                                          .mandiTaxAmount,
+                                                      style: TextStyle(
+                                                          fontFamily: 'Roboto',
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 22)),
+                                                  Text(
+                                                      " \u{20B9}${contractNote.data?.mandiTaxAmount ?? 0.0}",
+                                                      style: TextStyle(
+                                                          fontFamily: 'Roboto',
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 22)),
+                                                ],
+                                              ),
+                                            )
+                                          : Container(
+                                              padding:
+                                                  EdgeInsets.only(left: 10),
+                                              child: Row(
+                                                children: [
+                                                  Text(
+                                                      AppLocalizations.of(
+                                                              context)!
+                                                          .qvAmounttttt,
+                                                      style: TextStyle(
+                                                          fontFamily: 'Roboto',
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 22)),
+                                                  Text(
+                                                      "${contractNote.data?.qvAmount ?? 0.0}",
+                                                      style: TextStyle(
+                                                          fontFamily: 'Roboto',
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 22)),
+                                                ],
+                                              ),
+                                            )),
+                                    ]),
+                                    DataRow(cells: [
+                                      DataCell(
+                                        wareHouseTypeTag == "buy"
+                                            ? Container(
+                                                padding:
+                                                    EdgeInsets.only(left: 6),
+                                                child: Row(
+                                                  children: [
+                                                    Text(
+                                                        AppLocalizations.of(
+                                                                context)!
+                                                            .commisionAmount,
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                'Roboto',
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 22)),
+                                                    Text(
+                                                        "${contractNote.data?.agCommission ?? 0.0}",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                'Roboto',
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 22)),
+                                                  ],
+                                                ),
+                                              )
+                                            : Container(
+                                                padding:
+                                                    EdgeInsets.only(left: 6),
+                                                child: Row(
+                                                  children: [
+                                                    Text(
+                                                        AppLocalizations.of(
+                                                                context)!
+                                                            .settlementAmounttttt2,
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                'Roboto',
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 22)),
+                                                    Text(
+                                                        "${contractNote.data?.finalSettlmentAmount ?? 0.0}",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                'Roboto',
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 22)),
+                                                  ],
+                                                ),
+                                              ),
+                                      ),
+                                      DataCell(Text(''))
+                                    ])
+                                  ]),
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              children: [
+                                Expanded(
+                                    child: Text(
+                                  AppLocalizations.of(context)!
+                                      .msgTotalrecamount,
+                                  style: AppStyle.lblontestimonalname.copyWith(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
+                                )),
+                                wareHouseTypeTag == "buy"
+                                    ? Text(
+                                        "\u{20B9}${double.parse((double.parse("${contractNote.data?.finalMandiAmount ?? 0.0}") + double.parse("${contractNote.data?.mandiTaxAmount ?? 0.0}")).toString())}",
+                                        style: AppStyle.lblontestimonalname
+                                            .copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12),
+                                      )
+                                    : Text(
+                                        "\u{20B9}${double.parse((double.parse("${contractNote.data?.finalMandiAmount ?? 0.0}") - double.parse("${contractNote.data?.finalSettlmentAmount ?? 0.0}")).toString())}",
+                                        style: AppStyle.lblontestimonalname
+                                            .copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12),
+                                      )
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text.rich(TextSpan(
+                                text: AppLocalizations.of(context)!.regOffice,
+                                style: AppStyle.aplayforloan.copyWith(
+                                    fontWeight: FontWeight.bold, fontSize: 10),
+                                children: [
+                                  TextSpan(
+                                    text: AppLocalizations.of(context)!
+                                        .msgAddress,
+                                    style: AppStyle.aplayforloan.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 10),
+                                  )
+                                ])),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                    child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      AppLocalizations.of(context)!.lableEmail,
+                                      style: AppStyle.aplayforloan.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          decoration: TextDecoration.underline,
+                                          fontSize: 10),
+                                    ),
+                                    Text(
+                                      AppLocalizations.of(context)!
+                                          .contactEmail,
+                                      style: AppStyle.aplayforloan.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10),
+                                    ),
+                                  ],
+                                )),
+                                SizedBox(
+                                  width: 5,
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  AppLocalizations.of(context)!.msgLandline,
+                                  style: AppStyle.aplayforloan.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      decoration: TextDecoration.underline,
+                                      fontSize: 10),
+                                ),
+                                Text(
+                                  "0141-2232204",
+                                  style: AppStyle.aplayforloan.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10),
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              AppLocalizations.of(context)!.msginf,
+                              style:
+                                  AppStyle.aplayforloan.copyWith(fontSize: 10),
+                              textAlign: TextAlign.start,
+                              softWrap: true,
+                              // textDirection: TextDirection.ltr,
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          );
+        });
+  }
+}

@@ -1,0 +1,623 @@
+import 'dart:io';
+
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/theme/app_style.dart';
+import 'package:apnagodam/presentation/login_screen/LoginBottomsheet.dart';
+import 'package:apnagodam/widgets/CommonTextField.dart';
+import 'package:apnagodam/widgets/StackBookCard.dart';
+import 'package:apnagodam/widgets/dailogs/customAlertDialog.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:elevarm_icons/elevarm_icons.dart';
+import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+export 'loaders.dart';
+export '../core/utils/no_data_found_widget.dart';
+
+showLoginBottomsheet(BuildContext context) {
+  showModalBottomSheet(
+    showDragHandle: true,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+    backgroundColor: Colors.white,
+    context: context,
+    isScrollControlled: true, // Important
+    enableDrag: true,
+    builder: (bottomsheetContext) => LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: constraints.maxHeight,
+            ),
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(bottomsheetContext)
+                    .viewInsets
+                    .bottom, // reacts to keyboard
+              ),
+              child: DraggableScrollableSheet(
+                expand: false,
+                initialChildSize: 0.6, // default height
+                minChildSize: 0.4,
+                maxChildSize: 0.95,
+                builder: (_, scrollController) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 10),
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      child: LoginBottomSheet(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
+
+titleWidget(
+        {required String text,
+        MainAxisAlignment alignment = MainAxisAlignment.start,
+        double fontSize = ElevarmFontSizes.sm,
+        VoidCallback? callback}) =>
+    InkWell(
+      onTap: callback,
+      child: Row(
+        mainAxisAlignment: alignment,
+        children: [
+          Text(
+            "$text",
+            textAlign: TextAlign.left,
+            style: ElevarmFontFamilies.inter(
+              color: ColorConstant.maingreen,
+              fontSize: fontSize,
+              fontWeight: ElevarmFontWeights.bold,
+            ),
+          )
+        ],
+      ),
+    );
+
+Widget stacksLoader(BuildContext context) => Skeletonizer(
+      child: SizedBox(
+        height: Get.height,
+        child: Column(
+          // mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 35,
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(
+                            5,
+                          ),
+                          color: ColorConstant.red500),
+                      child: Center(
+                          child: Text(
+                        AppLocalizations.of(context)!.yourbooked,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Roboto',
+                        ),
+                      )),
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 5,
+                  ),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(
+                            5,
+                          ),
+                          color: ColorConstant.maingreen),
+                      height: 35,
+                      child: Center(
+                          child: Text(
+                        AppLocalizations.of(context)!.emptystack,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Roboto',
+                        ),
+                      )),
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 5,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(
+              height: 15,
+            ),
+            Expanded(
+                // height: MediaQuery.of(context).size.height*0.4,
+                child: GridView.builder(
+                    padding: Pad(all: 0),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 10,
+                            childAspectRatio: 3 / 4,
+                            crossAxisSpacing: 10),
+                    itemCount: 6,
+                    itemBuilder: (context, index) => InkWell(
+                          child: Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 3,
+                            shadowColor: Colors.grey.shade300,
+                            margin: EdgeInsets.zero,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                        color: ColorConstant.maingreen,
+                                        borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(8),
+                                            topRight: Radius.circular(8))),
+                                    child: Text(
+                                      AppLocalizations.of(context)!.msgStackno,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: Adaptive.sp(16),
+                                          color: Colors.white),
+                                    ),
+                                  ),
+                                  Padding(
+                                      padding: Pad(all: 10),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            AppLocalizations.of(context)!
+                                                .capacity_1,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: Adaptive.sp(15)),
+                                          ),
+                                          Text(
+                                            "Occupied ",
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: Adaptive.sp(15)),
+                                          ),
+                                        ],
+                                      )),
+                                  Container(
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                        color: ColorConstant.maingreen,
+                                        borderRadius: BorderRadius.only(
+                                            bottomLeft: Radius.circular(8),
+                                            bottomRight: Radius.circular(8))),
+                                    child: Text(
+                                      AppLocalizations.of(context)!.msgSell,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: Adaptive.sp(15),
+                                          color: Colors.white),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                          onTap: () {},
+                        ))),
+          ],
+        ),
+      ),
+    );
+
+Widget listSkeleton(BuildContext context) => Skeletonizer(
+      child: Wrap(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+            color: ColorConstant.maingreen,
+            child: Row(
+              children: [
+                _buildHeaderCell(AppLocalizations.of(context)!.msgGatepastwo),
+                _verticalDivider(),
+                _buildHeaderCell(AppLocalizations.of(context)!.msgCommodityy),
+                _verticalDivider(),
+                _buildHeaderCell(AppLocalizations.of(context)!.loading_1),
+                _verticalDivider(),
+                _buildHeaderCell(AppLocalizations.of(context)!.msgAction),
+              ],
+            ),
+          ),
+          Column(
+              children:
+                  List.generate(6, (index) => _buildItemCardStack(context))
+                      .toList())
+        ],
+      ),
+    );
+
+Widget dropDownloadLoader() => const Skeletonizer(
+      child: CommonTextField(
+        hintText: "Loading...",
+        label: "Loading...",
+      ),
+    );
+
+Widget _buildHeaderCell(String title) {
+  return Expanded(
+    flex: 1,
+    child: Center(
+      child: Text.rich(
+        TextSpan(text: title),
+        style: TextStyle(
+          fontSize: Adaptive.sp(15),
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    ),
+  );
+}
+
+Widget _buildItemCard(BuildContext context, dynamic item) {
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border.all(color: Colors.grey.shade400),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: IntrinsicHeight(
+      child: Row(
+        children: [
+          _buildCell(item.gatePassWr ?? "N/A"),
+          _verticalDivider(),
+          _buildCell(item.category ?? "N/A"),
+          _verticalDivider(),
+          _buildCell(item.fname ?? "N/A"),
+          _verticalDivider(),
+          _buildActionCell(context),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildItemCardStack(BuildContext context) {
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border.all(color: Colors.grey.shade400),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: IntrinsicHeight(
+      child: Row(
+        children: [
+          _buildCell("N/A"),
+          _verticalDivider(),
+          _buildCell("N/A"),
+          _verticalDivider(),
+          _buildCell("N/A"),
+          _verticalDivider(),
+          _buildCell("N/A"),
+          _verticalDivider(),
+          _buildActionCellStack(context),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _verticalDivider() {
+  return Container(
+    width: 1,
+    color: Colors.grey.shade300,
+    margin: const EdgeInsets.symmetric(vertical: 8),
+  );
+}
+
+Widget _buildCell(String value) {
+  return Expanded(
+    flex: 1,
+    child: Center(
+      child: Text(
+        value,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: Adaptive.sp(15),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildActionCell(BuildContext context) {
+  return Expanded(
+    flex: 1,
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        InkWell(
+          onTap: () {},
+          child: Icon(Icons.remove_red_eye,
+              color: ColorConstant.maingreen, size: Adaptive.sp(24)),
+        ),
+        const SizedBox(height: 6),
+        ElevatedButton(
+          style: AppStyle.buttonStyle.copyWith(
+            padding: WidgetStatePropertyAll(Pad(all: 8)),
+            backgroundColor: WidgetStateProperty.all(ColorConstant.maingreen),
+          ),
+          onPressed: () {},
+          child: Text(
+            AppLocalizations.of(context)!.msgNote,
+            style: AppStyle.lblnote.copyWith(fontSize: Adaptive.sp(16)),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildActionCellStack(BuildContext context) {
+  return Expanded(
+    flex: 1,
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        InkWell(
+          child: Icon(Icons.remove_red_eye,
+              color: ColorConstant.maingreen, size: Adaptive.sp(24)),
+        ),
+        const SizedBox(height: 6),
+        ElevatedButton(
+          style: AppStyle.buttonStyle.copyWith(
+            padding: WidgetStatePropertyAll(Pad(all: 8)),
+            backgroundColor: WidgetStateProperty.all(ColorConstant.maingreen),
+          ),
+          onPressed: () {},
+          child: Text(
+            AppLocalizations.of(context)!.msgNote,
+            style: AppStyle.lblnote.copyWith(fontSize: Adaptive.sp(15)),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget actionButton({
+  required VoidCallback onTap,
+  required String icon,
+  required String label,
+}) {
+  return InkWell(
+    onTap: onTap,
+    child: Container(
+      height: 45,
+      decoration: BoxDecoration(
+        color: ColorConstant.maingreen,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(
+            icon,
+            color: Colors.white,
+            height: Adaptive.sp(16),
+            width: Adaptive.sp(16),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppStyle.lblsellnbuy.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: Adaptive.sp(13),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+ElevarmPrimaryButton simpleButton(
+        {required String text,
+        required VoidCallback callback,
+        Color color = ColorConstant.maingreen}) =>
+    ElevarmPrimaryButton.text(
+      text: text,
+      onPressed: callback,
+      buttonThemeData: ElevarmPrimaryButtonThemeData(
+        primaryColor: color,
+      ),
+    );
+
+class ImagePickerWidget extends ConsumerWidget {
+  const ImagePickerWidget(
+      {super.key,
+      required this.onImageSelection,
+      required this.title,
+      this.imageProvider});
+
+  final Function(XFile) onImageSelection;
+  final String title;
+  final StateProvider<File?>? imageProvider;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedImage =
+        imageProvider != null ? ref.watch(imageProvider!) : null;
+    return selectedImage == null
+        ? ElevarmInputFileCard(
+            onTap: () {
+              showImageSourceFilePickerDialog(context, (result) {
+                final file = File(result.path);
+                if (imageProvider != null) {
+                  ref.watch(imageProvider!.notifier).state = file;
+                }
+                onImageSelection(result);
+              });
+            },
+            clickToUploadLabel: title,
+            orDragAndDropLabel: AppLocalizations.of(context)!.tapToUploadTitleImage2,
+            subtitle: 'PNG, JPG, JPEG (maks. 800x400px)',
+            textColor: ColorConstant.maingreen,
+          )
+        : ElevarmFileUploadCard(
+            title: selectedImage.path.split('/').last,
+            subtitle: selectedImage.path.split('/').last,
+            actionIconAssetName: ElevarmIconsOutline.eye,
+            iconColor: ColorConstant.maingreen,
+            iconBackgroundColor: ColorConstant.maingreen.withAlpha(26),
+            onTap: () {
+              showImagePopup(context, selectedImage);
+            },
+            onTapAction: () {
+              showImagePopup(context, selectedImage);
+            },
+          );
+  }
+}
+
+class FilePickerWidget extends ConsumerWidget {
+  FilePickerWidget(
+      {super.key, required this.onImageSelection, required this.title});
+
+  Function(File) onImageSelection;
+  String title = '';
+  final refImage = StateProvider<File?>((ref) => null);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ref.watch(refImage) == null
+        ? ElevarmInputFileCard(
+            onTap: () async {
+              FilePickerResult? result = await FilePicker.platform.pickFiles(
+                type: FileType.custom,
+                allowedExtensions: ['jpg', 'jpeg', 'pdf', 'png'],
+              );
+              if (result != null) {
+                ref.watch(refImage.notifier).state =
+                    File(result.files.single.path!);
+                onImageSelection(File(result.files.single.path!));
+              }
+            },
+            clickToUploadLabel: title,
+            orDragAndDropLabel: AppLocalizations.of(context)!.tapToUploadTitleImage2,
+            subtitle: 'PNG, JPG, JPEG,PDF ',
+            textColor: ColorConstant.maingreen,
+          )
+        : ElevarmFileUploadCard(
+            title: '${ref.watch(refImage)?.name}',
+            subtitle: '${ref.watch(refImage)?.name}',
+            actionIconAssetName: ElevarmIconsOutline.eye,
+            iconColor: ColorConstant.maingreen,
+            iconBackgroundColor: ColorConstant.maingreen.withOpacity(0.1),
+            onTap: () {
+              showImagePopup(context, File(ref.watch(refImage)?.path ?? ""));
+            },
+            onTapAction: () {
+              showImagePopup(context, File(ref.watch(refImage)?.path ?? ""));
+            },
+          );
+  }
+}
+
+void showImagePopup(BuildContext context, dynamic imageSource) {
+  ImageProvider imageProvider;
+
+  if (imageSource is String) {
+    if (imageSource.startsWith('http')) {
+      imageProvider = NetworkImage(imageSource);
+    } else {
+      imageProvider = AssetImage(imageSource);
+    }
+  } else if (imageSource is File) {
+    imageProvider = FileImage(imageSource);
+  } else if (imageSource is ImageProvider) {
+    imageProvider = imageSource;
+  } else {
+    throw ArgumentError('Unsupported image type: $imageSource');
+  }
+
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(16),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.all(10),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: InteractiveViewer(
+                child: Image(image: imageProvider, fit: BoxFit.contain),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 10,
+            right: 10,
+            child: Container(
+              margin: Pad(all: 5),
+              decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.3), shape: BoxShape.circle),
+              padding: EdgeInsets.all(5),
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () =>
+                    Navigator.of(context, rootNavigator: false).pop(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+extension FileExtention on FileSystemEntity {
+  String? get name {
+    return path.split(Platform.pathSeparator).last;
+  }
+}

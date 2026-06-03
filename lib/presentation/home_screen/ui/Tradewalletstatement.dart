@@ -1,0 +1,636 @@
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/core/utils/theme/app_style.dart';
+import 'package:apnagodam/extensions/extensions.dart';
+import 'package:apnagodam/presentation/wallet_statement_screen/models/wallet_transactions_list_model.dart';
+import 'package:apnagodam/presentation/wallet_statement_screen/service/wallet_service.dart';
+import 'package:apnagodam/presentation/wallet_statement_screen/wallet_statement_screen.dart';
+import 'package:apnagodam/widgets/invoice.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:file_saver/file_saver.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:pdf/widgets.dart' as pdfWidgets;
+import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+
+class TradeWalletStatement extends ConsumerStatefulWidget {
+  const TradeWalletStatement({super.key});
+
+  @override
+  ConsumerState<TradeWalletStatement> createState() =>
+      _TradeWalletStatementState();
+}
+
+class _TradeWalletStatementState extends ConsumerState<TradeWalletStatement> {
+  late StateProvider<String> searchQueryProvider;
+  @override
+  void initState() {
+    super.initState();
+    searchQueryProvider = StateProvider<String>((ref) => "");
+  }
+
+  var dataList = StateProvider<List<Datum>>((ref) => []);
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Filter By",
+                    style: AppStyle.lbldrawerbtn.copyWith(
+                      fontSize: Adaptive.sp(17),
+                      fontWeight: FontWeight.bold,
+                      color: ColorConstant.maingreen,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      ChoiceChip(
+                        checkmarkColor: Colors.white,
+                        label: Text("1 Month"),
+                        selected:
+                            ref.watch(selectedFilterProvider) == '1 Month',
+                      // ✅ Fixed code
+onSelected: (isSelected) {
+  if (isSelected) {
+    ref.read(selectedFilterProvider.notifier).state = '1 Month';
+    ref.read(fromDateProvider.notifier).state = DateFormat('dd-MM-yyyy').format(
+      DateTime.now().subtract(Duration(days: 30)),
+    );
+    ref.read(toDateProvider.notifier).state =
+        DateFormat('dd-MM-yyyy').format(DateTime.now());
+    ref.invalidate(getWalletListProvider);
+  }
+},
+                        selectedColor: ColorConstant.maingreen,
+                        backgroundColor: Colors.grey[200],
+                        labelStyle: TextStyle(
+                          color: ref.watch(selectedFilterProvider) == '1 Month'
+                              ? Colors.white
+                              : Colors.black,
+                        ),
+                      ),
+                      ChoiceChip(
+                        checkmarkColor: Colors.white,
+                        label: Text("3 Months"),
+                        selected:
+                            ref.read(selectedFilterProvider) == '3 Months',
+                        onSelected: (isSelected) {
+                          if (isSelected) {
+                            ref.read(selectedFilterProvider.notifier).state =
+                                '3 Months';
+                            ref.read(fromDateProvider.notifier).state =
+                                DateFormat('dd-MM-yyyy').format(
+                              DateTime.now().subtract(Duration(days: 90)),
+                            );
+                            ref.read(toDateProvider.notifier).state =
+                                DateFormat('dd-MM-yyyy').format(DateTime.now());
+                            ref.invalidate(getWalletListProvider);
+                          }
+                        },
+                        selectedColor: ColorConstant.maingreen,
+                        backgroundColor: Colors.grey[200],
+                        labelStyle: TextStyle(
+                          color: ref.watch(selectedFilterProvider) == '3 Months'
+                              ? Colors.white
+                              : Colors.black,
+                        ),
+                      ),
+                      ChoiceChip(
+                        checkmarkColor: Colors.white,
+                        label: Text("6 Months"),
+                        selected:
+                            ref.read(selectedFilterProvider) == '6 Months',
+                        onSelected: (isSelected) {
+                          if (isSelected) {
+                            ref.read(selectedFilterProvider.notifier).state =
+                                '6 Months';
+                            ref.read(fromDateProvider.notifier).state =
+                                DateFormat('dd-MM-yyyy').format(
+                              DateTime.now().subtract(Duration(days: 180)),
+                            );
+                            ref.watch(toDateProvider.notifier).state =
+                                DateFormat('dd-MM-yyyy').format(DateTime.now());
+                            ref.invalidate(getWalletListProvider);
+                          }
+                        },
+                        selectedColor: ColorConstant.maingreen,
+                        backgroundColor: Colors.grey[200],
+                        labelStyle: TextStyle(
+                          color: ref.watch(selectedFilterProvider) == '6 Months'
+                              ? Colors.white
+                              : Colors.black,
+                        ),
+                      ),
+                      ChoiceChip(
+                        checkmarkColor: Colors.white,
+                        label: Text(AppLocalizations.of(context)!.custom),
+                        selected: ref.watch(selectedFilterProvider) == 'Custom',
+                        onSelected: (isSelected) async {
+                          DateTime? fromDate;
+                          DateTime? toDate;
+                          await showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            builder: (context) {
+                              DateTime tempFromDate = DateTime.now();
+                              DateTime tempToDate = DateTime.now();
+                              return StatefulBuilder(
+                                builder: (context, setState) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: MediaQuery.of(
+                                        context,
+                                      ).viewInsets.bottom,
+                                      left: 16,
+                                      right: 16,
+                                      top: 24,
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          "Select Date Range",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: Adaptive.sp(17),
+                                          ),
+                                        ),
+                                        SizedBox(height: 16),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: InkWell(
+                                                onTap: () async {
+                                                  DateTime? picked =
+                                                      await showDatePicker(
+                                                    context: context,
+                                                    initialDate: tempFromDate,
+                                                    firstDate: DateTime(2018),
+                                                    lastDate: DateTime.now(),
+                                                  );
+                                                  if (picked != null) {
+                                                    setState(
+                                                      () =>
+                                                          tempFromDate = picked,
+                                                    );
+                                                  }
+                                                },
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    vertical: 12,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                      color: ColorConstant.grey,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                      8,
+                                                    ),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      "From: ${DateFormat('dd-MM-yyyy').format(tempFromDate)}",
+                                                      style: TextStyle(
+                                                        fontSize: Adaptive.sp(
+                                                          16,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(width: 10),
+                                            Expanded(
+                                              child: InkWell(
+                                                onTap: () async {
+                                                  DateTime? picked =
+                                                      await showDatePicker(
+                                                    context: context,
+                                                    initialDate: tempToDate,
+                                                    firstDate: tempFromDate,
+                                                    lastDate: DateTime.now(),
+                                                  );
+                                                  if (picked != null) {
+                                                    setState(
+                                                      () => tempToDate = picked,
+                                                    );
+                                                  }
+                                                },
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    vertical: 12,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                      color: ColorConstant.grey,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                      8,
+                                                    ),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      "To: ${DateFormat('dd-MM-yyyy').format(tempToDate)}",
+                                                      style: TextStyle(
+                                                        fontSize: Adaptive.sp(
+                                                          16,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 24),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            fromDate = tempFromDate;
+                                            toDate = tempToDate;
+                                            Navigator.of(context).pop();
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                ColorConstant.maingreen,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            AppLocalizations.of(context)!.submit,
+                                            style: AppStyle.lblviewbtnwithdraw
+                                                .copyWith(
+                                              fontSize: Adaptive.sp(14),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 16),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                          if (fromDate != null && toDate != null) {
+                            ref.read(selectedFilterProvider.notifier).state =
+                                'Custom';
+                            ref.read(fromDateProvider.notifier).state =
+                                DateFormat('dd-MM-yyyy').format(fromDate!);
+                            ref.read(toDateProvider.notifier).state =
+                                DateFormat('dd-MM-yyyy').format(toDate!);
+                            ref.invalidate(getWalletListProvider);
+                          }
+                        },
+                        selectedColor: ColorConstant.maingreen,
+                        backgroundColor: Colors.grey[200],
+                        labelStyle: TextStyle(
+                          color: ref.watch(selectedFilterProvider) == 'Custom'
+                              ? Colors.white
+                              : Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.only(
+                left: 10.0,
+                right: 10.0,
+                top: 5,
+                bottom: 5,
+              ),
+              color: ColorConstant.bgcolor,
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)!.msgOpeningBalance,
+                        style: TextStyle(
+                          fontSize: Adaptive.sp(16),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        AppLocalizations.of(context)!.msgClosingbal,
+                        style: TextStyle(
+                          fontSize: Adaptive.sp(16),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        NumberFormat.currency(
+                          locale: 'HI',
+                          symbol: '\u{20B9}',
+                          decimalDigits: 2,
+                        ).format(ref.watch(openingBalance)),
+                        style: TextStyle(
+                          fontSize: Adaptive.sp(17),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        NumberFormat.currency(
+                          locale: 'HI',
+                          symbol: '\u{20B9}',
+                          decimalDigits: 2,
+                        ).format(num.parse(ref.watch(closingBalance))),
+                        style: TextStyle(
+                          fontSize: Adaptive.sp(17),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+   ref.watch(getWalletListProvider(walletType: '2')).when(
+                data: (data) {
+                  var filteredData = data.data?.where((transaction) {
+                    var query = ref.watch(searchQueryProvider).toLowerCase();
+                    return transaction.narration?.toLowerCase().contains(
+                              query,
+                            ) ??
+                        false;
+                  }).toList();
+
+                 WidgetsBinding.instance.addPostFrameCallback((_) {
+  ref.read(dataList.notifier).state = data.data ?? [];
+});
+
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate((
+                      BuildContext context,
+                      int index,
+                    ) {
+                      var transaction = filteredData![index];
+                      DateTime abc = DateTime.parse(transaction.date ?? "");
+                      var date = DateFormat('dd-MM-yyyy').format(abc);
+                      String caseId = transaction.referenceNo!
+                          .toString()
+                          .split(
+                            transaction.referenceNo.toString().split(" ").last,
+                          )
+                          .join();
+                      var grading =
+                          transaction.referenceNo.toString().split(" ").last;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(
+                          left: 10.0,
+                          right: 10.0,
+                          top: 10.0,
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  date.toString(),
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: Adaptive.sp(16),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ColumnSuper(
+                                    alignment: Alignment.centerLeft,
+                                    children: [
+                                      Text.rich(
+                                        TextSpan(
+                                          text: transaction.narration ?? "",
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: Adaptive.sp(16),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Text.rich(
+                                        TextSpan(
+                                          text: caseId.toString(),
+                                          style: TextStyle(
+                                            fontSize: Adaptive.sp(16),
+                                            color: const Color(0xff786b74),
+                                          ),
+                                          children: [
+                                            TextSpan(text: grading.toString()),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: ColumnSuper(
+                                    alignment: Alignment.centerRight,
+                                    children: [
+                                      Text(
+                                        NumberFormat.currency(
+                                          locale: 'HI',
+                                          symbol: '\u{20B9}',
+                                          decimalDigits: 2,
+                                        ).format(
+                                          num.parse(
+                                            transaction.amount ?? "0.0",
+                                          ),
+                                        ),
+                                        style: TextStyle(
+                                          color: transaction.type == "Credit"
+                                              ? Colors.green
+                                              : Colors.red,
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        NumberFormat.currency(
+                                          locale: 'HI',
+                                          symbol: '\u{20B9}',
+                                          decimalDigits: 2,
+                                        ).format(
+                                          num.parse(
+                                            transaction.balance ?? "0.0",
+                                          ),
+                                        ),
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: Adaptive.sp(16),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(thickness: 2),
+                          ],
+                        ),
+                      );
+                    }, childCount: filteredData?.length ?? 0),
+                  );
+                },
+                error: (e, s) => SliverFillRemaining(
+                  child: noWalletTransactions(context),
+                ),
+                loading: () => SliverFillRemaining(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Skeletonizer(
+                      child: ListView.builder(
+                        itemCount: 6,
+                        itemBuilder: (context, index) => Column(
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  height: 18,
+                                  width: 80,
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                    horizontal: 4,
+                                  ),
+                                  color: Colors.grey[300],
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: 18,
+                                    width: double.infinity,
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 4,
+                                    ),
+                                    color: Colors.grey[300],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    height: 18,
+                                    width: double.infinity,
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 4,
+                                    ),
+                                    color: Colors.grey[300],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Divider(thickness: 2),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+        ],
+      ),
+      floatingActionButton: Visibility(
+        visible: ref.watch(dataList).isNotEmpty,
+        child: ElevatedButton(
+          onPressed: () async {
+            ref
+                .read(
+              walletSummaryDataProvider(
+                fromDate: ref.watch(fromDateProvider),
+                toDate: ref.watch(toDateProvider),
+                walletType: "1",
+              ).future,
+            )
+                .then((value) async {
+              makePdf(
+                context,
+                ref.watch(dataList),
+                ref.watch(openingBalance).toString(),
+                ref.watch(closingBalance),
+                ref,
+                value.data,
+              ).then((file) async {
+                if (file != null) {
+                  await FileSaver.instance
+                      .saveAs(
+                    name: 'wallet_statement',
+                    file: file,
+                    mimeType: MimeType.pdf,
+                    ext: '.pdf',
+                  )
+                      .then((value) {
+                    OpenFile.open(value);
+                    Fluttertoast.showToast(
+                      msg: 'File saved successfully ',
+                      toastLength: Toast.LENGTH_LONG,
+                    );
+                  });
+                }
+              }).onError((e, s) {
+                if (e is pdfWidgets.TooManyPagesException) {
+                  context.errorToast(
+                    'Please Select Dates below 5 months',
+                  );
+                }
+              });
+            });
+          },
+          style: AppStyle.buttonStyle,
+          child: Text(
+            AppLocalizations.of(context)!.msgPdf,
+            style: AppStyle.lbldrawerbtn.copyWith(fontSize: Adaptive.sp(16)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  openPdf(List<Datum>? data, WidgetRef ref) async {}
+}

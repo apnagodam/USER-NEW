@@ -1,0 +1,257 @@
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/core/utils/printer_helper.dart';
+import 'package:apnagodam/presentation/spot_order_booking_screen/service/spot_orders_response_model.dart';
+import 'package:apnagodam/presentation/spot_order_booking_screen/service/spot_orders_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+// import 'package:thermal_printer/esc_pos_utils_platform/src/enums.dart';
+// import 'package:thermal_printer/thermal_printer.dart';
+
+import '../../core/constants/constants.dart';
+import '../../core/utils/color_constant.dart';
+import '../../core/utils/image_constant.dart';
+import '../../core/utils/theme/app_style.dart';
+import 'order_summary_screen.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+
+class SpotOrderList extends ConsumerStatefulWidget {
+  const SpotOrderList({super.key});
+
+  @override
+  ConsumerState<SpotOrderList> createState() => _SpotOrderListState();
+}
+
+// final PagingController<int, Datum> _pagingController =
+// PagingController(firstPageKey: 0, invisibleItemsThreshold: 1);
+class _SpotOrderListState extends ConsumerState<SpotOrderList> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        backgroundColor: ColorConstant.bgcolor,
+        appBar: AppBar(
+          backgroundColor: ColorConstant.maingreen,
+          automaticallyImplyLeading: true,
+          title: Center(
+            child: Text(
+              AppLocalizations.of(context)!.msgPurchase,
+              style: AppStyle.lblAppbar,
+            ),
+          ),
+        ),
+        body: ref.watch(getWantToSellResponseProvider).when(
+              data: (orders) => Padding(
+                padding: EdgeInsets.all(00),
+                child: (orders.data ?? []).isEmpty
+                    ? noDataFoundOrders()
+                    : ListView.builder(
+                        itemCount: orders.data?.length ?? 0,
+                        itemBuilder: (BuildContext context, int index) {
+                          var status = orders.data?[index].status;
+                          String statusvalue = "";
+
+                          switch (status) {
+                            case 0:
+                              statusvalue = AppLocalizations.of(context)!.msgStatusRejected;
+                              break;
+                            case 1:
+                              statusvalue = AppLocalizations.of(context)!.msgStatusRunning;
+                              break;
+                            case 2:
+                              statusvalue = AppLocalizations.of(context)!.msgStatusApproved;
+                              break;
+                            case 2:
+                              statusvalue = AppLocalizations.of(context)!.msgStatusVerified;
+                              break;
+                            default:
+                              statusvalue = AppLocalizations.of(context)!.msgStatusRunning;
+                              break;
+                          }
+
+                          var date = DateFormat('dd/MM/yyyy').format(orders
+                                      .data?[index].inventory?.createdAt !=
+                                  null
+                              ? DateTime.parse(
+                                  "${orders.data?[index].inventory?.createdAt}")
+                              : DateTime.now());
+                          return InkWell(
+                            onTap: () {
+                              if (orders.data != null) {
+                                Get.to(() => OrderSummary(
+                                    indexData: orders.data![index]));
+                              }
+                            },
+                            child: Card(
+                              elevation: 8,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  side: BorderSide(
+                                      color: ColorConstant.maingreen
+                                          .withOpacity(0.3))),
+                              margin: EdgeInsets.all(10),
+                              surfaceTintColor: Colors.white,
+                              child: Column(
+                                children: [
+                                  // IconButton(
+                                  //   tooltip: 'Select Printer',
+                                  //   icon: Icon(Icons.print),
+                                  //   onPressed: () => _showPrinterSelection(
+                                  //       context, orders.data![index]),
+                                  // ),
+                                  Padding(
+                                    padding: EdgeInsets.all(8),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        /*CircleAvatar(
+                                  backgroundImage: AssetImage('assets/images/mung.jpeg'),
+                                ),*/
+                                        CircleAvatar(
+                                          radius: 25,
+                                          backgroundColor: Colors.grey,
+                                          child: Image.network(
+                                            "${IMAGE_BASE_URL}category/${orders.data?[index].inventory?.category?.image}",
+                                            fit: BoxFit.cover,
+                                            width: double.infinity,
+                                            height: double.infinity,
+                                            errorBuilder: (context, exception,
+                                                    stackTrack) =>
+                                                Image.asset(
+                                              ImageConstant.imgnoimage,
+                                              fit: BoxFit.fitWidth,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 10,
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '${orders.data?[index].inventory?.category?.category}',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: Adaptive.sp(16),
+                                              ),
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      AppLocalizations.of(context)!.msgDate,
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize:
+                                                            Adaptive.sp(16),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      date,
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize:
+                                                            Adaptive.sp(16),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                VerticalDivider(
+                                                  color: Colors.black,
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      AppLocalizations.of(context)!.msgPriceorder,
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize:
+                                                            Adaptive.sp(16),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      " ${orders.data?[index].inventory?.price}",
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize:
+                                                            Adaptive.sp(16),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            )
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                        color: ColorConstant.maingreen,
+                                        borderRadius: BorderRadius.only(
+                                          bottomRight: Radius.circular(6),
+                                          bottomLeft: Radius.circular(6),
+                                        )),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(AppLocalizations.of(context)!.msgOrderid,
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: Adaptive.sp(16),
+                                                    color: Colors.white)),
+                                            Text(
+                                                "${orders.data?[index].orderId}",
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: Adaptive.sp(16),
+                                                    color: Colors.white)),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            Text(AppLocalizations.of(context)!.msgStatus,
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: Adaptive.sp(16),
+                                                    color: Colors.white)),
+                                            Text(statusvalue,
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: Adaptive.sp(16),
+                                                    color: Colors.white)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+              ),
+              error: (e, s) => Text(e.toString() + s.toString()),
+              loading: () => defaultLoader(),
+            ));
+  }
+
+}

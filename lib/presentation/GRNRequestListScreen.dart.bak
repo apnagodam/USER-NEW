@@ -1,0 +1,86 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+final grnRequestListProvider = Provider<List<Map<String, dynamic>>>((ref) {
+  // Replace this with the actual provider logic to fetch data
+  return [];
+});
+
+class GRNRequestListScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final grnRequestList = ref.watch(grnRequestListProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('msg_grn_request_list'.tr),
+      ),
+      body: grnRequestList.isEmpty
+          ? Center(child: Text('msg_no_data_found'.tr))
+          : ListView.builder(
+              itemCount: grnRequestList.length,
+              itemBuilder: (context, index) {
+                final item = grnRequestList[index];
+                return Card(
+                  margin: EdgeInsets.all(10),
+                  child: Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("msg_order_id".tr + ": ${item['order_id']}",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text("msg_request_date".tr +
+                            ": ${item['request_date']}"),
+                        Text("msg_sales_status".tr +
+                            ": ${item['sales_status']}"),
+                        Text("msg_weight".tr + ": ${item['weight']}"),
+                        Text("msg_vehicle_number".tr +
+                            ": ${item['vehicle_number']}"),
+                        Text("msg_driver_number".tr +
+                            ": ${item['driver_number']}"),
+                        SizedBox(height: 10),
+                        if (item['kanta_parchi'] != null)
+                          _buildLink(
+                              "msg_kanta_parchi".tr, item['kanta_parchi']),
+                        if (item['billty'] != null)
+                          _buildLink("msg_billty".tr, item['billty']),
+                        if (item['draft_invoice_copy'] != null)
+                          _buildLink("msg_draft_invoice".tr,
+                              item['draft_invoice_copy']),
+                        if (item['invoice_copy'] != null)
+                          _buildLink(
+                              "msg_invoice_copy".tr, item['invoice_copy']),
+                        if (item['grn'] != null)
+                          _buildLink("msg_grn".tr, item['grn']),
+                        if (item['receving_kanta_parchi'] != null)
+                          _buildLink("msg_receiving_kanta_parchi".tr,
+                              item['receving_kanta_parchi']),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _buildLink(String label, String url) {
+    return InkWell(
+      onTap: () async {
+        if (await canLaunch(url)) {
+          await launch(url);
+        }
+      },
+      child: Text(
+        label,
+        style: TextStyle(
+          color: Colors.blue,
+          decoration: TextDecoration.underline,
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,537 @@
+import 'dart:io';
+
+import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/presentation/BusinessProfile/Service/BusinessProfileService.dart';
+import 'package:apnagodam/presentation/GstProfile/GstListingScreen.dart';
+import 'package:apnagodam/presentation/GstProfile/Service/GstService.dart';
+import 'package:apnagodam/presentation/MandiTaxProfile/Model/StatesResponseModel.dart';
+import 'package:apnagodam/presentation/MandiTaxProfile/Service/MandiTaxProfileService.dart';
+import 'package:apnagodam/presentation/dashboard/dashboard_screen.dart';
+import 'package:apnagodam/widgets/enums.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:dropdown_search/dropdown_search.dart';
+import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class Gstprofilescreen extends ConsumerStatefulWidget {
+  Gstprofilescreen({super.key, this.isAppbarVisible = true});
+  bool isAppbarVisible;
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _GstprofilescreenState();
+}
+
+class _GstprofilescreenState extends ConsumerState<Gstprofilescreen> {
+  var statesProvider = StateProvider<StatesDatum?>((ref) => null);
+  var gstNumberController = TextEditingController();
+  var addressController = TextEditingController();
+  var gstAvailableProvider = StateProvider<GstYesNO?>((ref) => null);
+
+  final formKey = GlobalKey<FormState>();
+  var gstImageFile = StateProvider<File?>((ref) => null);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: gstLayout(),
+      appBar:
+          widget.isAppbarVisible == true
+              ? AppBar(
+                title: Text(AppLocalizations.of(context)!.gstProfile),
+                actions: [
+                  InkWell(
+                    child: Text(
+                      AppLocalizations.of(context)!.myGstProfiles2,
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onTap: () {
+                      Get.to(Gstlistingscreen());
+                    },
+                  ),
+                ],
+              )
+              : null,
+    );
+  }
+
+  Widget gstLayout() => Form(
+    key: formKey,
+    child: ListView(
+      padding: Pad(all: 10),
+      children: [
+        Row(
+          children: [
+            Text(
+              AppLocalizations.of(context)!.selectState3,
+              textAlign: TextAlign.left,
+              style: ElevarmFontFamilies.inter(
+                color: Colors.black,
+                fontSize: ElevarmFontSizes.md,
+                fontWeight: ElevarmFontWeights.regular,
+              ),
+            ),
+          ],
+        ),
+        ref
+            .watch(statesListProvider)
+            .when(
+              data: (data) {
+                return DropdownSearch<StatesDatum?>(
+                  compareFn: (states, states2) => states?.id == states2?.id,
+                  popupProps: PopupPropsMultiSelection.menu(
+                    constraints: BoxConstraints(maxHeight: Get.height / 1.5),
+                    searchFieldProps: TextFieldProps(
+                      autofocus: false,
+                      cursorColor: ColorConstant.maingreen,
+                      padding: Pad(left: 10, right: 10),
+                      decoration: InputDecoration(
+                        contentPadding: Pad(left: 10, right: 10),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            style: BorderStyle.solid,
+                            color: ColorConstant.maingreen,
+                          ),
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            style: BorderStyle.solid,
+                            color: ColorConstant.maingreen,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            style: BorderStyle.solid,
+                            color: ColorConstant.maingreen,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            style: BorderStyle.solid,
+                            color: ColorConstant.maingreen,
+                          ),
+                        ),
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            style: BorderStyle.solid,
+                            color: ColorConstant.maingreen,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            style: BorderStyle.solid,
+                            color: ColorConstant.maingreen,
+                          ),
+                        ),
+                      ),
+                    ),
+                    menuProps: MenuProps(
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(color: ColorConstant.maingreen),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    containerBuilder:
+                        (context, popupWidget) =>
+                            ElevarmNeutralCard(child: popupWidget),
+                    itemBuilder:
+                        (context, terminal, isVisible, _) => ColumnSuper(
+                          alignment: Alignment.centerLeft,
+                          children: [
+                            Padding(
+                              padding: Pad(all: 10),
+                              child: Text(
+                                "${terminal?.name}",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: Adaptive.sp(16),
+                                ),
+                              ),
+                            ),
+                            ElevarmDivider(),
+                          ],
+                        ),
+                    title: Padding(
+                      padding: Pad(all: 10),
+                      child: Text(
+                        AppLocalizations.of(context)!.selectState3,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: Adaptive.sp(16),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    showSearchBox: true,
+                    searchDelay: Duration(microseconds: 500),
+                  ),
+                  filterFn:
+                      (user, filter) =>
+                          user?.stateFilterByName(filter) ?? false,
+
+                  // asyncItems: (String filter) => getData(filter),
+                  items: (i, s) => data.data!,
+                  itemAsString: (StatesDatum? u) => u?.name ?? "",
+                  validator: (value) {
+                    if (value == null) {
+                      return AppLocalizations.of(context)!.pleaseSelectState3;
+                    }
+                    return null;
+                  },
+                  onChanged:
+                      (data) => ref.watch(statesProvider.notifier).state = data,
+                  decoratorProps: DropDownDecoratorProps(
+                    decoration: InputDecoration(
+                      contentPadding: Pad(left: 10, bottom: 5, top: 5),
+                      hintText: AppLocalizations.of(context)!.selectState3,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                        borderSide: BorderSide(color: ColorConstant.maingreen),
+                      ),
+                    ),
+                  ),
+                );
+              },
+              error: (e, s) => Container(),
+              loading:
+                  () => ElevarmDropdownInputField<String>(
+                    label: '',
+                    hintText: AppLocalizations.of(context)!.selectState3,
+                    enabled: false,
+                    onChanged: (value) {},
+                    options: List.generate(
+                      BusinessProfileType.values.length,
+                      (index) => ElevarmDropdownInputFieldOption(
+                        title: BusinessProfileType.values[index].label,
+                        subtitle: '',
+                        value: '',
+                      ),
+                    ),
+                  ),
+            ),
+        SizedBox(height: 5),
+        DropdownSearch<GstYesNO?>(
+          compareFn: (gstYesNO, gstYesNO2) => gstYesNO?.type == gstYesNO2?.type,
+          popupProps: PopupProps.menu(
+            searchFieldProps: TextFieldProps(
+              autofocus: true,
+              cursorColor: ColorConstant.maingreen,
+              padding: Pad(left: 10, right: 10),
+              decoration: InputDecoration(
+                contentPadding: Pad(left: 10, right: 10),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    style: BorderStyle.solid,
+                    color: ColorConstant.maingreen,
+                  ),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    style: BorderStyle.solid,
+                    color: ColorConstant.maingreen,
+                  ),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    style: BorderStyle.solid,
+                    color: ColorConstant.maingreen,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    style: BorderStyle.solid,
+                    color: ColorConstant.maingreen,
+                  ),
+                ),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    style: BorderStyle.solid,
+                    color: ColorConstant.maingreen,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    style: BorderStyle.solid,
+                    color: ColorConstant.maingreen,
+                  ),
+                ),
+              ),
+            ),
+            menuProps: MenuProps(
+              shape: RoundedRectangleBorder(
+                side: BorderSide(color: ColorConstant.maingreen),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            itemBuilder:
+                (context, terminal, isVisible, _) => ColumnSuper(
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    Padding(
+                      padding: Pad(all: 10),
+                      child: Text(
+                        "${terminal?.label}",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: Adaptive.sp(16),
+                        ),
+                      ),
+                    ),
+                    Container(height: 1, color: Colors.grey.withOpacity(0.3)),
+                  ],
+                ),
+            title: Padding(
+              padding: Pad(all: 10),
+              child: Text(
+                AppLocalizations.of(context)!.selectAvailability,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: Adaptive.sp(16),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            showSearchBox: false,
+            searchDelay: Duration(microseconds: 500),
+          ),
+
+          // asyncItems: (String filter) => getData(filter),
+          items: (g, a) => GstYesNO.values ?? [],
+          itemAsString: (GstYesNO? u) => u?.label ?? "",
+          validator: (value) {
+            if (value == null) {
+              return AppLocalizations.of(context)!.gstAvailable;
+            }
+            return null;
+          },
+          onChanged:
+              (GstYesNO? data) =>
+                  ref.watch(gstAvailableProvider.notifier).state = data,
+          decoratorProps: DropDownDecoratorProps(
+            decoration: InputDecoration(
+              contentPadding: Pad(left: 10, bottom: 5, top: 5),
+              hintText: AppLocalizations.of(context)!.doYouHaveGst2,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+                borderSide: BorderSide(color: ColorConstant.maingreen),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 10),
+        if (ref.watch(gstAvailableProvider) == GstYesNO.yes)
+          Column(
+            children: [
+              SizedBox(height: 10),
+              ElevarmTextInputField(
+                label: AppLocalizations.of(context)!.gstNumber,
+                hintText: AppLocalizations.of(context)!.gstNumber,
+                isRequired: true,
+                controller: gstNumberController,
+                keyboardType: TextInputType.text,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return AppLocalizations.of(context)!.pleaseInputValidGst2;
+                  } else {
+                    return null;
+                  }
+                },
+              ),
+              SizedBox(height: 10),
+              ElevarmTextInputField(
+                label: AppLocalizations.of(context)!.address,
+                hintText: AppLocalizations.of(context)!.address,
+                isRequired: true,
+                controller: addressController,
+                keyboardType: TextInputType.text,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return AppLocalizations.of(
+                      context,
+                    )!.pleaseInputValidAddress2;
+                  } else {
+                    return null;
+                  }
+                },
+              ),
+              SizedBox(height: 10),
+              ref.watch(gstImageFile) != null
+                  ? Container(
+                    width: MediaQuery.of(context).size.width * 0.4,
+                    height: MediaQuery.of(context).size.height * 0.1,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(width: 1, color: Colors.black),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.file(
+                        ref.watch(gstImageFile) ?? File(''),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  )
+                  : ElevarmInputFileCard(
+                    onTap: () async {
+                      await ImagePicker()
+                          .pickImage(
+                            source: ImageSource.gallery,
+                            imageQuality: 15,
+                          )
+                          .then((value) async {
+                            if (value != null) {
+                              ref.watch(gstImageFile.notifier).state = File(
+                                value.path,
+                              );
+                            }
+                          })
+                          .onError((e, s) {
+                            //errorBottomSheet(context, e.toString());
+                          });
+                    },
+                    clickToUploadLabel:
+                        AppLocalizations.of(
+                          context,
+                        )!.uploadYourPassportSizedPhotos,
+                    orDragAndDropLabel: '',
+                    textColor: ColorConstant.maingreen,
+                    subtitle: AppLocalizations.of(context)!.pngJpgJpeg2,
+                  ),
+              SizedBox(height: 10),
+            ],
+          ),
+        ElevarmPrimaryButton.text(
+          text: AppLocalizations.of(context)!.submit,
+          onPressed: () {
+            if (ref.watch(statesProvider) == null) {
+              Fluttertoast.showToast(
+                msg: AppLocalizations.of(context)!.pleaseSelectAState2,
+              );
+            } else {
+              if (ref.watch(gstAvailableProvider) == GstYesNO.yes) {
+                if (formKey.currentState!.validate()) {
+                  ref
+                      .watch(
+                        insertGstProfileProvider(
+                          gstNumber: gstNumberController.text,
+                          address: addressController.text,
+                          stateCode: "${ref.watch(statesProvider)?.code ?? ""}",
+                          gstImage: ref.watch(gstImageFile),
+                          isRequired: GstYesNO.yes.type.toString(),
+                        ) //ref.watch(gstImageFile)
+                        .future,
+                      )
+                      .then((value) async {
+                        if (value['status'].toString() == "1") {
+                          var businessProfiles = await ref.watch(
+                            businessProfilesProvider.future,
+                          );
+                          var manditaxProfiles = await ref.watch(
+                            mandiTaxProfilesProvider.future,
+                          );
+                          var gstProfile = await ref.watch(
+                            gstListProvider.future,
+                          );
+
+                          ref
+                              .watch(sharedUtilityProvider)
+                              .setBusinessProfileStatus(
+                                businessProfiles.data != null,
+                              );
+                          ref
+                              .watch(sharedUtilityProvider)
+                              .setMandiTaxProfileStatus(
+                                (manditaxProfiles.data ?? []).isNotEmpty,
+                              );
+                          ref
+                              .watch(sharedUtilityProvider)
+                              .setGstProfileStatus(
+                                (gstProfile.data ?? []).isNotEmpty,
+                              );
+                          Get.to(DashboardScreen());
+                          Fluttertoast.showToast(
+                            msg: value['message'].toString(),
+                            toastLength: Toast.LENGTH_LONG,
+                            backgroundColor: ColorConstant.maingreen,
+                          );
+                        } else {
+                          Fluttertoast.showToast(
+                            msg: value['message'].toString(),
+                            toastLength: Toast.LENGTH_LONG,
+                            backgroundColor: ColorConstant.red500,
+                          );
+                        }
+                      })
+                      .onError((e, s) {});
+                }
+              } else {
+                ref
+                    .watch(
+                      insertGstProfileProvider(
+                        gstNumber: gstNumberController.text,
+                        address: addressController.text,
+                        stateCode: "${ref.watch(statesProvider)?.code ?? ""}",
+                        gstImage: ref.watch(gstImageFile),
+                        isRequired: GstYesNO.no.type.toString(),
+                      ) //ref.watch(gstImageFile)
+                      .future,
+                    )
+                    .then((value) async {
+                      if (value['status'].toString() == "1") {
+                        var businessProfiles = await ref.watch(
+                          businessProfilesProvider.future,
+                        );
+                        var manditaxProfiles = await ref.watch(
+                          mandiTaxProfilesProvider.future,
+                        );
+                        var gstProfile = await ref.watch(
+                          gstListProvider.future,
+                        );
+
+                        ref
+                            .watch(sharedUtilityProvider)
+                            .setBusinessProfileStatus(
+                              businessProfiles.data != null,
+                            );
+                        ref
+                            .watch(sharedUtilityProvider)
+                            .setMandiTaxProfileStatus(
+                              (manditaxProfiles.data ?? []).isNotEmpty,
+                            );
+                        ref
+                            .watch(sharedUtilityProvider)
+                            .setGstProfileStatus(
+                              (gstProfile.data ?? []).isNotEmpty,
+                            );
+                        Get.to(DashboardScreen());
+                        Fluttertoast.showToast(
+                          msg: value['message'].toString(),
+                          toastLength: Toast.LENGTH_LONG,
+                          backgroundColor: ColorConstant.maingreen,
+                        );
+                      } else {
+                        Fluttertoast.showToast(
+                          msg: value['message'].toString(),
+                          toastLength: Toast.LENGTH_LONG,
+                          backgroundColor: ColorConstant.red500,
+                        );
+                      }
+                    })
+                    .onError((e, s) {});
+              }
+            }
+          },
+          buttonThemeData: ElevarmPrimaryButtonThemeData(
+            primaryColor: ColorConstant.maingreen,
+          ),
+        ),
+      ],
+    ),
+  );
+}

@@ -1,0 +1,596 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/theme/app_style.dart';
+import 'package:apnagodam/presentation/add_money_screen/service/add_money_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class TradeAddMoney extends ConsumerStatefulWidget {
+  TradeAddMoney({super.key, required this.isAppBarVisible});
+
+  bool isAppBarVisible = false;
+
+  @override
+  ConsumerState<TradeAddMoney> createState() => _TradeAddMoneyState();
+}
+
+class _TradeAddMoneyState extends ConsumerState<TradeAddMoney> {
+  TextEditingController receptNocontroller = TextEditingController();
+  TextEditingController ammountcontroller = TextEditingController();
+
+  List<Option> options = [
+    Option('UPI', false),
+    Option('RTGS', false),
+    Option('Cheque', false),
+  ];
+  final ImagePicker _picker = ImagePicker();
+  var upiValProvider = StateProvider<bool>((ref) => false);
+  var rtgsValProvider = StateProvider((ref) => false);
+  var checkValProvider = StateProvider((ref) => false);
+
+  var paymentTypeProvider = StateProvider((ref) => '');
+
+  var imageFile = StateProvider<File?>((ref) => null);
+  var timeProvider = StateProvider((ref) => 5);
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+
+    //   Get.defaultDialog(
+    //     title: '',
+    //     middleText: '',
+    //     titlePadding: Pad(all: 0),
+    //     contentPadding: Pad(all: 0),
+    //     content:  Consumer(
+    //       builder: (context, ref, child) => Container(
+    //         color: Colors.white,
+    //         padding: Pad(all: 10),
+    //         margin: Pad(all: 10),
+    //         alignment: Alignment.center,
+    //         child: ColumnSuper(
+    //           children: [
+    //             Icon(
+    //               Icons.warning_rounded,
+    //               color: Colors.red.shade600,
+    //               size: Adaptive.sp(50),
+    //             ),
+    //             Text(
+    //               AppLocalizations.of(context)!.bankChanged,
+    //               style: TextStyle(
+    //                   fontWeight: FontWeight.bold,
+    //                   fontSize: Adaptive.sp(17)),
+    //             ),
+    //             SizedBox(
+    //               height: 10,
+    //             ),
+    //             ref.watch(timeProvider) > 0
+    //                 ?
+    //             SizedBox(
+    //               width: MediaQuery.of(context).size.width,
+    //               child: ElevatedButton(
+    //                 onPressed: () async {
+
+    //                 },
+    //                 style: AppStyle.buttonStyle.copyWith(backgroundColor: MaterialStatePropertyAll(Colors.grey)),
+    //                 child: Text('${ref.watch(timeProvider)}',
+    //                     style: TextStyle(
+    //                         fontWeight: FontWeight.bold,
+    //                         color: Colors.white,
+    //                         fontSize: Adaptive.sp(17))),
+    //               ),
+    //             )
+    //                 : SizedBox(
+    //               width: MediaQuery.of(context).size.width,
+    //               child: ElevatedButton(
+    //                 onPressed: () async {
+    //                   Navigator.of(context, rootNavigator: true)
+    //                       .pop();
+    //                 },
+    //                 style: AppStyle.buttonStyle,
+    //                 child: Text(
+    //                   "Ok",
+    //                   style: AppStyle.lblmoneybtn,
+    //                 ),
+    //               ),
+    //             ),
+    //           ],
+    //         ),
+    //       )),barrierDismissible: false,backgroundColor: Colors.white);
+    // });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: ColorConstant.bgcolor,
+      appBar: widget.isAppBarVisible
+          ? AppBar(
+              backgroundColor: ColorConstant.maingreen,
+              title: Text(
+                AppLocalizations.of(context)!.msgAddmoney,
+                style: AppStyle.lblAppbar,
+              ),
+              centerTitle: true,
+            )
+          : null,
+      body: Padding(
+        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+        child: SingleChildScrollView(
+          child: ref.watch(settingsProvider).when(
+                data: (data) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 10),
+                    Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 7,
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppLocalizations.of(context)!.msgAccountDetail,
+                              style: TextStyle(
+                                fontSize: Adaptive.sp(17),
+                                fontWeight: FontWeight.bold,
+                                color: ColorConstant.maingreen,
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                    child: Text(
+                                  AppLocalizations.of(context)!.beneficiaryName,
+                                  style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.bold,
+                                    // fontStyle: FontStyle.normal,
+                                  ),
+                                  textAlign: TextAlign.start,
+                                )),
+                                Expanded(
+                                    child: Text(
+                                        "CHIRAAG LOGISTICS PRIVATE LIMITED",
+                                        style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.bold,
+                                          // fontStyle: FontStyle.normal,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.end)),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                    child: Text(
+                                  AppLocalizations.of(context)!.msgAccontNo,
+                                  style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.bold,
+                                    // fontStyle: FontStyle.normal,
+                                  ),
+                                  textAlign: TextAlign.start,
+                                )),
+                                Expanded(
+                                    child: Text(
+                                        "CHLPL6${ref.watch(sharedUtilityProvider).getUser()?.phone}",
+                                        style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.bold,
+                                          // fontStyle: FontStyle.normal,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.end)),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                    child: Text(
+                                  AppLocalizations.of(context)!.msgBankName,
+                                  style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.bold,
+                                    // fontStyle: FontStyle.normal,
+                                  ),
+                                  textAlign: TextAlign.start,
+                                )),
+                                Expanded(
+                                    child: Text(data.settings?.bank ?? "",
+                                        style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          fontWeight: FontWeight.bold,
+                                          // fontStyle: FontStyle.normal,
+                                        ),
+                                        softWrap: false,
+                                        maxLines: 2,
+                                        textAlign: TextAlign.end,
+                                        overflow: TextOverflow.ellipsis)),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                    child: Text(
+                                  AppLocalizations.of(context)!.msgIfsc,
+                                  style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.bold,
+                                    // fontStyle: FontStyle.normal,
+                                  ),
+                                  textAlign: TextAlign.start,
+                                )),
+                                //data.settings?.ifsc ??
+                                Expanded(
+                                  child: Text(
+                                      AppLocalizations.of(context)!.hdfc0000054,
+                                      softWrap: false,
+                                      style: TextStyle(
+                                        fontSize: Adaptive.sp(16),
+                                        fontWeight: FontWeight.bold,
+                                        // fontStyle: FontStyle.normal,
+                                      ),
+                                      maxLines: 2,
+                                      textAlign: TextAlign.end,
+                                      overflow: TextOverflow.ellipsis),
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                    child: Text(
+                                  AppLocalizations.of(context)!.upi,
+                                  style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.bold,
+                                    // fontStyle: FontStyle.normal,
+                                  ),
+                                  textAlign: TextAlign.start,
+                                )),
+                                Text(
+                                    "chlpl6${ref.watch(sharedUtilityProvider).getUser()?.phone}@hdfcbank",
+                                    style: TextStyle(
+                                      fontSize: Adaptive.sp(16),
+                                      fontWeight: FontWeight.bold,
+                                      // fontStyle: FontStyle.normal,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.end)
+                              ],
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+
+                            // Align(alignment: Alignment.center,child: Container(
+                            //   margin: Pad(all: 10),
+                            //   padding: Pad(all: 10),
+                            //   decoration: BoxDecoration(borderRadius: BorderRadius.circular(5),border: Border.all()),
+                            //   height: 200,
+                            //   width: 200,
+                            //   child: Center(
+                            //       child: UPIPaymentQRCode(
+                            //         embeddedImagePath: 'assets/images/user_logo.png',
+                            //         upiDetails: UPIDetails(
+                            //           upiID:
+                            //           "swlplt${ref.watch(sharedUtilityProvider).getUser()?.phone}@hdfcbank",
+                            //           payeeName: "",
+                            //         ),
+                            //         upiQRErrorCorrectLevel: UPIQRErrorCorrectLevel.high,
+                            //       )),
+                            // ),),
+                            // SizedBox(
+                            //   height: 10,
+                            // ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // SizedBox(height: 18),
+                    // Card(
+                    //   shape: RoundedRectangleBorder(
+                    //     borderRadius: BorderRadius.circular(16),
+                    //   ),
+                    //   elevation: 4,
+                    //   color: Colors.white,
+                    //   child: Padding(
+                    //     padding: const EdgeInsets.all(16.0),
+                    //     child: Column(
+                    //       crossAxisAlignment: CrossAxisAlignment.start,
+                    //       children: [
+                    //         Text(
+                    //           "Select Payment Method",
+                    //           style: TextStyle(
+                    //             fontSize: Adaptive.sp(16),
+                    //             fontWeight: FontWeight.w600,
+                    //             color: Colors.black87,
+                    //           ),
+                    //         ),
+                    //         SizedBox(height: 10),
+                    //         Row(
+                    //           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    //           children: options.map((option) {
+                    //             final isSelected = ref.watch(paymentTypeProvider) == option.label;
+                    //             return ChoiceChip(
+                    //               label: Text(option.label),
+                    //               selected: isSelected,
+                    //               selectedColor: ColorConstant.maingreen,
+                    //               backgroundColor: Colors.grey[200],
+                    //               labelStyle: TextStyle(
+                    //                 color: isSelected ? Colors.white : Colors.black,
+                    //                 fontWeight: FontWeight.bold,
+                    //               ),
+                    //               onSelected: (selected) {
+                    //                 ref.read(paymentTypeProvider.notifier).state = option.label;
+                    //               },
+                    //             );
+                    //           }).toList(),
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
+                    // SizedBox(height: 18),
+                    // Card(
+                    //   shape: RoundedRectangleBorder(
+                    //     borderRadius: BorderRadius.circular(16),
+                    //   ),
+                    //   elevation: 4,
+                    //   color: Colors.white,
+                    //   child: Padding(
+                    //     padding: const EdgeInsets.all(16.0),
+                    //     child: Column(
+                    //       crossAxisAlignment: CrossAxisAlignment.start,
+                    //       children: [
+                    //         Text(
+                    //           "Enter Amount & Receipt No.",
+                    //           style: TextStyle(
+                    //             fontSize: Adaptive.sp(16),
+                    //             fontWeight: FontWeight.w600,
+                    //             color: Colors.black87,
+                    //           ),
+                    //         ),
+                    //         SizedBox(height: 10),
+                    //         CommonTextField(
+                    //           controller: ammountcontroller,
+                    //           label: "Amount",
+                    //           inputType: TextInputType.number,
+                    //           fillColor: Colors.grey[100],
+                    //         ),
+                    //         SizedBox(height: 10),
+                    //         CommonTextField(
+                    //           controller: receptNocontroller,
+                    //           label: "Receipt No.",
+                    //           fillColor: Colors.grey[100],
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
+                    // SizedBox(height: 18),
+                    // Card(
+                    //   shape: RoundedRectangleBorder(
+                    //     borderRadius: BorderRadius.circular(16),
+                    //   ),
+                    //   elevation: 4,
+                    //   color: Colors.white,
+                    //   child: Padding(
+                    //     padding: const EdgeInsets.all(16.0),
+                    //     child: Column(
+                    //       crossAxisAlignment: CrossAxisAlignment.start,
+                    //       children: [
+                    //         Text(
+                    //           "Upload Receipt",
+                    //           style: TextStyle(
+                    //             fontSize: Adaptive.sp(16),
+                    //             fontWeight: FontWeight.w600,
+                    //             color: Colors.black87,
+                    //           ),
+                    //         ),
+                    //         SizedBox(height: 10),
+                    //         Center(
+                    //           child: InkWell(
+                    //             onTap: () async {
+                    //               final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+                    //               if (pickedFile != null) {
+                    //                 ref.read(imageFile.notifier).state = File(pickedFile.path);
+                    //               }
+                    //             },
+                    //             child: Container(
+                    //               height: 120,
+                    //               width: 120,
+                    //               decoration: BoxDecoration(
+                    //                 color: Colors.grey[100],
+                    //                 borderRadius: BorderRadius.circular(12),
+                    //                 border: Border.all(color: Colors.grey.shade300),
+                    //               ),
+                    //               child: ref.watch(imageFile) == null
+                    //                   ? Icon(Icons.camera_alt, size: 40, color: Colors.grey)
+                    //                   : ClipRRect(
+                    //                       borderRadius: BorderRadius.circular(12),
+                    //                       child: Image.file(ref.watch(imageFile)!, fit: BoxFit.cover),
+                    //                     ),
+                    //             ),
+                    //           ),
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
+                    // SizedBox(height: 24),
+                    // SizedBox(
+                    //   width: double.infinity,
+                    //   height: 52,
+                    //   child: ElevatedButton(
+                    //     onPressed: () {
+                    //       if (ref.watch(paymentTypeProvider) == "") {
+                    //         Get.rawSnackbar(
+                    //             message: AppLocalizations.of(context)!.messagePayment,
+                    //             duration: const Duration(seconds: 2),
+                    //             backgroundColor: ColorConstant.red500);
+                    //       } else if (receptNocontroller.text.isEmpty) {
+                    //         Get.rawSnackbar(
+                    //             message: AppLocalizations.of(context)!.messageRcptno,
+                    //             duration: const Duration(seconds: 2),
+                    //             backgroundColor: ColorConstant.red500);
+                    //       } else if (ref.watch(imageFile) == null) {
+                    //         Get.rawSnackbar(
+                    //             message: AppLocalizations.of(context)!.chooseBankslip,
+                    //             duration: const Duration(seconds: 2),
+                    //             backgroundColor: ColorConstant.red500);
+                    //       } else if (ammountcontroller.text.isEmpty) {
+                    //         Get.rawSnackbar(
+                    //             message: AppLocalizations.of(context)!.enterAmount,
+                    //             duration: const Duration(seconds: 2),
+                    //             backgroundColor: ColorConstant.red500);
+                    //       } else {
+                    //         ProgressDialogUtils.showProgressDialog();
+                    //         ref
+                    //             .watch(addMoneyProvider(
+                    //                     paymenttype: ref.watch(paymentTypeProvider),
+                    //                     receptno: receptNocontroller.text,
+                    //                     amount: ammountcontroller.text,
+                    //                     files: ref.watch(imageFile))
+                    //                 .future)
+                    //             .then((value) {
+                    //           ProgressDialogUtils.hideProgressDialog();
+                    //           if (value['status'] == "1") {
+                    //             Get.to(AddSummaryScreen());
+                    //           }
+                    //         }).onError((e, s) {});
+                    //       }
+                    //     },
+                    //     style: ElevatedButton.styleFrom(
+                    //       backgroundColor: ColorConstant.maingreen,
+                    //       shape: RoundedRectangleBorder(
+                    //         borderRadius: BorderRadius.circular(14),
+                    //       ),
+                    //       elevation: 3,
+                    //     ),
+                    //     child: Text(
+                    //       "Submit",
+                    //       style: AppStyle.lblmoneybtn.copyWith(fontSize: Adaptive.sp(17)),
+                    //     ),
+                    //   ),
+                    // ),
+                    // SizedBox(height: 18),
+                  ],
+                ),
+                error: (e, s) => Container(),
+                loading: () => Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Skeletonizer(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 10),
+                        Container(
+                          height: 120,
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        SizedBox(height: 18),
+                        Container(
+                          height: 60,
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        SizedBox(height: 18),
+                        Container(
+                          height: 100,
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        SizedBox(height: 18),
+                        Container(
+                          height: 100,
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        SizedBox(height: 24),
+                        Container(
+                          height: 52,
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        SizedBox(height: 18),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+        ),
+      ),
+    );
+  }
+}
+
+class Option {
+  final String label;
+  bool isSelected;
+
+  Option(this.label, this.isSelected);
+}

@@ -1,0 +1,230 @@
+import 'package:anywhere_loader/provider/anywhere_loader_context_provider.dart';
+import 'package:apnagodam/auth_provider/AuthProvider.dart';
+import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/theme/app_style.dart';
+import 'package:apnagodam/presentation/BusinessProfile/BusinessProfile.dart';
+import 'package:apnagodam/presentation/MandiTaxProfile/MandiTaxProfileScreen.dart';
+import 'package:apnagodam/presentation/home_screen/Invoices.dart';
+import 'package:apnagodam/presentation/home_screen/service/home_screen_service.dart';
+import 'package:apnagodam/presentation/home_screen/ui/HomePage.dart';
+import 'package:apnagodam/presentation/home_screen/ui/HomeWallet.dart';
+import 'package:apnagodam/presentation/home_screen/ui/StoragePage.dart';
+import 'package:apnagodam/presentation/home_screen/ui/Trade.dart';
+
+import 'package:apnagodam/widgets/CommonBottomNavigationBar.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+
+var selectedIndex = StateProvider((ref) => 2);
+
+class DashboardScreen extends ConsumerStatefulWidget {
+  DashboardScreen({super.key});
+
+  @override
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+var listOfScreens = [
+  Homepage(),
+
+  Storagepage(),
+  Trade(),
+
+  // MyStockScreen(comodityTag: "", commodityid: "", salesStutas: ""),
+
+  HomeWalletScreen(),
+  InvoicesScreen()
+  // Market(),
+  // MyBuy(),
+  // MySell(),
+];
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  @override
+  initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false, // Prevent default back behavior
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        // If not on home tab, navigate to home tab first
+        if (ref.watch(selectedIndex) != 0) {
+          ref.watch(selectedIndex.notifier).state = 0;
+          return;
+        }
+
+        // Show exit confirmation dialog
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Exit App'.tr),
+              content: Text('Are you sure you want to exit the app?'.tr),
+              actions: [
+                TextButton(
+                  onPressed: () =>
+                      Navigator.of(context).pop(), // Dismiss dialog
+                  child: Text(AppLocalizations.of(context)!.msgNo),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Dismiss dialog
+                    SystemNavigator.pop(); // Exit app
+                  },
+                  child: Text(AppLocalizations.of(context)!.msgYes),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      child: AnyWhereLoaderContextProvider(
+          child: Scaffold(
+              body: Stack(
+                children: [
+                  listOfScreens[ref.watch(selectedIndex)],
+                  ref.watch(authProvider).when(
+                      data: (data) => data == AuthStatus.loggedOut
+                          ? Container()
+                          : !ref
+                                  .watch(sharedUtilityProvider)
+                                  .isBusinessProfileActive()
+                              ? Positioned(
+                                  bottom: 5,
+                                  left: 8,
+                                  right: 8,
+                                  child: Container(
+                                    padding: Pad(left: 10, right: 10),
+                                    width: Get.width,
+                                    decoration: BoxDecoration(
+                                        color: ColorConstant.maingreen,
+                                        borderRadius: BorderRadius.circular(8)),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text.rich(
+                                          TextSpan(
+                                            text:
+                                                'Business Profile is Incomplete',
+                                            children: [
+                                              TextSpan(
+                                                  text:
+                                                      '\ncomplete your profile to start trading')
+                                            ],
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: Adaptive.sp(13),
+                                                color: Colors.white),
+                                          ),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: Adaptive.sp(15),
+                                              color: Colors.white),
+                                        ),
+                                        Spacer(),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            Get.to(Businessprofile());
+                                          },
+                                          style: AppStyle.buttonStyle.copyWith(
+                                              backgroundColor:
+                                                  MaterialStateProperty
+                                                      .resolveWith((states) =>
+                                                          Colors.white)),
+                                          child: Text(
+                                            'Complete Now',
+                                            style: TextStyle(
+                                                color: ColorConstant.maingreen,
+                                                fontSize: Adaptive.sp(14)),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ))
+                              : !ref
+                                      .watch(sharedUtilityProvider)
+                                      .isMandiTaxProfileActive()
+                                  ? Positioned(
+                                      bottom: 5,
+                                      left: 8,
+                                      right: 8,
+                                      child: Container(
+                                        padding: Pad(left: 10, right: 10),
+                                        width: Get.width,
+                                        decoration: BoxDecoration(
+                                            color: ColorConstant.maingreen,
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text.rich(
+                                              TextSpan(
+                                                text:
+                                                    'Mandi Profile is Incomplete',
+                                                children: [
+                                                  TextSpan(
+                                                      text:
+                                                          '\ncomplete your profile to start trading')
+                                                ],
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: Adaptive.sp(13),
+                                                    color: Colors.white),
+                                              ),
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: Adaptive.sp(15),
+                                                  color: Colors.white),
+                                            ),
+                                            Spacer(),
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                Get.to(Manditaxprofilescreen());
+                                              },
+                                              style: AppStyle.buttonStyle.copyWith(
+                                                  backgroundColor:
+                                                      MaterialStateProperty
+                                                          .resolveWith(
+                                                              (states) => Colors
+                                                                  .white)),
+                                              child: Text(
+                                                'Complete',
+                                                style: TextStyle(
+                                                    color:
+                                                        ColorConstant.maingreen,
+                                                    fontSize: Adaptive.sp(16)),
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ))
+                                  : Container(),
+                      error: (e, s) => Container(),
+                      loading: () => Container())
+                ],
+              ),
+              bottomNavigationBar: CommonBottomNavigationBar(
+                  currentIndex: ref.watch(selectedIndex),
+                  onTap: (index) {
+                    ref.watch(selectedIndex.notifier).state = index;
+
+                    // if (index == 3) {
+                    //   ColorConstant.maingreen = Colors.amber;
+                    // } else {
+                    //   ColorConstant.maingreen = Color(0xff275135);
+                    // }
+                  }))),
+    );
+  }
+}

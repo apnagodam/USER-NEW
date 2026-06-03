@@ -1,0 +1,305 @@
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/core/utils/theme/app_style.dart';
+import 'package:apnagodam/extensions/extensions.dart';
+import 'package:apnagodam/presentation/credit/credit_screen.dart';
+import 'package:apnagodam/presentation/home_screen/service/home_screen_service.dart';
+import 'package:apnagodam/presentation/sbt/HoldSummary/SbtSummary.dart';
+import 'package:apnagodam/presentation/withdraw_money_screen/wallet_impl/wallet_imple_repo.dart';
+import 'package:apnagodam/presentation/withdraw_money_screen/withdraw_money_list.dart';
+import 'package:apnagodam/widgets/CommonTextField.dart';
+import 'package:apnagodam/widgets/CustomTItleWidget.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+
+class Tradewalletbalance extends ConsumerStatefulWidget {
+  const Tradewalletbalance({super.key});
+
+  @override
+  ConsumerState<Tradewalletbalance> createState() => _TradewalletbalanceState();
+}
+
+class _TradewalletbalanceState extends ConsumerState<Tradewalletbalance> {
+  final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
+  TextEditingController amountController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      ref.invalidate(userDetailsProvider);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: ColorConstant.bgcolor,
+      body: ref.watch(userDetailsProvider).when(
+          data: (userData) => RefreshIndicator.adaptive(
+              child: ListView(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                            bottomRight: Radius.circular(18),
+                            bottomLeft: Radius.circular(18)),
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.07),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ]),
+                    child: Column(
+                      children: [
+                        // customWalletTitle(
+                        //           title: "CHLPL",
+                        //           align: Alignment.center,
+                        //         ),
+                        customWalletTitle(
+                          title: "CHIRAAG LOGISTICS PRIVATE LIMITED",
+                          align: Alignment.center,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 40.0, bottom: 32),
+                          child: ColumnSuper(
+                            innerDistance: -8,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context)!.msgWalletAmount,
+                                style: TextStyle(
+                                  fontSize: Adaptive.sp(20),
+                                  fontWeight: FontWeight.bold,
+                                  color: ColorConstant.maingreen,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              Text(
+                                "${currencyFormat.format(userData.userDetails?.tradePower.toString().convertToDouble(defaultValue: 0.00))}",
+                                style: TextStyle(
+                                  fontSize: Adaptive.sp(20),
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: Pad(all: 12),
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                  color: ColorConstant.maingreen, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 14, horizontal: 16),
+                              backgroundColor: Colors.white,
+                            ),
+                            onPressed: () {
+                              Get.to(SbtHoldSummary(walletType: '2'));
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.lock_outline_rounded,
+                                        color: ColorConstant.maingreen),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      "Hold Balance".tr,
+                                      style: TextStyle(
+                                        fontSize: Adaptive.sp(16),
+                                        fontWeight: FontWeight.w600,
+                                        color: ColorConstant.maingreen,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      currencyFormat.format(userData
+                                          .userDetails?.tradeHoldPower
+                                          .toString()
+                                          .convertToDouble(defaultValue: 0.00)),
+                                      style: TextStyle(
+                                        fontSize: Adaptive.sp(16),
+                                        fontWeight: FontWeight.w600,
+                                        color: ColorConstant.maingreen,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.chevron_right_rounded,
+                                        color: ColorConstant.maingreen),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        Padding(
+                          padding: Pad(all: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("Effective Balance".tr,
+                                  style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  )),
+                              Text(
+                                currencyFormat.format(num.parse(((num.parse(
+                                                "${userData.userDetails?.tradePower ?? "0.0"}")) -
+                                            (num.parse(
+                                                "${userData.userDetails?.tradeHoldPower ?? "0.0"}")))
+                                        .toString() ??
+                                    "0.0")),
+                                style: TextStyle(
+                                  fontSize: Adaptive.sp(16),
+                                  fontWeight: FontWeight.w600,
+                                  color: ColorConstant.maingreen,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Padding(
+                          padding: Pad(all: 12),
+                          child: Form(
+                            key: _formkey,
+                            child: CommonTextField(
+                              controller: amountController,
+                              label: AppLocalizations.of(context)!.enterAmuont,
+                              textInputAction: TextInputAction.next,
+                              inputType: TextInputType.number,
+                              enabled: true,
+                              isOnlyDigit: true,
+                              isRequired: true,
+                              fillColor: Colors.grey[100],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 18),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: SizedBox(
+                            height: 50,
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              child: Text(AppLocalizations.of(context)!.msgWithdrawa,
+                                  style: AppStyle.lblmoneybtn
+                                      .copyWith(fontSize: Adaptive.sp(16))),
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                                backgroundColor: ColorConstant.maingreen,
+                                elevation: 2,
+                                textStyle: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontStyle: FontStyle.normal),
+                              ),
+                              onPressed: () async {
+                                if (_formkey.currentState!.validate()) {
+                                  await ref
+                                      .read(withdrawMoneyProvider(
+                                              requestAmount:
+                                                  amountController.text,
+                                              walletType: '2')
+                                          .future)
+                                      .then((value) {
+                                    if (value['status'] == "1") {
+                                      Get.rawSnackbar(
+                                          message: value["message"],
+                                          duration: const Duration(seconds: 2),
+                                          backgroundColor:
+                                              ColorConstant.maingreen);
+                                      Get.to(WithdrawlListScreen(
+                                        type: "2",
+                                      ));
+                                    } else {
+                                      Fluttertoast.showToast(
+                                          msg: value['message'].toString());
+                                    }
+                                  }).onError((e, s) {
+                                    Fluttertoast.showToast(msg: e.toString());
+                                  });
+                                } else {}
+                              },
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              onRefresh: () {
+                return Future.value((_) {
+                  ref.invalidate(userDetailsProvider);
+                });
+              }),
+          error: (e, s) => Container(),
+          loading: () => Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Skeletonizer(
+                      child: Column(
+                        children: [
+                          Container(
+                            height: 32,
+                            width: 180,
+                            margin: const EdgeInsets.symmetric(vertical: 12),
+                            color: Colors.grey[300],
+                          ),
+                          Container(
+                            height: 32,
+                            width: 120,
+                            margin: const EdgeInsets.symmetric(vertical: 12),
+                            color: Colors.grey[300],
+                          ),
+                          SizedBox(height: 24),
+                          Container(
+                            height: 24,
+                            width: double.infinity,
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            color: Colors.grey[300],
+                          ),
+                          Container(
+                            height: 24,
+                            width: double.infinity,
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            color: Colors.grey[300],
+                          ),
+                          SizedBox(height: 24),
+                          Container(
+                            height: 48,
+                            width: double.infinity,
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            color: Colors.grey[300],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+    );
+  }
+}

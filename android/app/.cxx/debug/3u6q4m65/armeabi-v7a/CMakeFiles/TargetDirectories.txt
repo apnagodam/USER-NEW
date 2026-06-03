@@ -1,0 +1,2 @@
+D:/ApnagodamUser-optimisations/android/app/.cxx/debug/3u6q4m65/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/ApnagodamUser-optimisations/android/app/.cxx/debug/3u6q4m65/armeabi-v7a/CMakeFiles/rebuild_cache.dir

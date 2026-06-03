@@ -1,0 +1,102 @@
+import 'package:apnagodam/presentation/loan_screens/loan_&_finance.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+import '../../widgets/CommonTextField.dart';
+import 'color_constant.dart';
+
+showAlertDialog(BuildContext context, String title, String message,
+    TextEditingController fromcontroller, var tag, WidgetRef ref) async {
+  return showDialog(
+      // barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: Center(
+                child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title),
+                InkWell(
+                    onTap: () {
+                      Get.back();
+                    },
+                    child: Container(
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle, color: Colors.red),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Icon(
+                            Icons.close_rounded,
+                            color: Colors.white,
+                          ),
+                        )))
+              ],
+            )),
+            content: Wrap(
+              children: [
+                Text(message),
+                CommonTextField(
+                  controller: fromcontroller,
+                  hintText: AppLocalizations.of(context)!.enterTextAsPer,
+                  // textInputAction: TextInputAction.next,
+                  inputType: TextInputType.emailAddress,
+                  enabled: true,
+                  // isOnlyDigit: true,
+                  isRequired: true,
+                ),
+              ],
+            ),
+            actions: <Widget>[
+              InkWell(
+                onTap: () {
+                  ref.watch(loanSearchProvider.notifier).state =
+                      fromcontroller.text;
+
+                  Get.back(closeOverlays: true);
+                },
+                child: Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6.0),
+                      color: ColorConstant.maingreen),
+                  child: Center(
+                    child: Text(
+                      AppLocalizations.of(context)!.msgSubmit,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Roboto'),
+                    ),
+                  ),
+                ),
+              ),
+              /*TextButton(
+            onPressed: () {
+              // Close the AlertDialog when the "OK" button is pressed
+              Navigator.of(context).pop();
+            },
+            child: Text('OK'),
+          ),*/
+            ],
+          );
+        });
+      });
+}
+
+/*
+textfild(controller){
+  CommonTextField(
+    controller: controller,
+    hintText: AppLocalizations.of(context)!.enterTextAsPer,
+    // textInputAction: TextInputAction.next,
+    inputType: TextInputType.emailAddress,
+    enabled: true,
+    // isOnlyDigit: true,
+    isRequired: true,
+  );
+}*/

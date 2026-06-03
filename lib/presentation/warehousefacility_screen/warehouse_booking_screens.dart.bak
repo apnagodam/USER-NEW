@@ -1,0 +1,84 @@
+import 'package:apnagodam/presentation/warehousefacility_screen/stackinward_screen.dart';
+import 'package:apnagodam/presentation/warehousefacility_screen/stackoutward_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../core/utils/color_constant.dart';
+import '../../core/utils/theme/app_style.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+
+class BookNow extends StatefulWidget {
+  const BookNow({super.key});
+
+  @override
+  State<BookNow> createState() => _BookNowState();
+}
+
+class _BookNowState extends State<BookNow> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: ColorConstant.maingreen,
+        title: Text(
+          AppLocalizations.of(context)!.msgBook,
+          style: AppStyle.lblAppbar,
+        ),
+        centerTitle: true,
+      ),
+      body: DefaultTabController(
+          length: 3,
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.all(5),
+                child: Container(
+                  height: 45,
+                  decoration: BoxDecoration(
+                      color: Colors.grey,
+                      borderRadius: BorderRadius.circular(
+                        6.0,
+                      )),
+                  child: TabBar(
+                      labelColor: Colors.white,
+                      indicator: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        color: ColorConstant.maingreen,
+                      ),
+                      tabs: [
+                        Tab(
+                          child: Text(
+                            "msg_stackinward".tr,
+                            textAlign: TextAlign.center,
+                            style: AppStyle.lblAppbar,
+                          ),
+                        ),
+                        Tab(
+                          child: Text(
+                            "msg_stackinward".tr,
+                            style: AppStyle.lblAppbar,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Tab(
+                          child: Text(
+                            AppLocalizations.of(context)!.msgWarehousefacility,
+                            style: AppStyle.lblAppbar,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ]),
+                ),
+              ),
+              Expanded(
+                  child: TabBarView(children: [
+                // StackInward(),
+                StackInward(),
+                StackOutward(),
+              ]))
+            ],
+          )),
+    );
+  }
+}

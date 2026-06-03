@@ -1,0 +1,527 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/progress_dialog_utils.dart';
+import 'package:apnagodam/presentation/TripId/TripRequests/TripRequestScreen.dart';
+import 'package:apnagodam/presentation/TripId/service/TripIdService.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+
+import '../../../core/utils/theme/app_style.dart';
+import '../../../widgets/CommonTextField.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+final imagePicker = ImagePicker();
+var kantaImage = StateProvider<File?>((ref) => null);
+var invoiceImage = StateProvider<File?>((ref) => null);
+var ewayBill = StateProvider<File?>((ref) => null);
+var mandiTaxDocumentsImage = StateProvider<File?>((ref) => null);
+var qualityReportImage = StateProvider<File?>((ref) => null);
+Uint8List? manditax;
+Uint8List? qualityBytes;
+
+class Updatetripscreen extends ConsumerStatefulWidget {
+  const Updatetripscreen({super.key, required this.requestId});
+
+  final String requestId;
+
+  @override
+  ConsumerState<Updatetripscreen> createState() => _UpdatetripscreenState();
+}
+
+class _UpdatetripscreenState extends ConsumerState<Updatetripscreen> {
+  final weightController = TextEditingController();
+  final bagsController = TextEditingController();
+
+  final updateFrom = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Update Trip Id"),
+      ),
+      body: SafeArea(
+          child: Padding(
+        padding: Pad(all: 10),
+        child: Form(
+            key: updateFrom,
+            child: SingleChildScrollView(
+              child: ColumnSuper(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 15.0),
+                    child: CommonTextField(
+                      controller: weightController,
+                      label: "Total Weight(Qtl.)",
+                      // textInputAction: TextInputAction.next,
+                      inputType: TextInputType.numberWithOptions(decimal: true),
+                      enabled: true,
+                      // isOnlyDigit: true,
+                      isRequired: true,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 15.0),
+                    child: CommonTextField(
+                      controller: bagsController,
+                      label: "Total Bags",
+                      // textInputAction: TextInputAction.next,
+                      inputType: TextInputType.numberWithOptions(decimal: true),
+                      enabled: true,
+                      // isOnlyDigit: true,
+                      isRequired: true,
+                    ),
+                  ),
+                  DottedBorder(
+                      borderType: BorderType.RRect,
+                      dashPattern: const [5, 5, 5, 5],
+                      color: ColorConstant.maingreen,
+                      child: Padding(
+                        padding: const Pad(all: 20),
+                        child: Center(
+                          child: ref.watch(kantaImage) != null
+                              ? Stack(
+                                  children: [
+                                    Image.file(
+                                        ref.watch(kantaImage) ?? File('')),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.6),
+                                          shape: BoxShape.circle),
+                                      child: IconButton(
+                                          onPressed: () {
+                                            ref.invalidate(kantaImage);
+                                          },
+                                          icon: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                          )),
+                                    )
+                                  ],
+                                )
+                              : InkWell(
+                                  child: ColumnSuper(children: [
+                                    Icon(
+                                      Icons.cloud_upload,
+                                      color: ColorConstant.maingreen,
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                      "Select kanta parchi image*",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          color: ColorConstant.maingreen,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: Adaptive.sp(16)),
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                      "Upload Document Image,\n  Supports JPG, JPEG, PNG",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          color: ColorConstant.maingreen,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: Adaptive.sp(16)),
+                                    )
+                                  ]),
+                                  onTap: () async {
+                                    imagePicker
+                                        .pickImage(
+                                            source: ImageSource.camera,
+                                            imageQuality: 30)
+                                        .then((file) {
+                                      if (file != null) {
+                                        ref.watch(kantaImage.notifier).state =
+                                            File(file.path);
+                                      }
+                                    });
+                                  },
+                                ),
+                        ),
+                      )),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  DottedBorder(
+                      borderType: BorderType.RRect,
+                      dashPattern: const [5, 5, 5, 5],
+                      color: ColorConstant.maingreen,
+                      child: Padding(
+                        padding: const Pad(all: 20),
+                        child: Center(
+                          child: ref.watch(invoiceImage) != null
+                              ? Stack(
+                                  children: [
+                                    Image.file(
+                                        ref.watch(invoiceImage) ?? File('')),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.6),
+                                          shape: BoxShape.circle),
+                                      child: IconButton(
+                                          onPressed: () {
+                                            ref.invalidate(invoiceImage);
+                                          },
+                                          icon: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                          )),
+                                    )
+                                  ],
+                                )
+                              : InkWell(
+                                  child: ColumnSuper(children: [
+                                    Icon(
+                                      Icons.cloud_upload,
+                                      color: ColorConstant.maingreen,
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                      "Select Invoice Image*",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          color: ColorConstant.maingreen,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: Adaptive.sp(16)),
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                      "Upload Document Image,\n  Supports JPG, JPEG, PNG",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          color: ColorConstant.maingreen,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: Adaptive.sp(16)),
+                                    )
+                                  ]),
+                                  onTap: () async {
+                                    imagePicker
+                                        .pickImage(
+                                            source: ImageSource.camera,
+                                            imageQuality: 30)
+                                        .then((file) {
+                                      if (file != null) {
+                                        ref.watch(invoiceImage.notifier).state =
+                                            File(file.path);
+                                      }
+                                    });
+                                  },
+                                ),
+                        ),
+                      )),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  DottedBorder(
+                      borderType: BorderType.RRect,
+                      dashPattern: const [5, 5, 5, 5],
+                      color: ColorConstant.maingreen,
+                      child: Padding(
+                        padding: const Pad(all: 20),
+                        child: Center(
+                          child: ref.watch(ewayBill) != null
+                              ? Stack(
+                                  children: [
+                                    Image.file(ref.watch(ewayBill) ?? File('')),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.6),
+                                          shape: BoxShape.circle),
+                                      child: IconButton(
+                                          onPressed: () {
+                                            ref.invalidate(ewayBill);
+                                          },
+                                          icon: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                          )),
+                                    )
+                                  ],
+                                )
+                              : InkWell(
+                                  child: ColumnSuper(children: [
+                                    Icon(
+                                      Icons.cloud_upload,
+                                      color: ColorConstant.maingreen,
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                      "Select e-way bill*",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          color: ColorConstant.maingreen,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: Adaptive.sp(16)),
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                      "Upload Document Image,\n  Supports JPG, JPEG, PNG",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          color: ColorConstant.maingreen,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: Adaptive.sp(16)),
+                                    )
+                                  ]),
+                                  onTap: () async {
+                                    imagePicker
+                                        .pickImage(
+                                            source: ImageSource.camera,
+                                            imageQuality: 30)
+                                        .then((file) {
+                                      if (file != null) {
+                                        ref.watch(ewayBill.notifier).state =
+                                            File(file.path);
+                                      }
+                                    });
+                                  },
+                                ),
+                        ),
+                      )),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  DottedBorder(
+                      borderType: BorderType.RRect,
+                      dashPattern: const [5, 5, 5, 5],
+                      color: ColorConstant.maingreen,
+                      child: Padding(
+                        padding: const Pad(all: 20),
+                        child: Center(
+                          child: ref.watch(mandiTaxDocumentsImage) != null
+                              ? Stack(
+                                  children: [
+                                    Image.file(
+                                        ref.watch(mandiTaxDocumentsImage) ??
+                                            File('')),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.6),
+                                          shape: BoxShape.circle),
+                                      child: IconButton(
+                                          onPressed: () {
+                                            ref.invalidate(
+                                                mandiTaxDocumentsImage);
+                                          },
+                                          icon: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                          )),
+                                    )
+                                  ],
+                                )
+                              : InkWell(
+                                  child: ColumnSuper(children: [
+                                    Icon(
+                                      Icons.cloud_upload,
+                                      color: ColorConstant.maingreen,
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                      "Select Mandi Tax Documents",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          color: ColorConstant.maingreen,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: Adaptive.sp(16)),
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                      "Upload Document Image,\n  Supports JPG, JPEG, PNG",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          color: ColorConstant.maingreen,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: Adaptive.sp(16)),
+                                    )
+                                  ]),
+                                  onTap: () async {
+                                    imagePicker
+                                        .pickImage(
+                                            source: ImageSource.camera,
+                                            imageQuality: 30)
+                                        .then((file) {
+                                      if (file != null) {
+                                        ref
+                                            .watch(
+                                                mandiTaxDocumentsImage.notifier)
+                                            .state = File(file.path);
+                                      }
+                                    });
+                                  },
+                                ),
+                        ),
+                      )),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  DottedBorder(
+                      borderType: BorderType.RRect,
+                      dashPattern: const [5, 5, 5, 5],
+                      color: ColorConstant.maingreen,
+                      child: Padding(
+                        padding: const Pad(all: 20),
+                        child: Center(
+                          child: ref.watch(qualityReportImage) != null
+                              ? Stack(
+                                  children: [
+                                    Image.file(ref.watch(qualityReportImage) ??
+                                        File('')),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.6),
+                                          shape: BoxShape.circle),
+                                      child: IconButton(
+                                          onPressed: () {
+                                            ref.invalidate(qualityReportImage);
+                                          },
+                                          icon: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                          )),
+                                    )
+                                  ],
+                                )
+                              : InkWell(
+                                  child: ColumnSuper(children: [
+                                    Icon(
+                                      Icons.cloud_upload,
+                                      color: ColorConstant.maingreen,
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                      "Select Quality Report",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          color: ColorConstant.maingreen,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: Adaptive.sp(16)),
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                      "Upload Document Image,\n  Supports JPG, JPEG, PNG",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          color: ColorConstant.maingreen,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: Adaptive.sp(16)),
+                                    )
+                                  ]),
+                                  onTap: () async {
+                                    imagePicker
+                                        .pickImage(
+                                            source: ImageSource.camera,
+                                            imageQuality: 30)
+                                        .then((file) {
+                                      if (file != null) {
+                                        ref
+                                            .watch(qualityReportImage.notifier)
+                                            .state = File(file.path);
+                                      }
+                                    });
+                                  },
+                                ),
+                        ),
+                      )),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  SizedBox(
+                    width: Get.width,
+                    child: ElevatedButton(
+                        onPressed: () async {
+                          if (updateFrom.currentState!.validate()) {
+                            if (ref.watch(kantaImage) == null) {
+                              Get.rawSnackbar(
+                                  message: "please select kanta image",
+                                  duration: const Duration(seconds: 2),
+                                  backgroundColor: ColorConstant.red500);
+                            } else if (ref.watch(invoiceImage) == null) {
+                              Get.rawSnackbar(
+                                  message: "please select invoice image",
+                                  duration: const Duration(seconds: 2),
+                                  backgroundColor: ColorConstant.red500);
+                            } else if (ref.watch(ewayBill) == null) {
+                              Get.rawSnackbar(
+                                  message: "please select e way bill image",
+                                  duration: const Duration(seconds: 2),
+                                  backgroundColor: ColorConstant.red500);
+                            } else {
+                              ref
+                                  .watch(updateTripIdProvider(
+                                          requestId: widget.requestId,
+                                          weight:
+                                              weightController.text.toString(),
+                                          noOfBags:
+                                              bagsController.text.toString(),
+                                          kantaParchiImage:
+                                              ref.watch(kantaImage) ?? File(""),
+                                          eWayBillImage:
+                                              ref.watch(ewayBill) ?? File(""),
+                                          invoiceImage:
+                                              ref.watch(invoiceImage) ??
+                                                  File(""),
+                                          mandiTaxDocuments: ref.watch(
+                                                  mandiTaxDocumentsImage) ??
+                                              File(""),
+                                          qualityReportImage:
+                                              ref.watch(qualityReportImage) ??
+                                                  File(""))
+                                      .future)
+                                  .then((value) {
+                                if (value['status'].toString() == "1") {
+                                  ref.invalidate(tripRequestsProvider);
+                                  Get.rawSnackbar(
+                                      message: value['message'].toString(),
+                                      duration: const Duration(seconds: 2),
+                                      backgroundColor: ColorConstant.maingreen);
+                                  Get.off(Triprequestscreen());
+                                } else {
+                                  Get.rawSnackbar(
+                                      message: value['message'].toString(),
+                                      duration: const Duration(seconds: 2),
+                                      backgroundColor: ColorConstant.red500);
+                                }
+                              }).onError((e, s) {});
+                            }
+                          }
+                        },
+                        style: AppStyle.buttonStyle,
+                        child: Text(AppLocalizations.of(context)!.submit,
+                            style: AppStyle.lbldrawerbtn
+                                .copyWith(fontSize: Adaptive.sp(16)))),
+                  )
+                ],
+              ),
+            )),
+      )),
+    );
+  }
+}

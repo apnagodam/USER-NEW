@@ -1,0 +1,748 @@
+import 'dart:convert';
+
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/presentation/LP_list_screen/service/LpService.dart';
+import 'package:apnagodam/presentation/home_screen/service/home_screen_service.dart';
+import 'package:apnagodam/presentation/my_Stock/my_stock_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../core/utils/color_constant.dart';
+import '../../core/utils/string.dart';
+import '../../core/utils/theme/app_style.dart';
+import '../../widgets/CommonTextField.dart';
+import '../LP_list_screen/lp_list_screen.dart';
+import 'controller/home_controller.dart';
+
+class Sellcommodity extends ConsumerStatefulWidget {
+  final commodityid;
+  final commodityName;
+
+  Sellcommodity(
+      {Key? key, required this.commodityid, required this.commodityName})
+      : super(key: key);
+
+  @override
+  ConsumerState<Sellcommodity> createState() => _SellcommodityState();
+}
+
+class _SellcommodityState extends ConsumerState<Sellcommodity> {
+  // String qrData = fromData.entries.map((entry) => '${entry.key}:${entry.value}').join(',');
+  final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
+
+  var homeCont = Get.put(HomeController());
+  var bage = "0";
+  var salesStutas = "0";
+
+  @override
+  void initState() {
+    _getLocation();
+    homeCont.salectedSell = "";
+    homeCont.salectedSellUnder = "";
+    homeCont.salectedSellUndertwo = "";
+    homeCont.salectedSellUnderthree = "";
+    homeCont.pricecontroller.clear();
+    homeCont.quantitycontroller.clear();
+    homeCont.commoditycontroller.clear();
+    homeCont.ownquantitycontroller.clear();
+    homeCont.commoditycontroller.text = widget.commodityName;
+    // TODO: implement initState
+    super.initState();
+  }
+
+  Future<void> _getLocation() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    // Check and request location permission
+    var status = await Permission.location.request();
+
+    if (status == PermissionStatus.granted) {
+      try {
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+
+        setState(() {
+          latitude = position.latitude.toString();
+          longitude = position.longitude.toString();
+          prefs.setString("lat", latitude);
+          prefs.setString("long", longitude);
+        });
+      } catch (e) {}
+    } else {
+      // Handle the case where the user denied the location permission
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // String qrData = fromData.entries.map((entry) => '${entry.key}:${entry.value}').join(',');
+    return GetBuilder<HomeController>(
+        init: HomeController(),
+        builder: (cont) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              backgroundColor: ColorConstant.maingreen,
+              title: Center(child: Text(AppLocalizations.of(context)!.msgSell)),
+              actions: [
+                Padding(
+                  padding:  EdgeInsets.only(right: 15.0),
+                  child: Icon(
+                    Icons.notifications,
+                    color: ColorConstant.maingreen,
+                  ),
+                )
+              ],
+            ),
+            body: SingleChildScrollView(
+              child: ref.watch(userDetailsProvider).when(
+                  data: (userData) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Stack(
+                            children: [
+                              Padding(
+                                padding:  EdgeInsets.only(top: 8.0),
+                                child: Container(
+                                  height: 48,
+                                  width: 250,
+                                  decoration:  BoxDecoration(
+                                      color: ColorConstant.maingreen),
+                                  child: Padding(
+                                    padding:  EdgeInsets.only(left: 15.0),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          AppLocalizations.of(context)!.msgChooseoption,
+                                          style: AppStyle.lblbuydetail,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                right: -40,
+                                bottom: 0,
+                                top: 0,
+                                child: Transform.rotate(
+                                  angle: 0.9, // Adjust the angle as needed
+                                  child: Container(
+                                    width: 120,
+                                    height: 190,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              // Other widgets can be added here...
+                            ],
+                          ),
+                          Padding(
+                            padding:  EdgeInsets.all(10.0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () {
+                                      salesStutas = "1";
+
+                                      cont.salectedSell = "kisasni";
+                                      cont.salectedSellUnder = "";
+                                      cont.update();
+                                    },
+                                    child: Container(
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                          color: cont.salectedSell == "kisasni"
+                                              ? ColorConstant.maingreen
+                                              : Colors.white,
+                                          borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(10),
+                                              bottomLeft: Radius.circular(10)),
+                                          border: Border.all(
+                                              color: ColorConstant.maingreen)),
+                                      child: Center(
+                                          child: Text(
+                                        AppLocalizations.of(context)!.msgKisasni,
+                                        style: TextStyle(
+                                          fontFamily: 'Roboto',
+                                          fontWeight: FontWeight.bold,
+                                          color: cont.salectedSell == "kisasni"
+                                              ? Colors.white
+                                              : ColorConstant.maingreen,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      )),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () {
+                                      salesStutas = "2";
+                                      cont.salectedSell = "manditaxpaid";
+                                      cont.salectedSellUnder = "";
+                                      cont.update();
+                                    },
+                                    child: Container(
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                          color: cont.salectedSell ==
+                                                  "manditaxpaid"
+                                              ? ColorConstant.maingreen
+                                              : Colors.white,
+                                          borderRadius: BorderRadius.only(
+                                              topRight: Radius.circular(10),
+                                              bottomRight: Radius.circular(10)),
+                                          border: Border.all(
+                                              color: ColorConstant.maingreen)),
+                                      child: Center(
+                                          child: Text(
+                                        AppLocalizations.of(context)!.msgManditaxpaid,
+                                        style: TextStyle(
+                                          fontFamily: 'Roboto',
+                                          fontWeight: FontWeight.bold,
+                                          color: cont.salectedSell ==
+                                                  "manditaxpaid"
+                                              ? Colors.white
+                                              : ColorConstant.maingreen,
+                                        ),
+                                      )),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          cont.salectedSell != ""
+                              ? Padding(
+                                  padding:  EdgeInsets.all(10.0),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: InkWell(
+                                          onTap: () {
+                                            cont.salectedSellUnder =
+                                                "lyingatfarm";
+                                            cont.update();
+                                          },
+                                          child: Container(
+                                            height: 48,
+                                            decoration: BoxDecoration(
+                                                color: cont.salectedSellUnder ==
+                                                        "lyingatfarm"
+                                                    ? ColorConstant.maingreen
+                                                    : Colors.white,
+                                                borderRadius: BorderRadius.only(
+                                                    topLeft:
+                                                        Radius.circular(10),
+                                                    bottomLeft:
+                                                        Radius.circular(10)),
+                                                border: Border.all(
+                                                    color: ColorConstant
+                                                        .maingreen)),
+                                            child: Center(
+                                                child: Text(
+                                              AppLocalizations.of(context)!.msgLyingatfarm,
+                                              style: TextStyle(
+                                                fontFamily: 'Roboto',
+                                                fontWeight: FontWeight.bold,
+                                                color: cont.salectedSellUnder ==
+                                                        "lyingatfarm"
+                                                    ? Colors.white
+                                                    : ColorConstant.maingreen,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            )),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: InkWell(
+                                          onTap: () {
+                                            Get.to(MyStockScreen(
+                                                comodityTag: widget
+                                                    .commodityName
+                                                    .toString(),
+                                                commodityid: widget.commodityid,
+                                                salesStutas: salesStutas));
+                                            cont.salectedSellUnder =
+                                                "lyingatwarehouse";
+                                            cont.update();
+                                          },
+                                          child: Container(
+                                            height: 48,
+                                            decoration: BoxDecoration(
+                                                color: cont.salectedSellUnder ==
+                                                        "lyingatwarehouse"
+                                                    ? ColorConstant.maingreen
+                                                    : Colors.white,
+                                                border: Border.all(
+                                                    color: ColorConstant
+                                                        .maingreen)),
+                                            child: Center(
+                                                child: Padding(
+                                              padding:  EdgeInsets.only(
+                                                  left: 8.0, right: 8.0),
+                                              child: Text(
+                                                AppLocalizations.of(context)!.msgLyingatwarehouse,
+                                                style: TextStyle(
+                                                  fontFamily: 'Roboto',
+                                                  fontWeight: FontWeight.bold,
+                                                  color:
+                                                      cont.salectedSellUnder ==
+                                                              "lyingatwarehouse"
+                                                          ? Colors.white
+                                                          : ColorConstant
+                                                              .maingreen,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            )),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: InkWell(
+                                          onTap: () {
+                                            cont.salectedSellUnder = "faceto";
+                                            cont.salectedSellUndertwo = "";
+                                            cont.update();
+                                          },
+                                          child: Container(
+                                            height: 48,
+                                            decoration: BoxDecoration(
+                                                color: cont.salectedSellUnder ==
+                                                        "faceto"
+                                                    ? ColorConstant.maingreen
+                                                    : Colors.white,
+                                                borderRadius: BorderRadius.only(
+                                                    topRight:
+                                                        Radius.circular(10),
+                                                    bottomRight:
+                                                        Radius.circular(10)),
+                                                border: Border.all(
+                                                  color:
+                                                      ColorConstant.maingreen,
+                                                )),
+                                            child: Center(
+                                                child: Text(
+                                              AppLocalizations.of(context)!.msgFaceto,
+                                              style: TextStyle(
+                                                fontFamily: 'Roboto',
+                                                fontWeight: FontWeight.bold,
+                                                color: cont.salectedSellUnder ==
+                                                        "faceto"
+                                                    ? Colors.white
+                                                    : ColorConstant.maingreen,
+                                              ),
+                                            )),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : SizedBox(),
+                          cont.salectedSellUnder == "faceto"
+                              ? Padding(
+                                  padding:  EdgeInsets.all(8.0),
+                                  child: Container(
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: ColorConstant.maingreen)),
+                                      child: Padding(
+                                        padding:  EdgeInsets.all(8.0),
+                                        child: Form(
+                                          key: _formkey,
+                                          child: Column(
+                                            children: [
+                                              SizedBox(
+                                                height: 25,
+                                              ),
+                                              CommonTextField(
+                                                controller:
+                                                    cont.pricecontroller,
+                                                label: AppLocalizations.of(context)!.msgPriceorder,
+                                                textInputAction:
+                                                    TextInputAction.next,
+                                                inputType: TextInputType.number,
+                                                enabled: true,
+                                                isOnlyDigit: true,
+                                                isRequired: true,
+                                              ),
+                                              SizedBox(
+                                                height: 15,
+                                              ),
+                                              CommonTextField(
+                                                controller:
+                                                    cont.quantitycontroller,
+                                                label: AppLocalizations.of(context)!.msgQuantity,
+                                                textInputAction:
+                                                    TextInputAction.next,
+                                                inputType: TextInputType.number,
+                                                enabled: true,
+                                                isOnlyDigit: true,
+                                                isRequired: true,
+                                              ),
+                                              SizedBox(
+                                                height: 25,
+                                              ),
+                                              InkWell(
+                                                onTap: () async {
+                                                  SharedPreferences prefs =
+                                                      await SharedPreferences
+                                                          .getInstance();
+                                                  if (_formkey.currentState!
+                                                      .validate()) {
+                                                    Map<String, String>
+                                                        formData = {
+                                                      'seller_id':
+                                                          "${userData.userDetails?.id}",
+                                                      'seller_lat': prefs
+                                                          .getString("lat")
+                                                          .toString(),
+                                                      'seller_long': prefs
+                                                          .getString("long")
+                                                          .toString(),
+                                                      'commodity': widget
+                                                          .commodityid
+                                                          .toString(),
+                                                      'bags': bage.toString(),
+                                                      'sales_status':
+                                                          salesStutas
+                                                              .toString(),
+                                                      'weight': homeCont
+                                                          .quantitycontroller
+                                                          .text,
+                                                      'price': homeCont
+                                                          .pricecontroller.text,
+                                                    };
+                                                    String encodedJson =
+                                                        jsonEncode(formData);
+
+                                                    showModalBottomSheet(
+                                                        context: context,
+                                                        builder: (context) {
+                                                          return Container(
+                                                            height: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .height *
+                                                                0.3,
+                                                            child: Center(
+                                                              child:
+                                                                  QrImageView(
+                                                                data:
+                                                                    encodedJson,
+                                                                version:
+                                                                    QrVersions
+                                                                        .auto,
+                                                                size: 200.0,
+                                                                gapless: false,
+                                                              ),
+                                                            ),
+                                                          );
+                                                        });
+                                                  } else {}
+                                                },
+                                                child: Container(
+                                                  child: Center(
+                                                      child: Text(
+                                                    AppLocalizations.of(context)!.msgSubmit,
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontFamily: 'Roboto',
+                                                    ),
+                                                  )),
+                                                  height: 46,
+                                                  width: double.infinity,
+                                                  decoration: BoxDecoration(
+                                                      color: ColorConstant
+                                                          .maingreen,
+                                                      borderRadius:
+                                                          BorderRadius.all(
+                                                              Radius.circular(
+                                                                  6))),
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                height: 15,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      )),
+                                )
+                              : cont.salectedSellUnder == "lyingatfarm"
+                                  ? Padding(
+                                      padding:  EdgeInsets.all(10.0),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () {
+                                                cont.salectedSellUndertwo =
+                                                    "ownvehicle";
+                                                cont.ownquantitycontroller
+                                                    .text = "";
+                                                cont.update();
+                                              },
+                                              child: Container(
+                                                height: 48,
+                                                decoration: BoxDecoration(
+                                                    color:
+                                                        cont.salectedSellUndertwo ==
+                                                                "ownvehicle"
+                                                            ? ColorConstant
+                                                                .maingreen
+                                                            : Colors.white,
+                                                    borderRadius: BorderRadius
+                                                        .only(
+                                                            topLeft:
+                                                                Radius.circular(
+                                                                    10),
+                                                            bottomLeft:
+                                                                Radius.circular(
+                                                                    10)),
+                                                    border: Border.all(
+                                                        color: ColorConstant
+                                                            .maingreen)),
+                                                child: Center(
+                                                    child: Text(
+                                                  AppLocalizations.of(context)!.ownVehicle,
+                                                  style: TextStyle(
+                                                    fontFamily: 'Roboto',
+                                                    fontWeight: FontWeight.bold,
+                                                    color:
+                                                        cont.salectedSellUndertwo ==
+                                                                "ownvehicle"
+                                                            ? Colors.white
+                                                            : ColorConstant
+                                                                .maingreen,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                )),
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () {
+                                                cont.salectedSellUndertwo =
+                                                    "apana_godam_vehicle";
+                                                cont.ownquantitycontroller
+                                                    .text = "";
+
+                                                cont.update();
+                                              },
+                                              child: Container(
+                                                height: 48,
+                                                decoration: BoxDecoration(
+                                                    color: cont.salectedSellUndertwo ==
+                                                            "apana_godam_vehicle"
+                                                        ? ColorConstant
+                                                            .maingreen
+                                                        : Colors.white,
+                                                    border: Border.all(
+                                                        color: ColorConstant
+                                                            .maingreen)),
+                                                child: Center(
+                                                    child: Padding(
+                                                  padding:
+                                                       EdgeInsets.only(
+                                                          left: 8.0,
+                                                          right: 8.0),
+                                                  child: Text(
+                                                    AppLocalizations.of(context)!.godamVehicle,
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontFamily: 'Roboto',
+                                                      color: cont.salectedSellUndertwo ==
+                                                              "apana_godam_vehicle"
+                                                          ? Colors.white
+                                                          : ColorConstant
+                                                              .maingreen,
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                )),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : SizedBox(),
+                          cont.salectedSellUndertwo == "ownvehicle" ||
+                                  cont.salectedSellUndertwo ==
+                                      "apana_godam_vehicle"
+                              ? Form(
+                                  key: _formkey,
+                                  child: Padding(
+                                    padding:  EdgeInsets.all(8.0),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: ColorConstant.maingreen),
+                                      ),
+                                      child: Padding(
+                                        padding:  EdgeInsets.all(8.0),
+                                        child: Column(
+                                          children: [
+                                            Center(
+                                                child: Padding(
+                                              padding:  EdgeInsets.only(
+                                                  top: 10.0, bottom: 10),
+                                              child:
+                                                  Text(AppLocalizations.of(context)!.msgYourcommodity),
+                                            )),
+                                            CommonTextField(
+                                              controller:
+                                                  cont.commoditycontroller,
+                                              label: AppLocalizations.of(context)!.msgCommodity,
+                                              textInputAction:
+                                                  TextInputAction.next,
+                                              inputType: TextInputType.number,
+                                              readOnly: true,
+                                              enabled: true,
+                                              isOnlyDigit: true,
+                                              isRequired: true,
+                                            ),
+                                            SizedBox(
+                                              height: 15,
+                                            ),
+                                            CommonTextField(
+                                              controller:
+                                                  cont.ownquantitycontroller,
+                                              label: AppLocalizations.of(context)!.msgQuantity,
+                                              textInputAction:
+                                                  TextInputAction.next,
+                                              inputType: TextInputType.number,
+                                              enabled: true,
+                                              isOnlyDigit: true,
+                                              isRequired: true,
+                                            ),
+                                            SizedBox(
+                                              height: 15,
+                                            ),
+                                            InkWell(
+                                              onTap: () {
+                                                Geolocator.checkPermission()
+                                                    .then((status) {
+                                                  switch (status) {
+                                                    case LocationPermission
+                                                          .denied:
+                                                      Geolocator
+                                                          .requestPermission();
+                                                      break;
+                                                    case LocationPermission
+                                                          .deniedForever:
+                                                          if(GetPlatform.isAndroid){
+Geolocator
+                                                          .openLocationSettings();
+                                                          }
+                                                      
+                                                      break;
+                                                    case LocationPermission
+                                                          .whileInUse:
+                                                      break;
+                                                    case LocationPermission
+                                                          .always:
+                                                      break;
+                                                    case LocationPermission
+                                                          .unableToDetermine:
+                                                      break;
+                                                  }
+                                                });
+                                                Geolocator.getCurrentPosition()
+                                                    .then((position) {
+                                                  if (_formkey.currentState!
+                                                      .validate()) {
+                                                    if (cont.salectedSellUndertwo ==
+                                                        "apana_godam_vehicle") {
+                                                      Get.to(() => Lplistscreen(
+                                                            lat: position
+                                                                .latitude
+                                                                .toString(),
+                                                            long: position
+                                                                .longitude
+                                                                .toString(),
+                                                            commoditId: widget
+                                                                .commodityid
+                                                                .toString(),
+                                                            quantity: cont
+                                                                .ownquantitycontroller
+                                                                .text
+                                                                .toString(),
+                                                            dealType: "SPOT",
+                                                            salesStatus:
+                                                                salesStutas,
+                                                          ));
+                                                    } else {
+                                                      Get.to(() => Lplistscreen(
+                                                            lat: position
+                                                                .latitude
+                                                                .toString(),
+                                                            long: position
+                                                                .longitude
+                                                                .toString(),
+                                                            commoditId: widget
+                                                                .commodityid
+                                                                .toString(),
+                                                            quantity: cont
+                                                                .ownquantitycontroller
+                                                                .text
+                                                                .toString(),
+                                                            dealType: "MGP",
+                                                            salesStatus:
+                                                                salesStutas,
+                                                          ));
+                                                    }
+                                                  } else {}
+                                                });
+                                              },
+                                              child: Container(
+                                                child: Center(
+                                                    child: Text(
+                                                  AppLocalizations.of(context)!.msgSubmit,
+                                                  style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontFamily: 'Roboto'),
+                                                )),
+                                                height: 46,
+                                                width: double.infinity,
+                                                decoration: BoxDecoration(
+                                                    color:
+                                                        ColorConstant.maingreen,
+                                                    borderRadius:
+                                                        BorderRadius.all(
+                                                            Radius.circular(
+                                                                6))),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : SizedBox(),
+                        ],
+                      ),
+                  error: (e, s) => Container(),
+                  loading: () => defaultLoader()),
+            ),
+          );
+        });
+  }
+}

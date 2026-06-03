@@ -1,0 +1,71 @@
+// To parse this JSON data, do
+//
+//     final statesResponseModel = statesResponseModelFromMap(jsonString);
+
+import 'dart:convert';
+
+StatesResponseModel statesResponseModelFromMap(String str) =>
+    StatesResponseModel.fromMap(json.decode(str));
+
+String statesResponseModelToMap(StatesResponseModel data) =>
+    json.encode(data.toMap());
+
+class StatesResponseModel {
+  List<StatesDatum>? data;
+  dynamic status;
+  dynamic message;
+
+  StatesResponseModel({
+    this.data,
+    this.status,
+    this.message,
+  });
+
+  factory StatesResponseModel.fromMap(Map<String, dynamic> json) =>
+      StatesResponseModel(
+        data: json["data"] == null
+            ? []
+            : List<StatesDatum>.from(
+                json["data"]!.map((x) => StatesDatum.fromMap(x))),
+        status: json["status"],
+        message: json["message"],
+      );
+
+  Map<String, dynamic> toMap() => {
+        "data":
+            data == null ? [] : List<dynamic>.from(data!.map((x) => x.toMap())),
+        "status": status,
+        "message": message,
+      };
+}
+
+class StatesDatum {
+  dynamic id;
+  dynamic name;
+  dynamic code;
+  dynamic countryId;
+
+  StatesDatum({
+    this.id,
+    this.name,
+    this.code,
+    this.countryId,
+  });
+
+  factory StatesDatum.fromMap(Map<String, dynamic> json) => StatesDatum(
+        id: json["id"],
+        name: json["name"],
+        code: json["code"],
+        countryId: json["country_id"],
+      );
+  bool stateFilterByName(String filter) {
+    return name.toString().toLowerCase().trim().contains(filter);
+  }
+
+  Map<String, dynamic> toMap() => {
+        "id": id,
+        "name": name,
+        "code": code,
+        "country_id": countryId,
+      };
+}

@@ -1,0 +1,1051 @@
+import 'dart:io';
+
+import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/core/utils/progress_dialog_utils.dart';
+import 'package:apnagodam/core/utils/theme/app_style.dart';
+import 'package:apnagodam/extensions/extensions.dart';
+import 'package:apnagodam/presentation/BusinessProfile/Service/BusinessProfileService.dart';
+import 'package:apnagodam/presentation/GstProfile/Service/GstService.dart';
+import 'package:apnagodam/presentation/MandiTaxProfile/MandiTaxListingScreen.dart';
+import 'package:apnagodam/presentation/MandiTaxProfile/Model/CandFModel.dart';
+import 'package:apnagodam/presentation/MandiTaxProfile/Model/DistrictsResponseModel.dart';
+import 'package:apnagodam/presentation/MandiTaxProfile/Service/MandiTaxProfileService.dart';
+import 'package:apnagodam/presentation/dashboard/dashboard_screen.dart';
+import 'package:apnagodam/widgets/enums.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:dotted_border/dotted_border.dart';
+import 'package:dropdown_search/dropdown_search.dart';
+import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+
+import '../../core/utils/color_constant.dart';
+import '../../widgets/CommonTextField.dart';
+import 'Model/StatesResponseModel.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+
+class Manditaxprofilescreen extends ConsumerStatefulWidget {
+  Manditaxprofilescreen({super.key, this.isAppbarVisible = true});
+  bool isAppbarVisible;
+
+  @override
+  ConsumerState<Manditaxprofilescreen> createState() =>
+      _ManditaxprofilescreenState();
+}
+
+class _ManditaxprofilescreenState extends ConsumerState<Manditaxprofilescreen> {
+  var statesProvider = StateProvider<StatesDatum?>((ref) => null);
+  var districtProvider = StateProvider<List<DistrictDatum?>>((ref) => []);
+  var candFProvider = StateProvider<CandFDatum?>((ref) => null);
+  var licenseProvider = StateProvider<LicenseType?>((ref) => null);
+  var licenseAvailableProvider = StateProvider<YesNO?>((ref) => null);
+  var issueDateProvider = StateProvider<DateTime?>((ref) => null);
+  var expiryDateProvider = StateProvider<DateTime?>((ref) => null);
+  var licenseImageProvider = StateProvider<File?>((ref) => null);
+
+  TextEditingController licenseController = TextEditingController();
+  TextEditingController referenceController = TextEditingController();
+  TextEditingController expiryDateController = TextEditingController();
+  TextEditingController issueDateController = TextEditingController();
+
+  final formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+        key: formKey,
+        child: Scaffold(
+          appBar: widget.isAppbarVisible
+              ? AppBar(
+                  title: Text("Mandi Tax Profile".tr),
+                  actions: [
+                    InkWell(
+                      child: Text(
+                        "My Manditax Profiles".tr,
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onTap: () {
+                        Get.to(Manditaxlistingscreen());
+                      },
+                    )
+                  ],
+                )
+              : null,
+          body: SingleChildScrollView(
+            padding: Pad(all: 10),
+            child: mandiTaxProfileLayout(),
+          ),
+        ));
+  }
+
+  Widget mandiTaxProfileLayout() => ColumnSuper(
+        children: [
+          SizedBox(
+            height: 10,
+          ),
+          ref.watch(statesListNewProvider).when(
+              data: (data) {
+                return DropdownSearch<StatesDatum?>(
+                  compareFn: (item1, item2) => item1?.code == item2?.code,
+                  popupProps: PopupProps.menu(
+                      searchFieldProps: TextFieldProps(
+                          autofocus: true,
+                          cursorColor: ColorConstant.maingreen,
+                          padding: Pad(left: 10, right: 10),
+                          decoration: InputDecoration(
+                            contentPadding: Pad(left: 10, right: 10),
+                            focusedErrorBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: ColorConstant.maingreen)),
+                            disabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: ColorConstant.maingreen)),
+                            errorBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: ColorConstant.maingreen)),
+                            focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: ColorConstant.maingreen)),
+                            border: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: ColorConstant.maingreen)),
+                            enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: ColorConstant.maingreen)),
+                          )),
+                      menuProps: MenuProps(
+                          shape: RoundedRectangleBorder(
+                              side: BorderSide(color: ColorConstant.maingreen),
+                              borderRadius: BorderRadius.circular(8))),
+                      itemBuilder: (context, terminal, isVisible, _) =>
+                          ColumnSuper(
+                              alignment: Alignment.centerLeft,
+                              children: [
+                                Padding(
+                                  padding: Pad(all: 10),
+                                  child: Text(
+                                    "${terminal?.name}",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: Adaptive.sp(16)),
+                                  ),
+                                ),
+                                Container(
+                                  height: 1,
+                                  color: Colors.grey.withOpacity(0.3),
+                                ),
+                              ]),
+                      title: Padding(
+                        padding: Pad(all: 10),
+                        child: Text(
+                          'Select State'.tr,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: Adaptive.sp(16),
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      showSearchBox: true,
+                      searchDelay: Duration(microseconds: 500)),
+                  filterFn: (user, filter) =>
+                      user?.stateFilterByName(filter) ?? false,
+                  items: (i, s) => data.data ?? [],
+                  itemAsString: (StatesDatum? u) => u?.name ?? "",
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Please select state'.tr;
+                    }
+                    return null;
+                  },
+                  onChanged: (StatesDatum? data) =>
+                      ref.watch(statesProvider.notifier).state = data,
+                  decoratorProps: DropDownDecoratorProps(
+                    decoration: InputDecoration(
+                        contentPadding: Pad(left: 10, bottom: 5, top: 5),
+                        hintText: "Select State".tr,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                            borderSide:
+                                BorderSide(color: ColorConstant.maingreen))),
+                  ),
+                );
+              },
+              error: (e, s) => Container(),
+              loading: () => defaultLoader()),
+          SizedBox(
+            height: 10,
+          ),
+          DropdownSearch<YesNO?>(
+            compareFn: (item1, item2) => item1?.type == item2?.type,
+            popupProps: PopupProps.menu(
+                searchFieldProps: TextFieldProps(
+                    autofocus: true,
+                    cursorColor: ColorConstant.maingreen,
+                    padding: Pad(left: 10, right: 10),
+                    decoration: InputDecoration(
+                      contentPadding: Pad(left: 10, right: 10),
+                      focusedErrorBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              style: BorderStyle.solid,
+                              color: ColorConstant.maingreen)),
+                      disabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              style: BorderStyle.solid,
+                              color: ColorConstant.maingreen)),
+                      errorBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              style: BorderStyle.solid,
+                              color: ColorConstant.maingreen)),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              style: BorderStyle.solid,
+                              color: ColorConstant.maingreen)),
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              style: BorderStyle.solid,
+                              color: ColorConstant.maingreen)),
+                      enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              style: BorderStyle.solid,
+                              color: ColorConstant.maingreen)),
+                    )),
+                menuProps: MenuProps(
+                    shape: RoundedRectangleBorder(
+                        side: BorderSide(color: ColorConstant.maingreen),
+                        borderRadius: BorderRadius.circular(8))),
+                itemBuilder: (context, terminal, isVisible, _) =>
+                    ColumnSuper(alignment: Alignment.centerLeft, children: [
+                      Padding(
+                        padding: Pad(all: 10),
+                        child: Text(
+                          "${terminal?.label}",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: Adaptive.sp(16)),
+                        ),
+                      ),
+                      Container(
+                        height: 1,
+                        color: Colors.grey.withOpacity(0.3),
+                      ),
+                    ]),
+                title: Padding(
+                  padding: Pad(all: 10),
+                  child: Text(
+                    AppLocalizations.of(context)!.SelectLicenseType,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: Adaptive.sp(16), fontWeight: FontWeight.w700),
+                  ),
+                ),
+                showSearchBox: false,
+                searchDelay: Duration(microseconds: 500)),
+
+            // asyncItems: (String filter) => getData(filter),
+
+            items: (s, k) => YesNO.values ?? [],
+            itemAsString: (YesNO? u) => u?.label ?? "",
+            validator: (value) {
+              if (value == null) {
+                return AppLocalizations.of(context)!.DoYouHaveValidLicense;
+              }
+              return null;
+            },
+            onChanged: (YesNO? data) =>
+                ref.watch(licenseAvailableProvider.notifier).state = data,
+            decoratorProps: DropDownDecoratorProps(
+              decoration: InputDecoration(
+                  contentPadding: Pad(left: 10, bottom: 5, top: 5),
+                  hintText: AppLocalizations.of(context)!.DoYouHaveValidLicense,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                      borderSide: BorderSide(color: ColorConstant.maingreen))),
+            ),
+          ),
+          SizedBox(
+            height: 10,
+          ),
+          if (ref.watch(licenseAvailableProvider) == YesNO.yes) licenseLayout(),
+          if (ref.watch(licenseAvailableProvider) == YesNO.no) candFLayout(),
+          SizedBox(
+            width: MediaQuery.of(context).size.width,
+            child: ElevatedButton(
+              onPressed: () {
+                var listOfIds = [];
+
+                for (var i in ref.watch(districtProvider)) {
+                  listOfIds.add(i?.id.toString());
+                }
+                if (formKey.currentState!.validate()) {
+                  context.showLoader();
+
+                  ref
+                      .watch(submitMandiTaxProfileProvider(
+                          mandiState: ref.watch(statesProvider)?.id.toString(),
+                          district: listOfIds.join(','),
+                          isLicense:
+                              "${ref.watch(licenseAvailableProvider)?.type}",
+                          licenseType: "${ref.watch(licenseProvider)?.type}",
+                          licenseNumber: licenseController.text,
+                          issueDate: issueDateController.text,
+                          expiryDate: expiryDateController.text,
+                          refNumber: referenceController.text,
+                          id: "${ref.watch(candFProvider)?.id}",
+                          image: ref.watch(
+                            licenseImageProvider,
+                          )).future)
+                      .then((value) async {
+                    context.hideloader();
+                    if (value['status'].toString() == "1") {
+                      var businessProfiles =
+                          await ref.watch(businessProfilesProvider.future);
+                      var manditaxProfiles =
+                          await ref.watch(mandiTaxProfilesProvider.future);
+                      var gstProfile = await ref.watch(gstListProvider.future);
+
+                      ref.watch(sharedUtilityProvider).setBusinessProfileStatus(
+                          businessProfiles.data != null);
+                      ref.watch(sharedUtilityProvider).setMandiTaxProfileStatus(
+                          (manditaxProfiles.data ?? []).isNotEmpty);
+                      ref.watch(sharedUtilityProvider).setGstProfileStatus(
+                          (gstProfile.data ?? []).isNotEmpty);
+                      Get.to(DashboardScreen());
+
+                      Fluttertoast.showToast(
+                          msg: value['message'].toString(),
+                          toastLength: Toast.LENGTH_LONG,
+                          backgroundColor: ColorConstant.maingreen);
+                    } else {
+                      Fluttertoast.showToast(
+                          msg: value['message'].toString(),
+                          toastLength: Toast.LENGTH_LONG,
+                          backgroundColor: ColorConstant.red500);
+                    }
+                  }).onError((e, s) {
+                    context.hideloader();
+                  });
+                }
+              },
+              child: Text(
+                AppLocalizations.of(context)!.Submit,
+                style: TextStyle(color: Colors.white),
+              ),
+              style: AppStyle.buttonStyle,
+            ),
+          ),
+          if (ref.watch(licenseAvailableProvider) == YesNO.not) null
+        ],
+      );
+  Widget candFLayout() => Column(
+        children: [
+          ref
+              .watch(cAndFDetailsProvider(
+                  stateId: "${ref.watch(statesProvider)?.id}"))
+              .when(
+                  data: (data) {
+                    return DropdownSearch<CandFDatum?>(
+                      compareFn: (item1, item2) => item1?.id == item2?.id,
+                      popupProps: PopupProps.menu(
+                          searchFieldProps: TextFieldProps(
+                              autofocus: true,
+                              cursorColor: ColorConstant.maingreen,
+                              padding: Pad(left: 10, right: 10),
+                              decoration: InputDecoration(
+                                contentPadding: Pad(left: 10, right: 10),
+                                focusedErrorBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        style: BorderStyle.solid,
+                                        color: ColorConstant.maingreen)),
+                                disabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        style: BorderStyle.solid,
+                                        color: ColorConstant.maingreen)),
+                                errorBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        style: BorderStyle.solid,
+                                        color: ColorConstant.maingreen)),
+                                focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        style: BorderStyle.solid,
+                                        color: ColorConstant.maingreen)),
+                                border: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        style: BorderStyle.solid,
+                                        color: ColorConstant.maingreen)),
+                                enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        style: BorderStyle.solid,
+                                        color: ColorConstant.maingreen)),
+                              )),
+                          menuProps: MenuProps(
+                              shape: RoundedRectangleBorder(
+                                  side: BorderSide(
+                                      color: ColorConstant.maingreen),
+                                  borderRadius: BorderRadius.circular(8))),
+                          itemBuilder: (context, terminal, isVisible, _) =>
+                              ColumnSuper(
+                                  alignment: Alignment.centerLeft,
+                                  children: [
+                                    Padding(
+                                      padding: Pad(all: 10),
+                                      child: Text(
+                                        "${terminal?.userName}",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: Adaptive.sp(16)),
+                                      ),
+                                    ),
+                                    Container(
+                                      height: 1,
+                                      color: Colors.grey.withOpacity(0.3),
+                                    ),
+                                  ]),
+                          title: Padding(
+                            padding: Pad(all: 10),
+                            child: Text(
+                              AppLocalizations.of(context)!.SelectClearingAndForwardingAgent,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: Adaptive.sp(16),
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          showSearchBox: true,
+                          searchDelay: Duration(microseconds: 500)),
+                      filterFn: (user, filter) =>
+                          user?.stateFilterByName(filter) ?? false,
+                      // asyncItems: (String filter) => getData(filter),
+
+                      items: (i, s) => data.data ?? [],
+                      itemAsString: (CandFDatum? u) => u?.userName ?? "",
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Please Select Clearing and Forwarding Agent'
+                              .tr;
+                        }
+                        return null;
+                      },
+                      onChanged: (data) =>
+                          ref.watch(candFProvider.notifier).state = data,
+                      decoratorProps: DropDownDecoratorProps(
+                        decoration: InputDecoration(
+                            contentPadding: Pad(left: 10, bottom: 5, top: 5),
+                            hintText: AppLocalizations.of(context)!.SelectClearingAndForwardingAgent,
+                            border: OutlineInputBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(8)),
+                                borderSide: BorderSide(
+                                    color: ColorConstant.maingreen))),
+                      ),
+                    );
+                  },
+                  error: (e, s) => Container(),
+                  loading: () => defaultLoader())
+        ],
+      );
+  Widget licenseLayout() => ColumnSuper(children: [
+        DropdownSearch<LicenseType?>(
+          compareFn: (item1, item2) => item1?.type == item2?.type,
+          popupProps: PopupProps.menu(
+              searchFieldProps: TextFieldProps(
+                  autofocus: true,
+                  cursorColor: ColorConstant.maingreen,
+                  padding: Pad(left: 10, right: 10),
+                  decoration: InputDecoration(
+                    contentPadding: Pad(left: 10, right: 10),
+                    focusedErrorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            style: BorderStyle.solid,
+                            color: ColorConstant.maingreen)),
+                    disabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            style: BorderStyle.solid,
+                            color: ColorConstant.maingreen)),
+                    errorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            style: BorderStyle.solid,
+                            color: ColorConstant.maingreen)),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            style: BorderStyle.solid,
+                            color: ColorConstant.maingreen)),
+                    border: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            style: BorderStyle.solid,
+                            color: ColorConstant.maingreen)),
+                    enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            style: BorderStyle.solid,
+                            color: ColorConstant.maingreen)),
+                  )),
+              menuProps: MenuProps(
+                  shape: RoundedRectangleBorder(
+                      side: BorderSide(color: ColorConstant.maingreen),
+                      borderRadius: BorderRadius.circular(8))),
+              itemBuilder: (context, terminal, isVisible, _) =>
+                  ColumnSuper(alignment: Alignment.centerLeft, children: [
+                    Padding(
+                      padding: Pad(all: 10),
+                      child: Text(
+                        "${terminal?.label}",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: Adaptive.sp(16)),
+                      ),
+                    ),
+                    Container(
+                      height: 1,
+                      color: Colors.grey.withOpacity(0.3),
+                    ),
+                  ]),
+              title: Padding(
+                padding: Pad(all: 10),
+                child: Text(
+                  'Select License Type',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: Adaptive.sp(16), fontWeight: FontWeight.w700),
+                ),
+              ),
+              showSearchBox: false,
+              searchDelay: Duration(microseconds: 500)),
+
+          // asyncItems: (String filter) => getData(filter),
+
+          items: (i, s) => LicenseType.values ?? [],
+          itemAsString: (LicenseType? u) => u?.label ?? "",
+          validator: (value) {
+            if (value == null) {
+              return AppLocalizations.of(context)!.PleaseSelectLicenseType;
+            }
+            return null;
+          },
+          onChanged: (LicenseType? data) =>
+              ref.watch(licenseProvider.notifier).state = data,
+          decoratorProps: DropDownDecoratorProps(
+            decoration: InputDecoration(
+                contentPadding: Pad(left: 10, bottom: 5, top: 5),
+                hintText: AppLocalizations.of(context)!.SelectLicenseType,
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                    borderSide: BorderSide(color: ColorConstant.maingreen))),
+          ),
+        ),
+        if (ref.watch(licenseProvider) != LicenseType.excempt)
+          Column(
+            children: [
+              SizedBox(
+                height: 10,
+              ),
+              districtType(),
+              SizedBox(
+                height: 10,
+              ),
+              ElevarmTextInputField(
+                label: AppLocalizations.of(context)!.msgLicenseNo,
+                hintText: AppLocalizations.of(context)!.msgLicenseNo,
+                suffixIconAssetName: Icons.credit_card,
+                onTapSuffix: null,
+                controller: licenseController,
+                errorText: null,
+                enabled: true,
+                validator: (value) {
+                  if (value == null ||
+                      value.isEmpty &&
+                          ref.watch(licenseProvider) != LicenseType.excempt) {
+                    return "Please input valid license no";
+                  }
+                  return null;
+                },
+                isRequired: ref.watch(licenseProvider) != LicenseType.excempt,
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              ElevarmTextInputField(
+                label: "Reference No.".tr,
+                hintText: "Reference No.".tr,
+                suffixIconAssetName: Icons.numbers,
+                onTapSuffix: null,
+                controller: referenceController,
+                errorText: null,
+                enabled: true,
+                isRequired: ref.watch(licenseProvider) != LicenseType.excempt,
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              ElevarmTextInputField(
+                label: AppLocalizations.of(context)!.IssueDate,
+                hintText: 'DD/MM/YYYY',
+                helperText: 'for e.g DD/MM/YYYY',
+                suffixIconAssetName: Icons.calendar_month,
+                onTapSuffix: null,
+                keyboardType: TextInputType.number,
+                controller: issueDateController,
+                errorText: null,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(10),
+                  FilteringTextInputFormatter.allow(RegExp(r'^[0-9\/]*$')),
+                  TextInputFormatter.withFunction((oldValue, newValue) {
+                    String text = newValue.text;
+                    if (newValue.text.length == 2 &&
+                        oldValue.text.length != 3) {
+                      text += '/';
+                    }
+                    if (newValue.text.length == 5 &&
+                        oldValue.text.length != 6) {
+                      text += '/';
+                    }
+                    return TextEditingValue(text: text);
+                  })
+                ],
+                validator: (value) {
+                  if (value == null ||
+                      value.isEmpty &&
+                          ref.watch(licenseProvider) != LicenseType.excempt) {
+                    return "Please input valid issue date".tr;
+                  }
+                  return null;
+                },
+                enabled: true,
+                isRequired: ref.watch(licenseProvider) != LicenseType.excempt,
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              ElevarmTextInputField(
+                label: AppLocalizations.of(context)!.ExpiryDate,
+                hintText: 'DD/MM/YYYY',
+                helperText: 'for e.g DD/MM/YYYY',
+                suffixIconAssetName: Icons.calendar_month,
+                onTapSuffix: null,
+                controller: expiryDateController,
+                errorText: null,
+                keyboardType: TextInputType.number,
+                enabled: true,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(10),
+                  FilteringTextInputFormatter.allow(RegExp(r'^[0-9\/]*$')),
+                  TextInputFormatter.withFunction((oldValue, newValue) {
+                    String text = newValue.text;
+                    if (newValue.text.length == 2 &&
+                        oldValue.text.length != 3) {
+                      text += '/';
+                    }
+                    if (newValue.text.length == 5 &&
+                        oldValue.text.length != 6) {
+                      text += '/';
+                    }
+                    return TextEditingValue(text: text);
+                  })
+                ],
+                validator: (value) {
+                  if (value == null ||
+                      value.isEmpty &&
+                          ref.watch(licenseProvider) != LicenseType.excempt) {
+                    return "Please input valid expiry date".tr;
+                  }
+                  return null;
+                },
+                isRequired: ref.watch(licenseProvider) != LicenseType.excempt,
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: InkWell(
+                  onTap: () async {
+                    ImagePicker()
+                        .pickImage(source: ImageSource.gallery)
+                        .then((value) {
+                      if (value != null) {
+                        ref.watch(licenseImageProvider.notifier).state =
+                            File(value.path);
+                      }
+                    });
+                  },
+                  child: DottedBorder(
+                      borderType: BorderType.RRect,
+                      dashPattern: [5, 5, 5, 5],
+                      color: ColorConstant.maingreen,
+                      child: Padding(
+                        padding: Pad(all: 20),
+                        child: Center(
+                          child: ref.watch(licenseImageProvider) != null
+                              ? Stack(
+                                  children: [
+                                    Image.file(
+                                        ref.watch(licenseImageProvider) ??
+                                            File('path')),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.6),
+                                          shape: BoxShape.circle),
+                                      child: IconButton(
+                                          onPressed: () {
+                                            ref.invalidate(
+                                                licenseImageProvider);
+                                          },
+                                          icon: Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                          )),
+                                    )
+                                  ],
+                                )
+                              : ColumnSuper(children: [
+                                  Icon(
+                                    Icons.cloud_upload,
+                                    color: ColorConstant.maingreen,
+                                  ),
+                                  SizedBox(
+                                    height: 5,
+                                  ),
+                                  Text(
+                                    "Select License Image".tr,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        color: ColorConstant.maingreen,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: Adaptive.sp(16)),
+                                  ),
+                                  SizedBox(
+                                    height: 5,
+                                  ),
+                                  Text(
+                                    "Upload Document Image,\n  Supports JPG, JPEG, PNG".tr,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        color: ColorConstant.maingreen,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: Adaptive.sp(16)),
+                                  )
+                                ]),
+                        ),
+                      )),
+                ),
+              ),
+            ],
+          )
+      ]);
+
+  Widget districtType() => ref.watch(licenseProvider) == LicenseType.single
+      ? ref
+          .watch(districtListNewProvider(
+              code: "${ref.watch(statesProvider)?.code}"))
+          .when(
+              data: (data) {
+                return ref.watch(licenseProvider) == LicenseType.single
+                    ? DropdownSearch<DistrictDatum?>(
+                        compareFn: (item1, item2) =>
+                            item1?.districtCode == item2?.districtCode,
+                        popupProps: PopupProps.menu(
+                            searchFieldProps: TextFieldProps(
+                                autofocus: true,
+                                cursorColor: ColorConstant.maingreen,
+                                padding: Pad(left: 10, right: 10),
+                                decoration: InputDecoration(
+                                  contentPadding: Pad(left: 10, right: 10),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  disabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  errorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  border: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                )),
+                            menuProps: MenuProps(
+                                shape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                        color: ColorConstant.maingreen),
+                                    borderRadius: BorderRadius.circular(8))),
+                            itemBuilder: (context, terminal, isVisible, _) =>
+                                ColumnSuper(
+                                    alignment: Alignment.centerLeft,
+                                    children: [
+                                      Padding(
+                                        padding: Pad(all: 10),
+                                        child: Text(
+                                          "${terminal?.name}",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: Adaptive.sp(16)),
+                                        ),
+                                      ),
+                                      Container(
+                                        height: 1,
+                                        color: Colors.grey.withOpacity(0.3),
+                                      ),
+                                    ]),
+                            title: Padding(
+                              padding: Pad(all: 10),
+                              child: Text(
+                                'Select District'.tr,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            showSearchBox: true,
+                            searchDelay: Duration(microseconds: 500)),
+                        filterFn: (user, filter) =>
+                            user?.districtFilterByName(filter) ?? false,
+                        // asyncItems: (String filter) => getData(filter),
+
+                        items: (i, s) => data.data ?? [],
+                        itemAsString: (DistrictDatum? u) => u?.name ?? "",
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Please select District'.tr;
+                          }
+                          return null;
+                        },
+                        onChanged: (data) {
+                          ref.watch(districtProvider).clear();
+                          ref.watch(districtProvider).add(data);
+                        },
+                        decoratorProps: DropDownDecoratorProps(
+                          decoration: InputDecoration(
+                              contentPadding: Pad(left: 10, bottom: 5, top: 5),
+                              hintText: "Select District".tr,
+                              border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(8)),
+                                  borderSide: BorderSide(
+                                      color: ColorConstant.maingreen))),
+                        ),
+                      )
+                    : DropdownSearch<DistrictDatum?>.multiSelection(
+                        popupProps: PopupPropsMultiSelection.menu(
+                            searchFieldProps: TextFieldProps(
+                                autofocus: true,
+                                cursorColor: ColorConstant.maingreen,
+                                padding: Pad(left: 10, right: 10),
+                                decoration: InputDecoration(
+                                  contentPadding: Pad(left: 10, right: 10),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  disabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  errorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  border: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                  enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          style: BorderStyle.solid,
+                                          color: ColorConstant.maingreen)),
+                                )),
+                            menuProps: MenuProps(
+                                shape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                        color: ColorConstant.maingreen),
+                                    borderRadius: BorderRadius.circular(8))),
+                            itemBuilder: (context, terminal, isVisible, _) =>
+                                ColumnSuper(
+                                    alignment: Alignment.centerLeft,
+                                    children: [
+                                      Padding(
+                                        padding: Pad(all: 10),
+                                        child: Text(
+                                          "${terminal?.name}",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: Adaptive.sp(16)),
+                                        ),
+                                      ),
+                                      Container(
+                                        height: 1,
+                                        color: Colors.grey.withOpacity(0.3),
+                                      ),
+                                    ]),
+                            title: Padding(
+                              padding: Pad(all: 10),
+                              child: Text(
+                                'Select District'.tr,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: Adaptive.sp(16),
+                                    fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            showSearchBox: true,
+                            searchDelay: Duration(microseconds: 500)),
+                        filterFn: (user, filter) =>
+                            user?.districtFilterByName(filter) ?? false,
+                        // asyncItems: (String filter) => getData(filter),
+
+                        items: (i, d) => data.data ?? [],
+                        itemAsString: (DistrictDatum? u) => u?.name ?? "",
+                        validator: (value) {
+                          if (value == null &&
+                              ref.watch(licenseProvider) !=
+                                  LicenseType.excempt) {
+                            return 'Please select District'.tr;
+                          }
+                          return null;
+                        },
+                        onChanged: (data) =>
+                            ref.watch(districtProvider.notifier).state = data,
+                        decoratorProps: DropDownDecoratorProps(
+                          decoration: InputDecoration(
+                              contentPadding: Pad(left: 10, bottom: 5, top: 5),
+                              hintText: "Select District".tr,
+                              border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(8)),
+                                  borderSide: BorderSide(
+                                      color: ColorConstant.maingreen))),
+                        ),
+                      );
+              },
+              error: (e, s) => Container(),
+              loading: () => defaultLoader())
+      : ref
+          .watch(
+              districtListProvider(code: "${ref.watch(statesProvider)?.code}"))
+          .when(
+              data: (data) {
+                return DropdownSearch<DistrictDatum?>.multiSelection(
+                  compareFn: (item1, item2) =>
+                      item1?.districtCode == item2?.districtCode,
+                  popupProps: PopupPropsMultiSelection.menu(
+                      searchFieldProps: TextFieldProps(
+                          autofocus: true,
+                          cursorColor: ColorConstant.maingreen,
+                          padding: Pad(left: 10, right: 10),
+                          decoration: InputDecoration(
+                            contentPadding: Pad(left: 10, right: 10),
+                            focusedErrorBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: ColorConstant.maingreen)),
+                            disabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: ColorConstant.maingreen)),
+                            errorBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: ColorConstant.maingreen)),
+                            focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: ColorConstant.maingreen)),
+                            border: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: ColorConstant.maingreen)),
+                            enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: ColorConstant.maingreen)),
+                          )),
+                      menuProps: MenuProps(
+                          shape: RoundedRectangleBorder(
+                              side: BorderSide(color: ColorConstant.maingreen),
+                              borderRadius: BorderRadius.circular(8))),
+                      itemBuilder: (context, terminal, isVisible, _) =>
+                          ColumnSuper(
+                              alignment: Alignment.centerLeft,
+                              children: [
+                                Padding(
+                                  padding: Pad(all: 10),
+                                  child: Text(
+                                    "${terminal?.name}",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: Adaptive.sp(16)),
+                                  ),
+                                ),
+                                Container(
+                                  height: 1,
+                                  color: Colors.grey.withOpacity(0.3),
+                                ),
+                              ]),
+                      title: Padding(
+                        padding: Pad(all: 10),
+                        child: Text(
+                          'Select District'.tr,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: Adaptive.sp(16),
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      showSearchBox: true,
+                      searchDelay: Duration(microseconds: 500)),
+                  filterFn: (user, filter) =>
+                      user?.districtFilterByName(filter) ?? false,
+                  // asyncItems: (String filter) => getData(filter),
+
+                  items: (d, s) => data.data ?? [],
+                  itemAsString: (DistrictDatum? u) => u?.name ?? "",
+                  validator: (value) {
+                    if (value == null &&
+                        ref.watch(licenseProvider) != LicenseType.excempt) {
+                      return 'Please select District'.tr;
+                    }
+                    return null;
+                  },
+                  onChanged: (data) =>
+                      ref.watch(districtProvider.notifier).state = data,
+                  decoratorProps: DropDownDecoratorProps(
+                    decoration: InputDecoration(
+                        contentPadding: Pad(left: 10, bottom: 5, top: 5),
+                        hintText: "Select District".tr,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                            borderSide:
+                                BorderSide(color: ColorConstant.maingreen))),
+                  ),
+                );
+              },
+              error: (e, s) => Container(),
+              loading: () => defaultLoader());
+}

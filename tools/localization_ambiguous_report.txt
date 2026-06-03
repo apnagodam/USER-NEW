@@ -1,0 +1,27 @@
+Ambiguous mappings (need manual review):
+
+('lib/presentation/market_screen/SBT/Sbtscreen.dart', 'InterestRate', ['interestRate', 'interestRate_1'])
+('lib/presentation/market_screen/SBT/Sbtscreen.dart', 'LTV', ['ltv', 'ltv_1'])
+('lib/presentation/market_screen/SBT/Sbtscreen.dart', 'PF', ['pf', 'pf_1'])
+('lib/presentation/my_Stock/my_stock_screen.dart', 'Bnpl', ['bnpl', 'bnpl'])
+('lib/presentation/home_screen/ui/BidsScreen.dart', 'InterestRate', ['interestRate', 'interestRate_1'])
+('lib/presentation/home_screen/ui/BidsScreen.dart', 'LTV', ['ltv', 'ltv_1'])
+('lib/presentation/home_screen/ui/BidsScreen.dart', 'PF', ['pf', 'pf_1'])
+
+Missing ARB keys (no candidate found):
+
+('lib/presentation/PurchaseOrder/PurchaseOrdersListScreen.dart', 'PODetails')
+('lib/presentation/TripId/TripIdScreen.dart', 'SelectDestinationTerminalOrLocation')
+('lib/presentation/TripId/TripIdScreen.dart', 'SelectPickUpLocationTerminalOrLocation')
+('lib/presentation/dashboard/WarehouseBookings.dart', 'CCTVPending')
+('lib/presentation/dashboard/WarehouseBookings.dart', 'CCTVReport')
+('lib/presentation/my_Stock/StacksSettlement/StacksSettlementScreen.dart', 'AGCommission')
+('lib/presentation/my_Stock/StacksSettlement/StacksSettlementScreen.dart', 'TotalPendingAmountNRentLoanInterest')
+('lib/presentation/MandiTaxProfile/MandiTaxProfileScreen.dart', 'SelectClearingAndForwardingAgent')
+('lib/widgets/firebase_debug_test.dart', 'FCMTokenNotAvailableYetPleaseWait')
+
+Suggested next steps:
+- I can add placeholder ARB entries for the missing keys to `lib/l10n/app_en.arb` (and optionally `app_hi.arb` and `app_kn.arb`) using a humanized label (e.g., 'Select Destination Terminal or Location') so the code compiles and getters resolve.
+- For ambiguous mappings, I will leave them flagged for manual choice (I can propose a default mapping if you prefer, but safer to confirm first).
+
+Tell me whether you'd like me to add placeholders to the ARB files (english-only or all locales), and whether I should pick defaults for ambiguous items.

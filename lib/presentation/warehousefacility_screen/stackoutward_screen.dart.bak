@@ -1,0 +1,1129 @@
+import 'package:apnagodam/core/utils/comman_dailog.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/presentation/repayment_screen/model/PurchaseOrderTypeModel.dart';
+import 'package:apnagodam/presentation/repayment_screen/repayment_screen.dart';
+import 'package:apnagodam/presentation/repayment_screen/service/repayment_service.dart';
+import 'package:apnagodam/presentation/warehousefacility_screen/OutwardsList.dart';
+import 'package:apnagodam/presentation/warehousefacility_screen/service/warehouse_facility_service.dart';
+import 'package:apnagodam/presentation/warehousefacility_screen/stackinward_screen.dart';
+import 'package:apnagodam/widgets/widgets.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:dropdown_search/dropdown_search.dart';
+import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+
+import '../../core/utils/color_constant.dart';
+import '../../widgets/CommonTextField.dart';
+import '../../widgets/dailogs/error.dart';
+import '../dashboard/dashboard_screen.dart';
+import '../repayment_screen/model/repayment_model.dart';
+import 'model/TripIdModel.dart' as tripData;
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class StackOutward extends ConsumerStatefulWidget {
+  StackOutward({super.key, this.isAppBarVisible});
+  bool? isAppBarVisible = false;
+  @override
+  ConsumerState<StackOutward> createState() => _StackOutwardState();
+}
+
+class _StackOutwardState extends ConsumerState<StackOutward> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  var terminalsProvider = StateProvider<Datum?>((ref) => null);
+
+  var commodityProvider = StateProvider<Datum?>((ref) => null);
+
+  var commodityList = StateProvider<List<Datum>>((ref) => []);
+  var stackWiseList = StateProvider((ref) => []);
+  var stackList = StateProvider<List<Datum>>((ref) => []);
+  var totalPayableAmountProvider = StateProvider((ref) => 0.00);
+  var warehouseIdProvider = StateProvider((ref) => '0');
+  var commodityIdProvider = StateProvider((ref) => '0');
+  var weaightcontroller = TextEditingController();
+  var vehiclenocontroller = TextEditingController();
+  var searchcontroller = TextEditingController();
+  var driverNoController = TextEditingController();
+  var transportTypeProvider =
+      StateProvider((ref) => TransporterType.defaultType);
+
+  var autoInvoiceProvider = StateProvider<AutoInvoiceType?>((ref) => null);
+  var tripIdProvider = StateProvider<tripData.Datum?>((ref) => null);
+  final tabs = [
+    {"label": AppLocalizations.of(context)!.outwardRequest3, "index": 0, "icon": Icons.warehouse},
+    {"label": AppLocalizations.of(context)!.history2, "index": 1, "icon": Icons.qr_code_2},
+  ];
+  var selectedTabIndex = StateProvider((ref) => 0);
+  final purchaseOrderProvider =
+      StateProvider<PurchaseOrderDatum?>((ref) => null);
+
+  // Method to reset all form data
+  void resetFormData() {
+    // Reset all text controllers
+    weaightcontroller.clear();
+    vehiclenocontroller.clear();
+    searchcontroller.clear();
+    driverNoController.clear();
+
+    // Reset all state providers
+    ref.read(terminalsProvider.notifier).state = null;
+    ref.read(commodityProvider.notifier).state = null;
+    ref.read(commodityList.notifier).state = [];
+    ref.read(stackWiseList.notifier).state = [];
+    ref.read(stackList.notifier).state = [];
+    ref.read(totalPayableAmountProvider.notifier).state = 0.00;
+    ref.read(warehouseIdProvider.notifier).state = '0';
+    ref.read(commodityIdProvider.notifier).state = '0';
+    ref.read(transportTypeProvider.notifier).state =
+        TransporterType.defaultType;
+    ref.read(autoInvoiceProvider.notifier).state = null;
+    ref.read(tripIdProvider.notifier).state = null;
+    ref.read(selectedTabIndex.notifier).state = 0;
+    ref.read(purchaseOrderProvider.notifier).state = null;
+
+    // Invalidate related providers to refresh data
+    ref.invalidate(commodityList);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: widget.isAppBarVisible == true
+          ? AppBar(
+              title: Text(AppLocalizations.of(context)!.outwards3),
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: <Color>[
+                      Color(0xFF12281B), // Deep green-black
+                      Color(0xFF275135), // Your main green
+                      Color(0xFF3E7251),
+                    ])),
+              ),
+              centerTitle: true,
+            )
+          : null,
+      floatingActionButton: simpleButton(
+          text: AppLocalizations.of(context)!.history2,
+          callback: () {
+            Get.to(Outwardslist());
+          }),
+      body: ListView(
+        children: [
+          ref.watch(repaymentTerminalsProvider()).when(
+              data: (data) => Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(8)),
+                              border: Border.all()),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<Datum>(
+                              isExpanded: true,
+                              value: ref.watch(terminalsProvider),
+                              icon: Icon(Icons.keyboard_arrow_down),
+                              hint: Center(
+                                  child: Text(AppLocalizations.of(context)!
+                                      .msgTerminalname)),
+                              items: List.generate(
+                                  data.data?.length ?? 0,
+                                  (index) => DropdownMenuItem(
+                                        alignment: AlignmentDirectional.center,
+                                        value: data.data?[index],
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 10),
+                                          child: Row(
+                                            children: [
+                                              Radio(
+                                                value: data.data?[index],
+                                                groupValue: ref
+                                                    .watch(terminalsProvider),
+                                                onChanged: (value) {
+                                                  ref
+                                                      .watch(terminalsProvider
+                                                          .notifier)
+                                                      .state = value!;
+                                                },
+                                                activeColor:
+                                                    ColorConstant.maingreen,
+                                              ),
+                                              Expanded(
+                                                  child: Text(
+                                                '${data.data?[index].warehouseName}',
+                                                overflow: TextOverflow.ellipsis,
+                                              ))
+                                            ],
+                                          ),
+                                        ),
+                                      )),
+                              onChanged: (val) {
+                                ref.watch(terminalsProvider.notifier).state =
+                                    val;
+                                ref.invalidate(commodityList);
+                              },
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        ref.watch(terminalsProvider) == null
+                            ? SizedBox()
+                            : ref
+                                .watch(repaymentTerminalsProvider(
+                                    terminalId: ref
+                                        .watch(terminalsProvider)
+                                        ?.warehouseId
+                                        .toString(),
+                                    commodityId:
+                                        "${ref.watch(terminalsProvider)?.commodity}",
+                                    type: "commodity"))
+                                .when(
+                                    data: (commodities) => Container(
+                                          decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(8)),
+                                              border: Border.all()),
+                                          height: 50,
+                                          child: DropdownButtonHideUnderline(
+                                            child: DropdownButton<Datum>(
+                                              isExpanded: true,
+                                              value:
+                                                  ref.watch(commodityProvider),
+                                              icon: Icon(
+                                                  Icons.keyboard_arrow_down),
+                                              hint: Center(
+                                                  child: Text(
+                                                      AppLocalizations.of(
+                                                              context)!
+                                                          .msgCommodityy)),
+                                              items: List.generate(
+                                                  commodities.data?.length ?? 0,
+                                                  (index) => DropdownMenuItem(
+                                                        alignment:
+                                                            AlignmentDirectional
+                                                                .center,
+                                                        value: commodities
+                                                            .data?[index],
+                                                        child: Padding(
+                                                          padding: EdgeInsets
+                                                              .symmetric(
+                                                                  horizontal:
+                                                                      10),
+                                                          child: Row(
+                                                            children: [
+                                                              Radio(
+                                                                value: commodities
+                                                                        .data?[
+                                                                    index],
+                                                                groupValue:
+                                                                    ref.watch(
+                                                                        commodityProvider),
+                                                                onChanged:
+                                                                    (value) {
+                                                                  ref
+                                                                      .watch(commodityProvider
+                                                                          .notifier)
+                                                                      .state = value!;
+                                                                },
+                                                                activeColor:
+                                                                    ColorConstant
+                                                                        .maingreen,
+                                                              ),
+                                                              Expanded(
+                                                                  child: Text(
+                                                                '${commodities.data?[index].category}',
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ))
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      )),
+                                              onChanged: (val) {
+                                                ref
+                                                    .watch(commodityProvider
+                                                        .notifier)
+                                                    .state = val;
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                    error: (e, s) => Container(),
+                                    loading: () => Container()),
+                        ref.watch(commodityProvider) == null
+                            ? SizedBox()
+                            : Padding(
+                                padding:
+                                    EdgeInsets.only(bottom: 15.0, top: 15.0),
+                                child: CommonTextField(
+                                  controller: weaightcontroller,
+                                  label: AppLocalizations.of(context)!
+                                      .msgWeightwithqtl,
+                                  textInputAction: TextInputAction.next,
+                                  inputType: TextInputType.numberWithOptions(
+                                      decimal: true),
+                                  enabled: true,
+                                  maxLength: 10,
+                                  isRequired: true,
+                                ),
+                              ),
+                        if (ref.watch(commodityProvider) != null)
+                          titleWidget(
+                              text: AppLocalizations.of(context)!
+                                  .msgTransportType),
+                        Visibility(
+                          visible: ref.watch(commodityProvider) != null,
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(8)),
+                                border: Border.all()),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<TransporterType>(
+                                  isExpanded: true,
+                                  value: ref.watch(transportTypeProvider),
+                                  icon: Icon(Icons.keyboard_arrow_down),
+                                  hint: Center(
+                                      child: Text(AppLocalizations.of(context)!
+                                          .msgTransportType)),
+                                  items: List.generate(
+                                      TransporterType.values.length,
+                                      (index) => DropdownMenuItem(
+                                            alignment:
+                                                AlignmentDirectional.center,
+                                            value:
+                                                TransporterType.values[index],
+                                            child: Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 10),
+                                              child: Row(
+                                                children: [
+                                                  Visibility(
+                                                      visible: ref.watch(
+                                                              transportTypeProvider) !=
+                                                          TransporterType
+                                                              .defaultType,
+                                                      child: Radio(
+                                                        value: ref.watch(
+                                                            transportTypeProvider),
+                                                        groupValue:
+                                                            TransporterType
+                                                                .values[index],
+                                                        onChanged: (value) {
+                                                          ref
+                                                              .watch(
+                                                                  transportTypeProvider
+                                                                      .notifier)
+                                                              .state = value!;
+                                                        },
+                                                        activeColor:
+                                                            ColorConstant
+                                                                .maingreen,
+                                                      )),
+                                                  Expanded(
+                                                      child: Text(
+                                                          TransporterType
+                                                              .values[index]
+                                                              .label))
+                                                ],
+                                              ),
+                                            ),
+                                          )),
+                                  onChanged: (val) {
+                                    ref
+                                        .watch(transportTypeProvider.notifier)
+                                        .state = val!;
+                                  }
+                                  // cont.newcommodityvalue!.commodityTax
+                                  //             .toString() ==
+                                  //         "0"
+                                  //     ? ref.watch(isMandiTax.notifier).state =
+                                  //         false
+                                  //     : ref.watch(isMandiTax.notifier).state =
+                                  //         true;
+
+                                  ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        if (ref.watch(commodityProvider) != null &&
+                            ref.watch(transportTypeProvider) ==
+                                TransporterType.own)
+                          Column(
+                            children: [
+                              titleWidget(text: AppLocalizations.of(context)!.autoInvoice2),
+                              Container(
+                                decoration: BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(8)),
+                                    border: Border.all()),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<AutoInvoiceType>(
+                                      isExpanded: true,
+                                      value: ref.watch(autoInvoiceProvider),
+                                      icon: Icon(Icons.keyboard_arrow_down),
+                                      hint: Center(
+                                          child: Text(AppLocalizations.of(context)!.autoInvoice2)),
+                                      items: List.generate(
+                                          AutoInvoiceType.values.length,
+                                          (index) => DropdownMenuItem(
+                                                alignment:
+                                                    AlignmentDirectional.center,
+                                                value: AutoInvoiceType
+                                                    .values[index],
+                                                child: Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 10),
+                                                  child: Row(
+                                                    children: [
+                                                      Visibility(
+                                                          visible: ref.watch(
+                                                                  autoInvoiceProvider) !=
+                                                              null,
+                                                          child: Radio(
+                                                            value: ref.watch(
+                                                                autoInvoiceProvider),
+                                                            groupValue:
+                                                                AutoInvoiceType
+                                                                        .values[
+                                                                    index],
+                                                            onChanged: (value) {
+                                                              ref
+                                                                  .watch(autoInvoiceProvider
+                                                                      .notifier)
+                                                                  .state = value!;
+                                                            },
+                                                            activeColor:
+                                                                ColorConstant
+                                                                    .maingreen,
+                                                          )),
+                                                      Expanded(
+                                                          child: Text(
+                                                              AutoInvoiceType
+                                                                  .values[index]
+                                                                  .label))
+                                                    ],
+                                                  ),
+                                                ),
+                                              )),
+                                      onChanged: (val) {
+                                        ref
+                                            .watch(autoInvoiceProvider.notifier)
+                                            .state = val!;
+                                      }
+                                      // cont.newcommodityvalue!.commodityTax
+                                      //             .toString() ==
+                                      //         "0"
+                                      //     ? ref.watch(isMandiTax.notifier).state =
+                                      //         false
+                                      //     : ref.watch(isMandiTax.notifier).state =
+                                      //         true;
+
+                                      ),
+                                ),
+                              ),
+                              if (ref.watch(autoInvoiceProvider) ==
+                                  AutoInvoiceType.yes)
+                                SizedBox(
+                                  height: 10,
+                                ),
+                              if (ref.watch(autoInvoiceProvider) ==
+                                  AutoInvoiceType.yes)
+                                titleWidget(
+                                    text: AppLocalizations.of(context)!
+                                        .selectPurchaseOrder),
+                              if (ref.watch(autoInvoiceProvider) ==
+                                  AutoInvoiceType.yes)
+                                ref
+                                    .watch(purchaseOrderListOutwardsProvider(
+                                      terminalId: ref
+                                              .watch(terminalsProvider)
+                                              ?.warehouseId
+                                              .toString() ??
+                                          "0",
+                                      commodityId:
+                                          "${ref.watch(commodityProvider)?.commodity.toString()}",
+                                    ))
+                                    .when(
+                                        data: (data) =>
+                                            DropdownSearch<PurchaseOrderDatum>(
+                                              compareFn: (item, sItem) =>
+                                                  item.id == sItem.id,
+                                              popupProps: PopupProps.menu(
+                                                  searchFieldProps:
+                                                      TextFieldProps(
+                                                          autofocus: true,
+                                                          cursorColor:
+                                                              ColorConstant
+                                                                  .maingreen,
+                                                          padding: Pad(
+                                                              left: 10,
+                                                              right: 10),
+                                                          decoration:
+                                                              InputDecoration(
+                                                            contentPadding: Pad(
+                                                                left: 10,
+                                                                right: 10),
+                                                            focusedErrorBorder: OutlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    style: BorderStyle
+                                                                        .solid,
+                                                                    color: ColorConstant
+                                                                        .maingreen)),
+                                                            disabledBorder: OutlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    style: BorderStyle
+                                                                        .solid,
+                                                                    color: ColorConstant
+                                                                        .maingreen)),
+                                                            errorBorder: OutlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    style: BorderStyle
+                                                                        .solid,
+                                                                    color: ColorConstant
+                                                                        .maingreen)),
+                                                            focusedBorder: OutlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    style: BorderStyle
+                                                                        .solid,
+                                                                    color: ColorConstant
+                                                                        .maingreen)),
+                                                            border: OutlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    style: BorderStyle
+                                                                        .solid,
+                                                                    color: ColorConstant
+                                                                        .maingreen)),
+                                                            enabledBorder: OutlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    style: BorderStyle
+                                                                        .solid,
+                                                                    color: ColorConstant
+                                                                        .maingreen)),
+                                                          )),
+                                                  menuProps: MenuProps(
+                                                      shape: RoundedRectangleBorder(
+                                                          side: BorderSide(
+                                                              color: ColorConstant
+                                                                  .maingreen),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      8))),
+                                                  itemBuilder: (context,
+                                                          terminal,
+                                                          isVisible,
+                                                          _) =>
+                                                      ColumnSuper(
+                                                          alignment: Alignment
+                                                              .centerLeft,
+                                                          children: [
+                                                            Padding(
+                                                              padding:
+                                                                  Pad(all: 10),
+                                                              child: Text(
+                                                                "${terminal.poIds}",
+                                                                style: TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500,
+                                                                    fontSize:
+                                                                        Adaptive.sp(
+                                                                            16)),
+                                                              ),
+                                                            ),
+                                                            Container(
+                                                              height: 1,
+                                                              color: Colors.grey
+                                                                  .withOpacity(
+                                                                      0.3),
+                                                            ),
+                                                          ]),
+                                                  title: Padding(
+                                                    padding: Pad(all: 10),
+                                                    child: Text(
+                                                      'Select Trip Id',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
+                                                          fontSize:
+                                                              Adaptive.sp(16),
+                                                          fontWeight:
+                                                              FontWeight.w700),
+                                                    ),
+                                                  ),
+                                                  showSearchBox: true,
+                                                  searchDelay:
+                                                      Duration(microseconds: 500)),
+                                              filterFn: (user, filter) => user
+                                                  .poIds
+                                                  .toString()
+                                                  .toLowerCase()
+                                                  .trim()
+                                                  .contains(filter),
+                                              // asyncItems: (String filter) => getData(filter),
+
+                                              items: (s, d) => data.data ?? [],
+                                              itemAsString:
+                                                  (PurchaseOrderDatum u) =>
+                                                      u.poIds ?? "",
+                                              onChanged: (PurchaseOrderDatum?
+                                                      data) =>
+                                                  ref
+                                                      .watch(
+                                                          purchaseOrderProvider
+                                                              .notifier)
+                                                      .state = data,
+                                              decoratorProps:
+                                                  DropDownDecoratorProps(
+                                                decoration: InputDecoration(
+                                                    contentPadding: Pad(
+                                                        left: 10,
+                                                        bottom: 5,
+                                                        top: 5),
+                                                    hintText:
+                                                        AppLocalizations.of(context)!.selectPurchaseOrder3,
+                                                    border: OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.all(
+                                                                Radius.circular(
+                                                                    8)),
+                                                        borderSide: BorderSide(
+                                                            color: ColorConstant
+                                                                .maingreen))),
+                                              ),
+                                            ),
+                                        error: (e, s) => Container(),
+                                        loading: () => CircularProgressIndicator
+                                            .adaptive()),
+                              if (ref.watch(autoInvoiceProvider) ==
+                                  AutoInvoiceType.yes)
+                                SizedBox(
+                                  height: 10,
+                                ),
+                            ],
+                          ),
+                        ref.watch(commodityProvider) == null ||
+                                ref.watch(transportTypeProvider) !=
+                                    TransporterType.own
+                            ? SizedBox()
+                            : Padding(
+                                padding: EdgeInsets.only(bottom: 15.0),
+                                child: CommonTextField(
+                                  controller: vehiclenocontroller,
+                                  label:
+                                      AppLocalizations.of(context)!.vehicleno,
+                                  // textInputAction: TextInputAction.next,
+                                  // inputType: TextInputType.emailAddress,
+                                  enabled: true,
+                                  // isOnlyDigit: true,
+                                  isRequired: true,
+                                ),
+                              ),
+                        ref.watch(commodityProvider) == null ||
+                                ref.watch(transportTypeProvider) !=
+                                    TransporterType.own
+                            ? SizedBox()
+                            : Padding(
+                                padding: EdgeInsets.only(bottom: 15.0),
+                                child: CommonTextField(
+                                  controller: driverNoController,
+                                  label: AppLocalizations.of(context)!.driverMobileNo2,
+                                  enabled: true,
+                                  isOnlyDigit: true,
+                                  maxLength: 10,
+                                  isRequired: true,
+                                ),
+                              ),
+                        ref.watch(transportTypeProvider) !=
+                                TransporterType.company
+                            ? SizedBox()
+                            : ref
+                                .watch(outwardTripIdListProvider(
+                                    terminal:
+                                        "${ref.watch(terminalsProvider)?.warehouseId}",
+                                    commodity:
+                                        "${ref.watch(commodityProvider)?.commodity}"))
+                                .when(
+                                    data: (data) => Visibility(
+                                          visible: ref.watch(
+                                                  transportTypeProvider) ==
+                                              TransporterType.company,
+                                          child:
+                                              DropdownSearch<tripData.Datum?>(
+                                            compareFn: (item, sItem) =>
+                                                item?.id == sItem?.id,
+                                            popupProps: PopupProps.menu(
+                                                searchFieldProps:
+                                                    TextFieldProps(
+                                                        autofocus: true,
+                                                        cursorColor:
+                                                            ColorConstant
+                                                                .maingreen,
+                                                        padding: Pad(
+                                                            left: 10,
+                                                            right: 10),
+                                                        decoration:
+                                                            InputDecoration(
+                                                          contentPadding: Pad(
+                                                              left: 10,
+                                                              right: 10),
+                                                          focusedErrorBorder: OutlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  style:
+                                                                      BorderStyle
+                                                                          .solid,
+                                                                  color: ColorConstant
+                                                                      .maingreen)),
+                                                          disabledBorder: OutlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  style:
+                                                                      BorderStyle
+                                                                          .solid,
+                                                                  color: ColorConstant
+                                                                      .maingreen)),
+                                                          errorBorder: OutlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  style:
+                                                                      BorderStyle
+                                                                          .solid,
+                                                                  color: ColorConstant
+                                                                      .maingreen)),
+                                                          focusedBorder: OutlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  style:
+                                                                      BorderStyle
+                                                                          .solid,
+                                                                  color: ColorConstant
+                                                                      .maingreen)),
+                                                          border: OutlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  style:
+                                                                      BorderStyle
+                                                                          .solid,
+                                                                  color: ColorConstant
+                                                                      .maingreen)),
+                                                          enabledBorder: OutlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  style:
+                                                                      BorderStyle
+                                                                          .solid,
+                                                                  color: ColorConstant
+                                                                      .maingreen)),
+                                                        )),
+                                                menuProps: MenuProps(
+                                                    shape: RoundedRectangleBorder(
+                                                        side: BorderSide(
+                                                            color: ColorConstant
+                                                                .maingreen),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8))),
+                                                itemBuilder: (context, terminal,
+                                                        isVisible, _) =>
+                                                    ColumnSuper(
+                                                        alignment: Alignment
+                                                            .centerLeft,
+                                                        children: [
+                                                          Padding(
+                                                            padding:
+                                                                Pad(all: 10),
+                                                            child: Text(
+                                                              "${terminal?.tripRequestId}",
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w500,
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16)),
+                                                            ),
+                                                          ),
+                                                          Container(
+                                                            height: 1,
+                                                            color: Colors.grey
+                                                                .withOpacity(
+                                                                    0.3),
+                                                          ),
+                                                        ]),
+                                                title: Padding(
+                                                  padding: Pad(all: 10),
+                                                  child: Text(
+                                                    'Select Trip Id',
+                                                    textAlign: TextAlign.center,
+                                                    style: TextStyle(
+                                                        fontSize:
+                                                            Adaptive.sp(16),
+                                                        fontWeight:
+                                                            FontWeight.w700),
+                                                  ),
+                                                ),
+                                                showSearchBox: true,
+                                                searchDelay: Duration(
+                                                    microseconds: 500)),
+                                            filterFn: (user, filter) =>
+                                                user?.userFilterByCreationDate(
+                                                    filter) ??
+                                                false,
+                                            // asyncItems: (String filter) => getData(filter),
+
+                                            items: (s, d) => data.data ?? [],
+                                            itemAsString: (tripData.Datum? u) =>
+                                                u?.tripRequestId ?? "",
+                                            onChanged: (tripData.Datum? data) =>
+                                                ref
+                                                    .watch(
+                                                        tripIdProvider.notifier)
+                                                    .state = data,
+                                            decoratorProps:
+                                                DropDownDecoratorProps(
+                                              decoration: InputDecoration(
+                                                  contentPadding: Pad(
+                                                      left: 10,
+                                                      bottom: 5,
+                                                      top: 5),
+                                                  hintText: AppLocalizations.of(
+                                                          context)!
+                                                      .selectTripId,
+                                                  border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.all(
+                                                              Radius.circular(
+                                                                  8)),
+                                                      borderSide: BorderSide(
+                                                          color: ColorConstant
+                                                              .maingreen))),
+                                            ),
+                                          ),
+                                        ),
+                                    error: (e, s) => Container(),
+                                    loading: () =>
+                                        CupertinoActivityIndicator()),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        InkWell(
+                          onTap: () {
+                            if (ref.watch(terminalsProvider) == null) {
+                              Get.rawSnackbar(
+                                  message: AppLocalizations.of(context)!
+                                      .selectYourTerminal,
+                                  duration: Duration(seconds: 2),
+                                  backgroundColor: ColorConstant.red500);
+                            } else if (ref.watch(commodityProvider) == null) {
+                              Get.rawSnackbar(
+                                  message: AppLocalizations.of(context)!
+                                      .selectYourCommodity,
+                                  duration: Duration(seconds: 2),
+                                  backgroundColor: ColorConstant.red500);
+                            } else if (weaightcontroller.text.isEmpty) {
+                              Get.rawSnackbar(
+                                  message: AppLocalizations.of(context)!
+                                      .selectYourWeight,
+                                  duration: Duration(seconds: 2),
+                                  backgroundColor: ColorConstant.red500);
+                            } else if (ref.watch(transportTypeProvider) ==
+                                    TransporterType.own &&
+                                vehiclenocontroller.text.isEmpty) {
+                              Get.rawSnackbar(
+                                  message: AppLocalizations.of(context)!
+                                      .selectYourVehicle,
+                                  duration: Duration(seconds: 2),
+                                  backgroundColor: ColorConstant.red500);
+                            }
+                            // else if (ref.watch(vehicleTypeProvider) ==
+                            //     VehicleType.Default) {
+                            //   Get.rawSnackbar(
+                            //       message: AppLocalizations.of(context)!.selectYourVehicleType,
+                            //       duration:  Duration(seconds: 2),
+                            //       backgroundColor: ColorConstant.red500);
+                            // }
+
+                            else if (ref.watch(transportTypeProvider) ==
+                                    TransporterType.own &&
+                                driverNoController.text.isEmpty) {
+                              Get.rawSnackbar(
+                                  message: AppLocalizations.of(context)!
+                                      .selectYourDriver,
+                                  duration: Duration(seconds: 2),
+                                  backgroundColor: ColorConstant.red500);
+                            } else if (ref.watch(transportTypeProvider) ==
+                                    TransporterType.company &&
+                                ref.watch(tripIdProvider) == null) {
+                              Get.rawSnackbar(
+                                  message: AppLocalizations.of(context)!.pleaseSelectTripId3,
+                                  duration: Duration(seconds: 2),
+                                  backgroundColor: ColorConstant.red500);
+                            } else if (ref.watch(transportTypeProvider) ==
+                                    TransporterType.own &&
+                                ref.watch(autoInvoiceProvider) == null) {
+                              Get.rawSnackbar(
+                                  message: AppLocalizations.of(context)!.pleaseSelectAutoInvoice2,
+                                  duration: Duration(seconds: 2),
+                                  backgroundColor: ColorConstant.red500);
+                            } else {
+                              ref
+                                  .watch(terminalStackDataProvider(
+                                terminalId: ref
+                                        .watch(terminalsProvider)
+                                        ?.warehouseId
+                                        .toString() ??
+                                    "0",
+                                commodityId: ref
+                                    .watch(commodityProvider)
+                                    ?.commodity
+                                    .toString(),
+                                weightReq: weaightcontroller.text,
+                                stackType: "",
+                                inOutStatus: "OUT",
+                                driverNumber: driverNoController.text,
+                                vehicleNo: vehiclenocontroller.text,
+                              ).future)
+                                  .then((value) {
+                                if ((value.data ?? []).isEmpty) {
+                                  CommanDialog(
+                                      context,
+                                      AppLocalizations.of(context)!.msgAlert,
+                                      AppLocalizations.of(context)!.validationOutwordStack2,
+                                      (userClickedOK) {
+                                    if (userClickedOK) {
+                                      print("object");
+                                      Navigator.of(context, rootNavigator: true)
+                                          .pop();
+
+                                      Get.off(() => RepaymentScreen());
+                                    } else {
+                                      Navigator.of(context, rootNavigator: true)
+                                          .pop();
+                                    }
+                                  });
+                                } else {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    builder: (bottomsheetContext) {
+                                      return ElevarmBottomSheet(
+                                          title: AppLocalizations.of(context)!
+                                              .msgWarehousefacility,
+                                          initialChildSize: 1,
+                                          minChildSize: 1,
+                                          onPressedClose: () {
+                                            Navigator.of(bottomsheetContext,
+                                                    rootNavigator: false)
+                                                .pop();
+                                          },
+                                          children: [
+                                            SizedBox(
+                                              child: Column(
+                                                // mainAxisAlignment: MainAxisAlignment.center,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  Padding(
+                                                    padding:
+                                                        EdgeInsets.all(4.0),
+                                                    child: SizedBox(
+                                                      child: GridView.count(
+                                                        physics:
+                                                            NeverScrollableScrollPhysics(),
+                                                        shrinkWrap: true,
+                                                        crossAxisSpacing: 5,
+                                                        mainAxisSpacing: 10,
+                                                        crossAxisCount: 3,
+                                                        children: List.generate(
+                                                            value.data
+                                                                    ?.length ??
+                                                                0, (index) {
+                                                          var occupied = value
+                                                                  .data?[index]
+                                                                  .stackTotalInv ??
+                                                              0 -
+                                                                  (value.data?[index]
+                                                                          .stackReleaseInv ??
+                                                                      0);
+                                                          return SizedBox(
+                                                            width: Get.width,
+                                                            child: Column(
+                                                              children: [
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .center,
+                                                                  children: [
+                                                                    Text(
+                                                                      AppLocalizations.of(context)!.msgStackno3,
+                                                                      style: TextStyle(
+                                                                          fontSize: Adaptive.sp(
+                                                                              13),
+                                                                          fontWeight:
+                                                                              FontWeight.w700),
+                                                                    ),
+                                                                    Text(
+                                                                      '${value.data?[index].stackNumber}',
+                                                                      style: TextStyle(
+                                                                          fontSize: Adaptive.sp(
+                                                                              13),
+                                                                          fontWeight:
+                                                                              FontWeight.w700),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                InkWell(
+                                                                    onTap:
+                                                                        () async {
+                                                                      await ref
+                                                                          .watch(createStackRequestOutwardsProvider(stackType: value.data?[index].stackType, requestWeight: weaightcontroller.text, inOutStatus: "OUT", stackNum: value.data?[index].stackNumber.toString(), stackRowId: value.data?[index].id.toString(), commodityId: ref.watch(commodityProvider)?.commodity.toString(), vhicalNo: vehiclenocontroller.text.toString(), lockInMonth: '', warehouseRent: '', driverNumber: driverNoController.text.toString(), releaseInv: "${value.data?[index].stackReleaseBags}", releaseBags: "${value.data?[index].stackReleaseInv}", transporterType: ref.watch(transportTypeProvider) == TransporterType.own ? "1" : "2", tripId: "${ref.watch(tripIdProvider)?.id}", autoInvoicing: ref.watch(autoInvoiceProvider)?.type.toString(), poIds: ref.watch(purchaseOrderProvider)?.id.toString() ?? "")
+                                                                              .future)
+                                                                          .then(
+                                                                              (value) async {
+                                                                        if (value['status'].toString() ==
+                                                                            "1") {
+                                                                          // Close bottom sheet
+                                                                          Navigator.of(bottomsheetContext, rootNavigator: false)
+                                                                              .pop();
+
+                                                                          // Reset form data
+                                                                          resetFormData();
+
+                                                                          // Navigate to outwards list
+                                                                          Get.off(() =>
+                                                                              Outwardslist());
+                                                                        }
+                                                                        Fluttertoast.showToast(
+                                                                            msg:
+                                                                                value['message'].toString());
+                                                                      }).onError((e,
+                                                                              s) {
+                                                                        errorBottomSheet(
+                                                                            context,
+                                                                            e.toString());
+                                                                      });
+                                                                    },
+                                                                    child:
+                                                                        Container(
+                                                                      width: Get
+                                                                          .width,
+                                                                      decoration: BoxDecoration(
+                                                                          color: Colors.green.withOpacity(
+                                                                              0.3),
+                                                                          border: Border.all(
+                                                                              color: Colors.green,
+                                                                              width: 3),
+                                                                          borderRadius: BorderRadius.circular(8)),
+                                                                      child:
+                                                                          Padding(
+                                                                        padding:
+                                                                            EdgeInsets.all(5.0),
+                                                                        child:
+                                                                            Column(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.center,
+                                                                          children: [
+                                                                            Text.rich(TextSpan(
+                                                                                text: AppLocalizations.of(context)!.releasedWeight2,
+                                                                                style: TextStyle(
+                                                                                  fontSize: Adaptive.sp(14),
+                                                                                  fontWeight: FontWeight.w700,
+                                                                                  fontFamily: 'Roboto',
+                                                                                ),
+                                                                                children: [])),
+                                                                            SizedBox(
+                                                                              height: 5,
+                                                                            ),
+                                                                            Text.rich(TextSpan(
+                                                                                text: "${double.tryParse(value.data?[index].stackReleaseInv.toString() ?? "0.0")?.toStringAsFixed(2)} (Qtl.)",
+                                                                                style: TextStyle(
+                                                                                  fontSize: Adaptive.sp(14),
+                                                                                  fontWeight: FontWeight.w700,
+                                                                                  fontFamily: 'Roboto',
+                                                                                ),
+                                                                                children: [])),
+                                                                            SizedBox(
+                                                                              height: 5,
+                                                                            ),
+                                                                            Text.rich(TextSpan(
+                                                                                text: AppLocalizations.of(context)!.releasedBags3,
+                                                                                style: TextStyle(
+                                                                                  fontSize: Adaptive.sp(14),
+                                                                                  fontWeight: FontWeight.w700,
+                                                                                  fontFamily: 'Roboto',
+                                                                                ),
+                                                                                children: [])),
+                                                                            Text.rich(TextSpan(
+                                                                                text: "${value.data![index].stackReleaseBags}",
+                                                                                style: TextStyle(
+                                                                                  fontSize: Adaptive.sp(14),
+                                                                                  fontWeight: FontWeight.w700,
+                                                                                  fontFamily: 'Roboto',
+                                                                                ),
+                                                                                children: [])),
+                                                                          ],
+                                                                        ),
+                                                                      ),
+                                                                    )),
+                                                                SizedBox(
+                                                                  height: 5,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          );
+                                                        }),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          ]);
+                                    },
+                                  );
+                                }
+                              }).onError((e, s) {
+                                errorBottomSheet(context, e.toString());
+                              });
+                            }
+                          },
+                          child: Container(
+                            height: 46,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                                color: ColorConstant.maingreen,
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(6))),
+                            child: Center(
+                                child: Text(
+                              AppLocalizations.of(context)!.msgSubmit,
+                              style: TextStyle(color: Colors.white),
+                            )),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              error: (e, s) => noStockData(context),
+              loading: () => defaultLoader())
+        ],
+      ),
+    );
+  }
+}

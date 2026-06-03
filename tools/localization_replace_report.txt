@@ -1,0 +1,127 @@
+Replacements
+lib/core/utils/no_data_found_widget.dart: AppLocalizations.of(context)!.NoDataFound -> AppLocalizations.of(context)!.noDataFound
+lib/presentation/BusinessProfile/BusinessProfile.dart: AppLocalizations.of(context)!.LandAreaInAcres -> AppLocalizations.of(context)!.landAreaInAcres
+lib/presentation/BusinessProfile/BusinessProfile.dart: AppLocalizations.of(context)!.MillCapacityPerAnnum -> AppLocalizations.of(context)!.millCapacityPerAnnum
+lib/presentation/BusinessProfile/BusinessProfile.dart: AppLocalizations.of(context)!.PleaseInputValidValue -> AppLocalizations.of(context)!.pleaseInputValidValue
+lib/presentation/BusinessProfile/BusinessProfile.dart: AppLocalizations.of(context)!.SelectAnnualTurnover -> AppLocalizations.of(context)!.selectAnnualTurnover
+lib/presentation/BusinessProfile/BusinessProfile.dart: AppLocalizations.of(context)!.SelectCapacityPerAnnum -> AppLocalizations.of(context)!.selectCapacityPerAnnum
+lib/presentation/BusinessProfile/BusinessProfile.dart: AppLocalizations.of(context)!.SelectCommodities -> AppLocalizations.of(context)!.selectCommodities
+lib/presentation/BusinessProfile/BusinessProfile.dart: AppLocalizations.of(context)!.SelectFacility -> AppLocalizations.of(context)!.selectFacility
+lib/presentation/BusinessProfile/BusinessProfile.dart: AppLocalizations.of(context)!.SelectTurnover -> AppLocalizations.of(context)!.selectTurnover
+lib/presentation/BusinessProfile/BusinessProfile.dart: AppLocalizations.of(context)!.TypeOfProcessingFacility -> AppLocalizations.of(context)!.typeOfProcessingFacility
+lib/presentation/PurchaseOrder/PurchaseOrdersListScreen.dart: AppLocalizations.of(context)!.PendingQuantity -> AppLocalizations.of(context)!.pendingQuantity
+lib/presentation/PurchaseOrder/PurchaseOrdersListScreen.dart: AppLocalizations.of(context)!.PurchaseOrderList -> AppLocalizations.of(context)!.purchaseOrderList
+lib/presentation/PurchaseOrder/PurchaseOrdersListScreen.dart: AppLocalizations.of(context)!.UniqueId -> AppLocalizations.of(context)!.uniqueId
+lib/presentation/PurchaseOrder/PurchaseOrdersListScreen.dart: AppLocalizations.of(context)!.UpdatePurchaseOrder -> AppLocalizations.of(context)!.updatePurchaseOrder
+lib/presentation/PurchaseOrder/PurchaseOrderScreen.dart: AppLocalizations.of(context)!.BuyerAddress -> AppLocalizations.of(context)!.buyerAddress
+lib/presentation/PurchaseOrder/PurchaseOrderScreen.dart: AppLocalizations.of(context)!.CapturePoImage -> AppLocalizations.of(context)!.capturePoImage
+lib/presentation/PurchaseOrder/PurchaseOrderScreen.dart: AppLocalizations.of(context)!.DeliveryPincode -> AppLocalizations.of(context)!.deliveryPincode
+lib/presentation/PurchaseOrder/PurchaseOrderScreen.dart: AppLocalizations.of(context)!.PleaseFillAllTheFieldsProperly -> AppLocalizations.of(context)!.pleaseFillAllTheFieldsProperly
+lib/presentation/PurchaseOrder/PurchaseOrderScreen.dart: AppLocalizations.of(context)!.QualityCondition -> AppLocalizations.of(context)!.qualityCondition
+lib/presentation/mysell_tabscreen/SbtMySell.dart: AppLocalizations.of(context)!.DealId -> AppLocalizations.of(context)!.dealId
+lib/presentation/market_screen/seller_list_screen.dart: AppLocalizations.of(context)!.PleaseInputValidValue -> AppLocalizations.of(context)!.pleaseInputValidValue
+lib/presentation/market_screen/seller_list_screen.dart: AppLocalizations.of(context)!.QtyQtl -> AppLocalizations.of(context)!.qtyQtl
+lib/presentation/market_screen/buy_sell_data_screen.dart: AppLocalizations.of(context)!.QtyQtl -> AppLocalizations.of(context)!.qtyQtl
+lib/presentation/market_screen/buyer_list_screen.dart: AppLocalizations.of(context)!.PleaseInputValidValue -> AppLocalizations.of(context)!.pleaseInputValidValue
+lib/presentation/market_screen/buyer_list_screen.dart: AppLocalizations.of(context)!.QtyQtl -> AppLocalizations.of(context)!.qtyQtl
+lib/presentation/market_screen/SBT/Sbtscreen.dart: AppLocalizations.of(context)!.DeliveryMarking -> AppLocalizations.of(context)!.deliveryMarking
+lib/presentation/market_screen/SBT/Sbtscreen.dart: AppLocalizations.of(context)!.MarkDelivery -> AppLocalizations.of(context)!.markDelivery
+lib/presentation/market_screen/SBT/Sbtscreen.dart: AppLocalizations.of(context)!.NoData -> AppLocalizations.of(context)!.noData
+lib/presentation/market_screen/SBT/Sbtscreen.dart: AppLocalizations.of(context)!.PendingQuantity -> AppLocalizations.of(context)!.pendingQuantity
+lib/presentation/market_screen/SBT/Sbtscreen.dart: AppLocalizations.of(context)!.QtyQtl -> AppLocalizations.of(context)!.qtyQtl
+lib/presentation/market_screen/SBT/Sbtscreen.dart: AppLocalizations.of(context)!.QuantityShouldBeGreaterThan0 -> AppLocalizations.of(context)!.quantityShouldBeGreaterThan0
+lib/presentation/market_screen/SBT/Sbtscreen.dart: AppLocalizations.of(context)!.ViewAllWarehouses -> AppLocalizations.of(context)!.viewAllWarehouses
+lib/presentation/market_screen/SBT/Sbtscreen.dart: AppLocalizations.of(context)!.ViewChart -> AppLocalizations.of(context)!.viewChart
+lib/presentation/market_screen/SBT/Sbtscreen.dart: AppLocalizations.of(context)!.WalletRefund -> AppLocalizations.of(context)!.walletRefund
+lib/presentation/market_screen/SBT/Sbtscreen.dart: AppLocalizations.of(context)!.WeightShortageAllowance -> AppLocalizations.of(context)!.weightShortageAllowance
+lib/presentation/market_screen/commodity_wise_trading/CommodityWiseTradingScreen.dart: AppLocalizations.of(context)!.QtyQtl -> AppLocalizations.of(context)!.qtyQtl
+lib/presentation/TripId/TripIdScreen.dart: AppLocalizations.of(context)!.PaymentTo -> AppLocalizations.of(context)!.paymentTo
+lib/presentation/TripId/TripIdScreen.dart: AppLocalizations.of(context)!.PleaseSelectAutoInvoicing -> AppLocalizations.of(context)!.pleaseSelectAutoInvoicing
+lib/presentation/TripId/TripIdScreen.dart: AppLocalizations.of(context)!.PleaseSelectCommodity -> AppLocalizations.of(context)!.pleaseSelectCommodity
+lib/presentation/TripId/TripIdScreen.dart: AppLocalizations.of(context)!.SelectAutoInvoicing -> AppLocalizations.of(context)!.selectAutoInvoicing
+lib/presentation/TripId/TripIdScreen.dart: AppLocalizations.of(context)!.SelectPurchaseOrder -> AppLocalizations.of(context)!.selectPurchaseOrder
+lib/presentation/TripId/TripIdScreen.dart: AppLocalizations.of(context)!.SelectTransporter -> AppLocalizations.of(context)!.selectTransporter
+lib/presentation/TripId/TripRequests/TripRequestScreen.dart: AppLocalizations.of(context)!.CaseIdPending -> AppLocalizations.of(context)!.caseIdPending
+lib/presentation/TripId/TripRequests/TripRequestScreen.dart: AppLocalizations.of(context)!.DealId -> AppLocalizations.of(context)!.dealId
+lib/presentation/TripId/TripRequests/TripRequestScreen.dart: AppLocalizations.of(context)!.TripEndPending -> AppLocalizations.of(context)!.tripEndPending
+lib/presentation/TripId/TripRequests/TripRequestScreen.dart: AppLocalizations.of(context)!.TripRequests -> AppLocalizations.of(context)!.tripRequests
+lib/presentation/mybuy_screen/werehouse_deal_screen.dart: AppLocalizations.of(context)!.YourBottomSheetContent -> AppLocalizations.of(context)!.yourBottomSheetContent
+lib/presentation/mybuy_screen/SbtMyBuy.dart: AppLocalizations.of(context)!.DealId -> AppLocalizations.of(context)!.dealId
+lib/presentation/login_screen/LoginBottomsheet.dart: AppLocalizations.of(context)!.MobileNumber -> AppLocalizations.of(context)!.mobileNumber
+lib/presentation/login_screen/LoginBottomsheet.dart: AppLocalizations.of(context)!.PleaseInputYourMobileNumber -> AppLocalizations.of(context)!.pleaseInputYourMobileNumber
+lib/presentation/warehousefacility_screen/stackoutward_screen.dart: AppLocalizations.of(context)!.SelectPurchaseOrder -> AppLocalizations.of(context)!.selectPurchaseOrder
+lib/presentation/warehousefacility_screen/stackoutward_screen.dart: AppLocalizations.of(context)!.SelectTripId -> AppLocalizations.of(context)!.selectTripId
+lib/presentation/warehousefacility_screen/stackinward_screen.dart: AppLocalizations.of(context)!.SelectFromGallery -> AppLocalizations.of(context)!.selectFromGallery
+lib/presentation/warehousefacility_screen/stackinward_screen.dart: AppLocalizations.of(context)!.SelectImage -> AppLocalizations.of(context)!.selectImage
+lib/presentation/warehousefacility_screen/stackinward_screen.dart: AppLocalizations.of(context)!.SelectTripId -> AppLocalizations.of(context)!.selectTripId
+lib/presentation/Feedback/Feedbackscreen.dart: AppLocalizations.of(context)!.LetUsKnowYourThoughts -> AppLocalizations.of(context)!.letUsKnowYourThoughts
+lib/presentation/Feedback/Feedbackscreen.dart: AppLocalizations.of(context)!.YourFeedback -> AppLocalizations.of(context)!.yourFeedback
+lib/presentation/wallet_statement_screen/wallet_statement_screen.dart: AppLocalizations.of(context)!.SelectDateRange -> AppLocalizations.of(context)!.selectDateRange
+lib/presentation/dashboard/WarehouseBookings.dart: AppLocalizations.of(context)!.ErrorLoadingData -> AppLocalizations.of(context)!.errorLoadingData
+lib/presentation/dashboard/WarehouseBookings.dart: AppLocalizations.of(context)!.FirstKantaParchi -> AppLocalizations.of(context)!.firstKantaParchi
+lib/presentation/dashboard/WarehouseBookings.dart: AppLocalizations.of(context)!.FirstQuality -> AppLocalizations.of(context)!.firstQuality
+lib/presentation/dashboard/WarehouseBookings.dart: AppLocalizations.of(context)!.GatepassPending -> AppLocalizations.of(context)!.gatepassPending
+lib/presentation/dashboard/WarehouseBookings.dart: AppLocalizations.of(context)!.SecondKantaParchi -> AppLocalizations.of(context)!.secondKantaParchi
+lib/presentation/dashboard/WarehouseBookings.dart: AppLocalizations.of(context)!.SecondQualityReport -> AppLocalizations.of(context)!.secondQualityReport
+lib/presentation/my_Stock/StacksSettlement/StacksSettlementScreen.dart: AppLocalizations.of(context)!.ApproxBalanceAmount -> AppLocalizations.of(context)!.approxBalanceAmount
+lib/presentation/my_Stock/StacksSettlement/StacksSettlementScreen.dart: AppLocalizations.of(context)!.WalletTotalBalance -> AppLocalizations.of(context)!.walletTotalBalance
+lib/presentation/singup_screen/singup_screen.dart: AppLocalizations.of(context)!.EnterYourMobileNumber -> AppLocalizations.of(context)!.enterYourMobileNumber
+lib/presentation/singup_screen/singup_screen.dart: AppLocalizations.of(context)!.EnterYourName -> AppLocalizations.of(context)!.enterYourName
+lib/presentation/singup_screen/singup_screen.dart: AppLocalizations.of(context)!.PleaseSelectConstitution -> AppLocalizations.of(context)!.pleaseSelectConstitution
+lib/presentation/sbt/SbtHoldWallet.dart: AppLocalizations.of(context)!.MyHoldWallet -> AppLocalizations.of(context)!.myHoldWallet
+lib/presentation/sbt/SbtDeals.dart: AppLocalizations.of(context)!.DeliveryMarking -> AppLocalizations.of(context)!.deliveryMarking
+lib/presentation/sbt/SbtDeals.dart: AppLocalizations.of(context)!.DeliveryQuantity -> AppLocalizations.of(context)!.deliveryQuantity
+lib/presentation/sbt/SbtDeals.dart: AppLocalizations.of(context)!.MarkDelivery -> AppLocalizations.of(context)!.markDelivery
+lib/presentation/sbt/SbtDeals.dart: AppLocalizations.of(context)!.ShowReport -> AppLocalizations.of(context)!.showReport
+lib/presentation/sbt/DispatchRequests/DispatchRequestScreen.dart: AppLocalizations.of(context)!.DispatchRequest -> AppLocalizations.of(context)!.dispatchRequest
+lib/presentation/sbt/DispatchRequests/DispatchRequestScreen.dart: AppLocalizations.of(context)!.KantaImage -> AppLocalizations.of(context)!.kantaImage
+lib/presentation/sbt/DispatchRequests/DispatchRequestScreen.dart: AppLocalizations.of(context)!.MandiTaxType -> AppLocalizations.of(context)!.mandiTaxType
+lib/presentation/sbt/DispatchRequests/DispatchRequestScreen.dart: AppLocalizations.of(context)!.SelectBiltyImage -> AppLocalizations.of(context)!.selectBiltyImage
+lib/presentation/sbt/DispatchRequests/DispatchRequestScreen.dart: AppLocalizations.of(context)!.SelectInvoiceImage -> AppLocalizations.of(context)!.selectInvoiceImage
+lib/presentation/sbt/DispatchRequests/DispatchRequestScreen.dart: AppLocalizations.of(context)!.SelectKantaImage -> AppLocalizations.of(context)!.selectKantaImage
+lib/presentation/sbt/DispatchRequests/DispatchRequestScreen.dart: AppLocalizations.of(context)!.SelectTripId -> AppLocalizations.of(context)!.selectTripId
+lib/presentation/sbt/DispatchRequests/FactoryDispatchScreen.dart: AppLocalizations.of(context)!.DispatchRequest -> AppLocalizations.of(context)!.dispatchRequest
+lib/presentation/sbt/DispatchRequests/FactoryDispatchScreen.dart: AppLocalizations.of(context)!.SelectTripId -> AppLocalizations.of(context)!.selectTripId
+lib/presentation/sbt/DispatchRequests/DispatchRequestsListing.dart: AppLocalizations.of(context)!.DispatchRequests -> AppLocalizations.of(context)!.dispatchRequests
+lib/presentation/sbt/DispatchRequests/FactoryDispatchListingScreen.dart: AppLocalizations.of(context)!.SubmitFinal -> AppLocalizations.of(context)!.submitFinal
+lib/presentation/home_screen/Invoices.dart: AppLocalizations.of(context)!.DealId -> AppLocalizations.of(context)!.dealId
+lib/presentation/home_screen/Invoices.dart: AppLocalizations.of(context)!.LoginToViewInvoices -> AppLocalizations.of(context)!.loginToViewInvoices
+lib/presentation/home_screen/Invoices.dart: AppLocalizations.of(context)!.SelectDateRange -> AppLocalizations.of(context)!.selectDateRange
+lib/presentation/home_screen/Invoices.dart: AppLocalizations.of(context)!.ShowDetails -> AppLocalizations.of(context)!.showDetails
+lib/presentation/home_screen/Invoices.dart: AppLocalizations.of(context)!.YourBottomSheetContent -> AppLocalizations.of(context)!.yourBottomSheetContent
+lib/presentation/home_screen/stock_summary.dart: AppLocalizations.of(context)!.FilterCommodity -> AppLocalizations.of(context)!.filterCommodity
+lib/presentation/home_screen/stock_summary.dart: AppLocalizations.of(context)!.FilterTerminals -> AppLocalizations.of(context)!.filterTerminals
+lib/presentation/home_screen/stock_summary.dart: AppLocalizations.of(context)!.ReleasedAndFunded -> AppLocalizations.of(context)!.releasedAndFunded
+lib/presentation/home_screen/stock_summary.dart: AppLocalizations.of(context)!.ReleasedWeightInQtl -> AppLocalizations.of(context)!.releasedWeightInQtl
+lib/presentation/home_screen/ui/Bookwarehousescreen.dart: AppLocalizations.of(context)!.BookWarehouse -> AppLocalizations.of(context)!.bookWarehouse
+lib/presentation/home_screen/ui/Bookwarehousescreen.dart: AppLocalizations.of(context)!.LocateOnMap -> AppLocalizations.of(context)!.locateOnMap
+lib/presentation/home_screen/ui/QualityCalculationScreen.dart: AppLocalizations.of(context)!.CalculateQuality -> AppLocalizations.of(context)!.calculateQuality
+lib/presentation/home_screen/ui/QualityCalculationScreen.dart: AppLocalizations.of(context)!.PleaseSelectCommodity -> AppLocalizations.of(context)!.pleaseSelectCommodity
+lib/presentation/home_screen/ui/Findwarehousescreen.dart: AppLocalizations.of(context)!.LocateOnMap -> AppLocalizations.of(context)!.locateOnMap
+lib/presentation/home_screen/ui/Trade.dart: AppLocalizations.of(context)!.DeliveryMarking -> AppLocalizations.of(context)!.deliveryMarking
+lib/presentation/home_screen/ui/WarehouseBooking.dart: AppLocalizations.of(context)!.FindWarehouses -> AppLocalizations.of(context)!.findWarehouses
+lib/presentation/MandiTaxProfile/MandiTaxProfileScreen.dart: AppLocalizations.of(context)!.DoYouHaveValidLicense -> AppLocalizations.of(context)!.doYouHaveValidLicense
+lib/presentation/MandiTaxProfile/MandiTaxProfileScreen.dart: AppLocalizations.of(context)!.ExpiryDate -> AppLocalizations.of(context)!.expiryDate
+lib/presentation/MandiTaxProfile/MandiTaxProfileScreen.dart: AppLocalizations.of(context)!.IssueDate -> AppLocalizations.of(context)!.issueDate
+lib/presentation/MandiTaxProfile/MandiTaxProfileScreen.dart: AppLocalizations.of(context)!.PleaseSelectLicenseType -> AppLocalizations.of(context)!.pleaseSelectLicenseType
+lib/presentation/MandiTaxProfile/MandiTaxProfileScreen.dart: AppLocalizations.of(context)!.SelectLicenseType -> AppLocalizations.of(context)!.selectLicenseType
+
+Ambiguous
+('lib/presentation/market_screen/SBT/Sbtscreen.dart', 'InterestRate', ['interestRate', 'interestRate_1'])
+('lib/presentation/market_screen/SBT/Sbtscreen.dart', 'LTV', ['ltv', 'ltv_1'])
+('lib/presentation/market_screen/SBT/Sbtscreen.dart', 'PF', ['pf', 'pf_1'])
+('lib/presentation/my_Stock/my_stock_screen.dart', 'Bnpl', ['bnpl', 'bnpl'])
+('lib/presentation/home_screen/ui/BidsScreen.dart', 'InterestRate', ['interestRate', 'interestRate_1'])
+('lib/presentation/home_screen/ui/BidsScreen.dart', 'LTV', ['ltv', 'ltv_1'])
+('lib/presentation/home_screen/ui/BidsScreen.dart', 'PF', ['pf', 'pf_1'])
+
+No Candidate
+('lib/presentation/PurchaseOrder/PurchaseOrdersListScreen.dart', 'PODetails')
+('lib/presentation/TripId/TripIdScreen.dart', 'SelectDestinationTerminalOrLocation')
+('lib/presentation/TripId/TripIdScreen.dart', 'SelectPickUpLocationTerminalOrLocation')
+('lib/presentation/dashboard/WarehouseBookings.dart', 'CCTVPending')
+('lib/presentation/dashboard/WarehouseBookings.dart', 'CCTVReport')
+('lib/presentation/my_Stock/StacksSettlement/StacksSettlementScreen.dart', 'AGCommission')
+('lib/presentation/my_Stock/StacksSettlement/StacksSettlementScreen.dart', 'TotalPendingAmountNRentLoanInterest')
+('lib/presentation/MandiTaxProfile/MandiTaxProfileScreen.dart', 'SelectClearingAndForwardingAgent')
+('lib/widgets/firebase_debug_test.dart', 'FCMTokenNotAvailableYetPleaseWait')

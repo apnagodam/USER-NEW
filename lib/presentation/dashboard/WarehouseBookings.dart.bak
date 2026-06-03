@@ -1,0 +1,509 @@
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/core/utils/theme/app_style.dart';
+import 'package:apnagodam/presentation/dashboard/model/CaseIdStatusModel.dart';
+import 'package:apnagodam/presentation/dashboard/service/dashboard_service.dart';
+import 'package:apnagodam/presentation/market_screen/service/market_service.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class Warehousebookings extends ConsumerStatefulWidget {
+  Warehousebookings({super.key, this.isAppBarVisible});
+  bool? isAppBarVisible = false;
+  @override
+  ConsumerState<Warehousebookings> createState() => _WarehousebookingsState();
+}
+
+class _WarehousebookingsState extends ConsumerState<Warehousebookings> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: widget.isAppBarVisible == true
+          ? AppBar(
+              title: Text(AppLocalizations.of(context)!.warehouseBookings2),
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: <Color>[
+                      Color(0xFF12281B), // Deep green-black
+                      Color(0xFF275135), // Your main green
+                      Color(0xFF3E7251),
+                    ])),
+              ),
+              centerTitle: true,
+            )
+          : null,
+      body: RefreshIndicator.adaptive(
+        onRefresh: () async {
+          ref.invalidate(warehouseBookingsProvider);
+        },
+        child: ListView(
+          children: [
+            _buildTableHeader(),
+            bookingsLayout(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableHeader() {
+    return Container(
+      color: ColorConstant.maingreen,
+      padding: const Pad(all: 10),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            _headerCell(AppLocalizations.of(context)!.truckDriver2),
+            _verticalDivider(),
+            _headerCell(AppLocalizations.of(context)!.msgGatepastwo),
+            _verticalDivider(),
+            _headerCell(AppLocalizations.of(context)!.msgCommodityy),
+            _verticalDivider(),
+            _headerCell(AppLocalizations.of(context)!.status),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _headerCell(String text) {
+    return Expanded(
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontSize: Adaptive.sp(16),
+        ),
+      ),
+    );
+  }
+
+  Widget _verticalDivider() {
+    return const VerticalDivider(
+      color: Colors.white,
+      thickness: 1,
+    );
+  }
+
+  Widget bookingsLayout() {
+    return ref.watch(warehouseBookingsProvider).when(
+          data: (data) {
+            if (data.data == null || data.data!.isEmpty) {
+              return noStockData(); // Reuse your no data widget
+            }
+            return ListView.separated(
+              itemCount: data.data!.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              separatorBuilder: (_, __) => const Divider(height: 0),
+              itemBuilder: (context, index) {
+                final booking = data.data![index];
+                final isEven = index % 2 == 0;
+                return Container(
+                  color: isEven ? Colors.grey.shade100 : Colors.white,
+                  padding: const Pad(all: 10),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        _bookingCell(
+                          "${booking.vehicleNo}\n${booking.driverPhone}",
+                          onTap: () => _showTrackingModal(booking),
+                          underline: true,
+                          color: ColorConstant.maingreen,
+                        ),
+                        _verticalDivider(),
+                        _bookingCell("${booking.gatePass}"),
+                        _verticalDivider(),
+                        _bookingCell("${booking.cateName ?? ''}"),
+                        _verticalDivider(),
+                        Expanded(child: actionWidget(booking)),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+          error: (e, s) => Center(
+              child: Text(AppLocalizations.of(context)!.errorLoadingData)),
+          loading: () => SizedBox(
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: Center(child: defaultLoader()),
+          ),
+        );
+  }
+
+  Widget _bookingCell(String text,
+      {VoidCallback? onTap, bool underline = false, Color? color}) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: Adaptive.sp(15),
+            color: color ?? Colors.black,
+            decoration: underline ? TextDecoration.underline : null,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showTrackingModal(CaseIdDatum data) {
+    Get.bottomSheet(
+      ElevarmBottomSheet(
+        title:
+            'Case Status - ${data.caseId?.toLowerCase().contains('in') == true ? "Inwards" : "Outwards"}'
+                .tr,
+        onPressedClose: () => Get.back(),
+        initialChildSize: 1,
+        minChildSize: 1,
+        children: [
+          ElevarmStepper(
+            steps: [
+              ElevarmStepperStep(
+                  title: AppLocalizations.of(context)!.truckBook2,
+                  onTap: () {},
+                  subtitle: ""),
+              ElevarmStepperStep(title: 'Labour', onTap: () {}, subtitle: ""),
+              ElevarmStepperStep(
+                  title: AppLocalizations.of(context)!.firstKantaParchi,
+                  onTap: () {},
+                  subtitle: ""),
+              ElevarmStepperStep(
+                  title: AppLocalizations.of(context)!.firstQuality,
+                  onTap: () {},
+                  subtitle: ""),
+              ElevarmStepperStep(
+                  title: AppLocalizations.of(context)!.secondKantaParchi,
+                  onTap: () {},
+                  subtitle: ""),
+              ElevarmStepperStep(
+                  title: AppLocalizations.of(context)!.secondQualityReport,
+                  onTap: () {},
+                  subtitle: ""),
+              ElevarmStepperStep(
+                  title: AppLocalizations.of(context)!.cctvReport,
+                  onTap: () {},
+                  subtitle: ""),
+              ElevarmStepperStep(
+                  title: AppLocalizations.of(context)!.gatepassPending,
+                  onTap: () {},
+                  subtitle: ""),
+              ElevarmStepperStep(
+                  title: AppLocalizations.of(context)!.done2,
+                  onTap: () {},
+                  subtitle: ""),
+            ],
+            currentStep: _determineCurrentStep(data),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+    );
+  }
+
+  int _determineCurrentStep(CaseIdDatum data) {
+    if (data.truckbook == null) return 0;
+    if (data.labourbook == null) return 1;
+    if (data.firstKantaParchi == null) return 2;
+    if (data.firstQuality == null) return 3;
+    if (data.sKParchi == null) return 4;
+    if (data.sQualityReport == null) return 5;
+    if (data.cctvReport == null) return 6;
+    if (data.ivrReport == null) return 7;
+    if (data.gatepassReport == null) return 8;
+    return 9;
+  }
+
+  Widget actionWidget(CaseIdDatum? data) {
+    final textStyle =
+        TextStyle(fontSize: Adaptive.sp(14), fontWeight: FontWeight.bold);
+    if (data == null) return const SizedBox();
+
+    if (data.labourbook == null) {
+      return _statusLabel(
+          AppLocalizations.of(context)!.labourPending2, Colors.orange);
+    }
+    if (data.firstKantaParchi == null) {
+      return _statusLabel(
+          AppLocalizations.of(context)!.firstKantaPending3, Colors.orange);
+    }
+    if (data.firstQuality == null) {
+      return _statusLabel(
+          AppLocalizations.of(context)!.firstQualityPending3, Colors.orange);
+    }
+    if (data.firstQuality != null && data.fqTagging == null) {
+      return ElevatedButton(
+        style: AppStyle.buttonStyle,
+        onPressed: () => _showQualityApprovalDialog(data),
+        child: Text(
+          AppLocalizations.of(context)!.verify2,
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
+    if (data.fqTagging != null && data.sKParchi == null) {
+      return _statusLabel(
+          AppLocalizations.of(context)!.secondKantaParchiPending3,
+          Colors.orange);
+    }
+    if (data.sQualityReport == null) {
+      return _statusLabel(
+          AppLocalizations.of(context)!.secondQualityReportPending3,
+          Colors.orange);
+    }
+    if (data.cctvReport == null) {
+      return _statusLabel(
+          AppLocalizations.of(context)!.cctvPending, Colors.orange);
+    }
+    if (data.ivrReport == null) {
+      return _statusLabel(
+          AppLocalizations.of(context)!.gatepassRecommended3, Colors.blue);
+    }
+    if (data.gatepassReport == null) {
+      return _statusLabel(
+          AppLocalizations.of(context)!.gatepassPending, Colors.blue);
+    }
+    return _statusLabel(AppLocalizations.of(context)!.done2, Colors.green);
+  }
+
+  Widget _statusLabel(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        border: Border.all(color: color),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: Adaptive.sp(13),
+        ),
+      ),
+    );
+  }
+
+  void _showQualityApprovalDialog(CaseIdDatum? data) {
+    ref
+        .watch(
+            bookingQualityParametersProvider(caseId: "${data?.caseId}").future)
+        .then((value) {
+      if (value.status.toString() == "1") {
+        Get.defaultDialog(
+          contentPadding: const EdgeInsets.all(0),
+          title: AppLocalizations.of(context)!.qualityReport,
+          titleStyle: TextStyle(
+            fontSize: Adaptive.sp(17),
+            fontWeight: FontWeight.w700,
+          ),
+          content: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: ColumnSuper(
+              children: [
+                // DataTable
+                SizedBox(
+                  width: Get.width,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: DataTable(
+                      headingRowColor:
+                          WidgetStateProperty.all(ColorConstant.maingreen),
+                      columnSpacing: 36,
+                      headingTextStyle: const TextStyle(color: Colors.white),
+                      showBottomBorder: true,
+                      columns: [
+                        DataColumn(
+                          label: Center(
+                            child: Text(
+                              AppLocalizations.of(context)!.name3,
+                              style: TextStyle(
+                                fontSize: Adaptive.sp(16),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        DataColumn(
+                          label: Center(
+                            child: Text(
+                              AppLocalizations.of(context)!.value,
+                              style: TextStyle(
+                                fontSize: Adaptive.sp(16),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                      rows: List.generate(
+                        value.data?.length ?? 0,
+                        (index) => DataRow(
+                          color: WidgetStateProperty.all(
+                            index % 2 == 0
+                                ? Colors.white
+                                : Colors.grey.withOpacity(0.1),
+                          ),
+                          cells: [
+                            DataCell(
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  '${value.data?[index].parameter}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: Adaptive.sp(15),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  '${value.data?[index].value}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: Adaptive.sp(15),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Live Insects
+                _infoRow(AppLocalizations.of(context)!.live3,
+                    '${value.liveInsects ?? 0}'),
+
+                const SizedBox(height: 6),
+                const ElevarmDivider(),
+
+                // Quality Claim
+                _infoRow(
+                    'Quality Claim\n(Per Qtl.)', '₹${value.qvAmount ?? 0}'),
+
+                const SizedBox(height: 16),
+
+                // Approve / Reject Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevarmPrimaryButton.text(
+                        buttonThemeData: ElevarmPrimaryButtonThemeData(
+                          primaryColor: ColorConstant.maingreen,
+                        ),
+                        text: AppLocalizations.of(context)!.approve3,
+                        onPressed: () {
+                          ref
+                              .watch(
+                            approveBookingParametersProvider(
+                              caseId: "${data?.caseId}",
+                            ).future,
+                          )
+                              .then((res) {
+                            if (res['status'].toString() == "1") {
+                              ref.invalidate(warehouseBookingsProvider);
+                              Fluttertoast.showToast(
+                                msg: res['message'],
+                                toastLength: Toast.LENGTH_LONG,
+                                backgroundColor: Colors.green,
+                              );
+                              Get.back(); // Close dialog
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevarmPrimaryButton.text(
+                        buttonThemeData: ElevarmPrimaryButtonThemeData(
+                          primaryColor: ElevarmColors.danger,
+                        ),
+                        text: AppLocalizations.of(context)!.reject,
+                        onPressed: () {
+                          ref
+                              .watch(
+                            rejectQualityProvider(
+                              caseId: "${data?.caseId}",
+                            ).future,
+                          )
+                              .then((res) {
+                            if (res['status'].toString() == "1") {
+                              ref.invalidate(warehouseBookingsProvider);
+                              Fluttertoast.showToast(
+                                msg: res['message'],
+                                toastLength: Toast.LENGTH_LONG,
+                                backgroundColor: Colors.green,
+                              );
+                              Get.back(); // Close dialog
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        );
+      }
+    }).onError((e, s) {});
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: Adaptive.sp(15),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: Adaptive.sp(15),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

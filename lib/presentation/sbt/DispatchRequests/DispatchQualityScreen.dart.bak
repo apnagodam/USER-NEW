@@ -1,0 +1,484 @@
+import 'package:apnagodam/core/constants/constants.dart';
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/presentation/my_Stock/my_stock_impl/service/my_stock_impl.dart';
+import 'package:apnagodam/presentation/sbt/service/SbtService.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+
+class Dispatchqualityscreen extends ConsumerStatefulWidget {
+  final String? dispatchRequestId;
+  final String? sbtOrderId;
+  const Dispatchqualityscreen(
+      {super.key, this.dispatchRequestId, required this.sbtOrderId});
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _DispatchqualityscreenState();
+}
+
+class _DispatchqualityscreenState extends ConsumerState<Dispatchqualityscreen> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _bagsController = TextEditingController();
+
+  bool _isAddingParameter = false;
+  List<TextEditingController> _valueControllers = [];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _weightController.dispose();
+    _bagsController.dispose();
+    for (var controller in _valueControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+        title: const Text(
+          'Quality Parameters',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: Pad(all: 00),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Add Parameter Form (shown when _isAddingParameter is true)
+              if (_isAddingParameter) _buildAddParameterForm(),
+
+              // Quality Parameters List
+              ref
+                  .watch(dispatchRequestQualityParamsProvider(
+                      id: widget.dispatchRequestId,
+                      sbtOrderId: widget.sbtOrderId!))
+                  .when(
+                    data: (data) {
+                      final parameters = data['data'] as List<dynamic>? ?? [];
+                      if (parameters.isEmpty) {
+                        return noDataFoundOrders();
+                      }
+
+                      // Initialize controllers if needed
+                      if (_valueControllers.length != parameters.length) {
+                        // Dispose existing controllers
+                        for (var controller in _valueControllers) {
+                          controller.dispose();
+                        }
+                        // Create new controllers
+                        _valueControllers = List.generate(
+                          parameters.length,
+                          (i) => TextEditingController(),
+                        );
+                      }
+
+                      return _buildQualityParametersTable(parameters);
+                    },
+                    error: (e, s) => Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline,
+                              size: 48, color: Colors.red[400]),
+                          SizedBox(height: 16),
+                          Text(
+                            'Failed to load quality parameters',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          ElevatedButton(
+                            onPressed: () => ref.invalidate(
+                                dispatchRequestQualityParamsProvider),
+                            child: Text(AppLocalizations.of(context)!.Retry),
+                          ),
+                        ],
+                      ),
+                    ),
+                    loading: () => Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddParameterForm() {
+    return Container(
+      margin: Pad(bottom: 20),
+      child: ElevarmNeutralCard(
+        child: Padding(
+          padding: Pad(all: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Add Quality Parameter',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: 20),
+
+              // Parameter Name
+              ElevarmTextInputField(
+                label: 'Parameter Name',
+                hintText: 'e.g., FM, Moisture, Dana',
+                controller: _nameController,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Parameter name is required';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 24),
+
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevarmPrimaryButton.text(
+                      text: 'Cancel',
+                      onPressed: _toggleAddParameterForm,
+                      buttonThemeData: ElevarmPrimaryButtonThemeData(
+                        primaryColor: Colors.grey,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: ElevarmPrimaryButton.text(
+                      text: 'Add Parameter',
+                      onPressed: _submitQualityParameter,
+                      buttonThemeData: ElevarmPrimaryButtonThemeData(
+                        primaryColor: ColorConstant.maingreen,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQualityParametersTable(List<dynamic> parameters) {
+    return Column(
+      children: [
+        // Header
+        Container(
+          padding: Pad(all: 10),
+          decoration: BoxDecoration(color: ColorConstant.maingreen),
+          child: IntrinsicHeight(
+            child: Row(children: [
+              Expanded(
+                  child: Text(
+                "Parameter".tr,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 16.sp),
+              )),
+              VerticalDivider(),
+              Expanded(
+                  child: Text(
+                "Max".tr,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 16.sp),
+              )),
+              VerticalDivider(),
+              Expanded(
+                  child: Text(
+                "Min".tr,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 16.sp),
+              )),
+              VerticalDivider(),
+              Expanded(
+                  child: Text(
+                "Enter Value".tr,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 16.sp),
+              )),
+            ]),
+          ),
+        ),
+        // Parameters List
+        ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: parameters.length,
+          itemBuilder: (context, index) {
+            final parameter = parameters[index] as Map<String, dynamic>;
+            return Container(
+              color:
+                  index % 2 == 0 ? Colors.grey.withOpacity(0.2) : Colors.white,
+              padding: Pad(all: 10),
+              child: IntrinsicHeight(
+                child: Row(children: [
+                  Expanded(
+                      child: Text(
+                    "${parameter['name'] ?? 'N/A'}",
+                    textAlign: TextAlign.center,
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp),
+                  )),
+                  VerticalDivider(),
+                  Expanded(
+                      child: Text(
+                    "${parameter['max'] ?? 'N/A'}",
+                    textAlign: TextAlign.center,
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp),
+                  )),
+                  VerticalDivider(),
+                  Expanded(
+                      child: Text(
+                    "${parameter['min'] ?? 'N/A'}",
+                    textAlign: TextAlign.center,
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp),
+                  )),
+                  VerticalDivider(),
+                  Expanded(
+                      child: Padding(
+                    padding: Pad(horizontal: 8),
+                    child: ElevarmTextInputField(
+                      controller: _valueControllers[index],
+                      hintText: 'Enter value',
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Invalid number';
+                        }
+                        return null;
+                      },
+                    ),
+                  )),
+                ]),
+              ),
+            );
+          },
+        ),
+        SizedBox(height: 20),
+        // Weight and Bags Fields
+        ElevarmNeutralCard(
+          child: Padding(
+            padding: Pad(all: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Dispatch Details',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevarmTextInputField(
+                        label: 'Weight (in Quintals)',
+                        controller: _weightController,
+                        hintText: 'Enter weight',
+                        keyboardType:
+                            TextInputType.numberWithOptions(decimal: true),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Weight is required';
+                          }
+                          if (double.tryParse(value) == null) {
+                            return 'Enter a valid weight';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: ElevarmTextInputField(
+                        label: 'Number of Bags',
+                        controller: _bagsController,
+                        hintText: 'Enter bags count',
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Bags count is required';
+                          }
+                          if (int.tryParse(value) == null) {
+                            return 'Enter a valid number';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 20),
+        // Submit Button
+        ElevarmPrimaryButton.text(
+          text: 'Submit Quality Data',
+          onPressed: _submitQualityData,
+          buttonThemeData: ElevarmPrimaryButtonThemeData(
+            primaryColor: ColorConstant.maingreen,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _toggleAddParameterForm() {
+    setState(() {
+      _isAddingParameter = !_isAddingParameter;
+      if (!_isAddingParameter) {
+        // Clear form when closing
+        _nameController.clear();
+        _formKey.currentState?.reset();
+      }
+    });
+  }
+
+  void _submitQualityParameter() {
+    if (_formKey.currentState?.validate() ?? false) {
+      // TODO: Implement API call to add quality parameter
+      final parameterData = {
+        'name': _nameController.text.trim(),
+        'dispatch_request_id': widget.dispatchRequestId,
+      };
+
+      // For now, just show a success message
+      Fluttertoast.showToast(
+        msg: 'Quality parameter added successfully!',
+        backgroundColor: Colors.green[600],
+      );
+
+      // Close the form and refresh the list
+      _toggleAddParameterForm();
+      ref.invalidate(dispatchRequestQualityParamsProvider);
+
+      print('Adding quality parameter: $parameterData');
+      // TODO: Call the API to add the parameter
+    }
+  }
+
+  void _submitQualityData() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      try {
+        // Prepare the data in the required format
+        final Map<String, dynamic> qualityData = {
+          'id': widget.dispatchRequestId,
+          'sbt_order_id': widget.sbtOrderId,
+          'weight': _weightController.text,
+          'bags': _bagsController.text,
+        };
+
+        // Get parameters data synchronously
+        final paramsResponse = await ref.watch(
+            dispatchRequestQualityParamsProvider(
+                    id: widget.dispatchRequestId,
+                    sbtOrderId: widget.sbtOrderId ?? "")
+                .future);
+        final parameters = paramsResponse['data'] as List<dynamic>? ?? [];
+
+        // Add parameters in the array format
+        for (int i = 0;
+            i < parameters.length && i < _valueControllers.length;
+            i++) {
+          final parameter = parameters[i] as Map<String, dynamic>;
+          final value = _valueControllers[i].text.trim();
+
+          if (value.isNotEmpty) {
+            qualityData['parameters[$i][id]'] = parameter['id'].toString();
+            qualityData['parameters[$i][value]'] = value;
+          }
+        }
+
+        // Call the API directly using dio
+        final response = await ref.watch(dioProvider).post(
+              updateDispatchQualityParams,
+              data: qualityData,
+            );
+
+        // Handle the response
+        if (response.data['status'].toString() == "1") {
+          Fluttertoast.showToast(
+            msg: response.data['message']?.toString() ??
+                'Quality data updated successfully!',
+            backgroundColor: ColorConstant.maingreen,
+          );
+          ref.invalidate(dispatchListingNewProvider);
+          // Navigate back or refresh the screen (check if mounted)
+          if (mounted) {
+            Navigator.of(context).pop(true);
+          }
+        } else {
+          Fluttertoast.showToast(
+            msg: response.data['message']?.toString() ??
+                'Failed to update quality data',
+            backgroundColor: Colors.red[600],
+          );
+        }
+
+        print('API Request Data: $qualityData');
+        print('API Response: ${response.data}');
+      } catch (e) {
+        Fluttertoast.showToast(
+          msg: 'Error updating quality data: ${e.toString()}',
+          backgroundColor: Colors.red[600],
+        );
+        print('Error: $e');
+      }
+    }
+  }
+}

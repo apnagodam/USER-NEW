@@ -1,0 +1,115 @@
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/presentation/my_Stock/my_stock_impl/model/StacksListModel.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+
+class StackCard extends StatelessWidget {
+  final StacksDatum stack;
+
+  const StackCard({super.key, required this.stack});
+
+  @override
+  Widget build(BuildContext context) {
+    return DottedBorder(
+        borderType: BorderType.RRect,
+        radius: const Radius.circular(10),
+        dashPattern: const [8, 4],
+        strokeWidth: 1.2,
+        color: ColorConstant.maingreen,
+        child: Column(
+          children: [
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 3,
+              shadowColor: Colors.grey.shade300,
+              margin: EdgeInsets.zero,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  gradient: LinearGradient(
+                    colors: [Colors.white, Colors.grey.shade100],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                          color: ColorConstant.maingreen,
+                          borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(8),
+                              topRight: Radius.circular(8))),
+                      child: Text(
+                       "Stack No.".tr+ " ${stack.stackNumber}",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: Adaptive.sp(15),
+                            color: Colors.white),
+                      ),
+                    ),
+                    Padding(
+                        padding: Pad(all: 10),
+                        child: Column(
+                          children: [
+                            Text(
+                              "${stack.stackType}",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: Adaptive.sp(14)),
+                            ),
+                            Divider(
+                              color: Colors.grey.shade300,
+                              thickness: 1,
+                              height: 5,
+                            ),
+                            Text(
+                            AppLocalizations.of(context)!.Quantity+  " \n${stack.quantity} Qtl.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: Adaptive.sp(13)),
+                            ),
+                            Text(
+                             AppLocalizations.of(context)!.msgBags+ " \n${num.parse("${stack.bags}").toStringAsFixed(0)}",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: Adaptive.sp(13)),
+                            ),
+                          ],
+                        )),
+                    if (stack.stackType.toString().toLowerCase() == "dedicated")
+                      Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                            color: ColorConstant.maingreen,
+                            borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(8),
+                                bottomRight: Radius.circular(8))),
+                        child: Text(
+                          AppLocalizations.of(context)!.msgSell,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: Adaptive.sp(15),
+                              color: Colors.white),
+                        ),
+                      )
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ));
+  }
+}

@@ -1,0 +1,277 @@
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/presentation/BusinessProfile/BusinessProfile.dart';
+import 'package:apnagodam/presentation/BusinessProfile/Model/BusinessListingModel.dart';
+import 'package:apnagodam/presentation/BusinessProfile/Service/BusinessProfileService.dart';
+import 'package:apnagodam/widgets/enums.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+
+class Businessprofilelisting extends ConsumerStatefulWidget {
+  const Businessprofilelisting({super.key});
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _BusinessprofilelistingState();
+}
+
+class _BusinessprofilelistingState
+    extends ConsumerState<Businessprofilelisting> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        actions: [
+          IconButton(
+              onPressed: () {
+                Get.to(Businessprofile());
+              },
+              icon: const Icon(Icons.edit))
+        ],
+        title: Text("Business Profile".tr),
+      ),
+      body: businessProfileLayout(),
+    );
+  }
+
+  Widget businessProfileLayout() {
+    return ListView(
+      padding: Pad(all: 10),
+      children: [
+        ref.watch(businessProfilesProvider).when(
+            data: (data) {
+              if (data.data?.type == BusinessProfileType.farmer.type) {
+                return farmerLayout(data);
+              } else if (data.data?.type == BusinessProfileType.investor.type) {
+                return investorLayout(data);
+              } else if (data.data?.type == BusinessProfileType.trader.type) {
+                return traderLayout(data);
+              } else if (data.data?.type ==
+                  BusinessProfileType.processor.type) {
+                return processorLayout(data);
+              }
+              return noDataFoundOrders();
+            },
+            error: (e, s) => Container(),
+            loading: () => defaultLoader())
+      ],
+    );
+  }
+
+  farmerLayout(BusinessLIstingModel data) => Column(
+        children: [
+          ElevarmTextInputField(
+            label: AppLocalizations.of(context)!.msgState,
+            hintText: AppLocalizations.of(context)!.msgState,
+            initialValue: "${data.data?.state ?? ""}",
+            isRequired: true,
+            enabled: false,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ElevarmTextInputField(
+            label: AppLocalizations.of(context)!.msgDistrict,
+            hintText: AppLocalizations.of(context)!.msgDistrict,
+            initialValue: "${data.data?.district ?? ""}",
+            isRequired: true,
+            enabled: false,
+            keyboardType: TextInputType.text,
+          ),
+          ElevarmTextInputField(
+            label: 'Khasra Number'.tr,
+            enabled: false,
+            hintText: 'Khasra Number'.tr,
+            initialValue: "${data.data?.khasraNo ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ElevarmTextInputField(
+            label: 'Tehsil Name'.tr,
+            enabled: false,
+            hintText: 'Tehsil Name'.tr,
+            initialValue: "${data.data?.tehsil ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ElevarmTextInputField(
+            label: 'Area in Acres'.tr,
+            enabled: false,
+            hintText: 'Area in Acres'.tr,
+            initialValue: "${data.data?.landMap ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ElevarmTextInputField(
+            label: AppLocalizations.of(context)!.msgCommodityy,
+            hintText: AppLocalizations.of(context)!.msgCommodityy,
+            initialValue: "${data.data?.commodity ?? ""}",
+            isRequired: true,
+            enabled: false,
+            keyboardType: TextInputType.text,
+          ),
+        ],
+      );
+
+  investorLayout(BusinessLIstingModel data) => Column(
+        children: [
+          ElevarmTextInputField(
+            label: AppLocalizations.of(context)!.msgState,
+            hintText: AppLocalizations.of(context)!.msgState,
+            enabled: false,
+            initialValue: "${data.data?.stateName ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ElevarmTextInputField(
+            label: AppLocalizations.of(context)!.msgDistrict,
+            hintText: AppLocalizations.of(context)!.msgDistrict,
+            enabled: false,
+            initialValue: "${data.data?.district ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          ElevarmTextInputField(
+            label: 'Investment Amount'.tr,
+            enabled: false,
+            hintText: 'Investment Amount'.tr,
+            initialValue: "${data.data?.investerAnnualCapicity ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ElevarmTextInputField(
+            enabled: false,
+            label: AppLocalizations.of(context)!.Commodities,
+            hintText: AppLocalizations.of(context)!.Commodities,
+            initialValue: "${data.data?.commodity ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+        ],
+      );
+
+  traderLayout(BusinessLIstingModel data) => Column(
+        children: [
+          ElevarmTextInputField(
+            label: AppLocalizations.of(context)!.msgState,
+            hintText: AppLocalizations.of(context)!.msgState,
+            enabled: false,
+            initialValue: "${data.data?.state ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ElevarmTextInputField(
+            label: AppLocalizations.of(context)!.msgDistrict,
+            hintText: AppLocalizations.of(context)!.msgDistrict,
+            enabled: false,
+            initialValue: "${data.data?.district ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          ElevarmTextInputField(
+            label: AppLocalizations.of(context)!.Commodities,
+            hintText: AppLocalizations.of(context)!.Commodities,
+            enabled: false,
+            initialValue: "${data.data?.commodity ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ElevarmTextInputField(
+            label: AppLocalizations.of(context)!.Turnover,
+            enabled: false,
+            hintText: AppLocalizations.of(context)!.Turnover,
+            initialValue: "${data.data?.dailyCapacity ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+        ],
+      );
+
+  processorLayout(BusinessLIstingModel data) => Column(
+        children: [
+          ElevarmTextInputField(
+            label: AppLocalizations.of(context)!.msgState,
+            enabled: false,
+            hintText: AppLocalizations.of(context)!.msgState,
+            initialValue: "${data.data?.state ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ElevarmTextInputField(
+            enabled: false,
+            label: AppLocalizations.of(context)!.msgDistrict,
+            hintText: AppLocalizations.of(context)!.msgDistrict,
+            initialValue: "${data.data?.district ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          ElevarmTextInputField(
+            label: AppLocalizations.of(context)!.Commodities,
+            hintText: AppLocalizations.of(context)!.Commodities,
+            initialValue: "${data.data?.commodity ?? ""}",
+            enabled: false,
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ElevarmTextInputField(
+            label: 'Facility Type'.tr,
+            hintText: 'Facility Type'.tr,
+            enabled: false,
+            initialValue: "${data.data?.summery ?? ""}",
+            isRequired: true,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          ElevarmTextInputField(
+            label: 'Mill Capacity'.tr,
+            hintText: 'Mill Capacity'.tr,
+            initialValue: "${data.data?.milsType ?? ""}",
+            isRequired: true,
+            enabled: false,
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+        ],
+      );
+}

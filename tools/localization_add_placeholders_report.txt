@@ -1,0 +1,30 @@
+Added the following keys to ARB files:
+lib/l10n/app_en.arb: selectDestinationTerminalOrLocation
+lib/l10n/app_en.arb: selectPickUpLocationTerminalOrLocation
+lib/l10n/app_en.arb: totalPendingAmountNRentLoanInterest
+lib/l10n/app_en.arb: selectClearingAndForwardingAgent
+lib/l10n/app_en.arb: fcmTokenNotAvailableYetPleaseWait
+lib/l10n/app_hi.arb: selectDestinationTerminalOrLocation
+lib/l10n/app_hi.arb: selectPickUpLocationTerminalOrLocation
+lib/l10n/app_hi.arb: totalPendingAmountNRentLoanInterest
+lib/l10n/app_hi.arb: selectClearingAndForwardingAgent
+lib/l10n/app_hi.arb: fcmTokenNotAvailableYetPleaseWait
+lib/l10n/app_kn.arb: selectDestinationTerminalOrLocation
+lib/l10n/app_kn.arb: selectPickUpLocationTerminalOrLocation
+lib/l10n/app_kn.arb: totalPendingAmountNRentLoanInterest
+lib/l10n/app_kn.arb: selectClearingAndForwardingAgent
+lib/l10n/app_kn.arb: fcmTokenNotAvailableYetPleaseWait
+lib/l10n/app_en.arb: removingGoods
+lib/l10n/app_en.arb: fuminationsand
+lib/l10n/app_en.arb: theFacility
+lib/l10n/app_en.arb: youCanApply
+lib/l10n/app_hi.arb: removingGoods
+lib/l10n/app_hi.arb: fuminationsand
+lib/l10n/app_hi.arb: theFacility
+lib/l10n/app_hi.arb: youCanApply
+lib/l10n/app_kn.arb: removingGoods
+lib/l10n/app_kn.arb: fuminationsand
+lib/l10n/app_kn.arb: theFacility
+lib/l10n/app_kn.arb: youCanApply
+
+Skipped (already present):

@@ -1,0 +1,466 @@
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/presentation/commodity_finance/service/commodity_finance_service.dart';
+import 'package:apnagodam/presentation/my_Stock/my_stock_impl/service/my_stock_impl.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+
+import '../../core/utils/color_constant.dart';
+import '../../core/utils/progress_dialog_utils.dart';
+import '../../core/utils/theme/app_style.dart';
+import '../../widgets/CommonTextField.dart';
+import '../../widgets/dailogs/error.dart';
+import '../dashboard/dashboard_screen.dart';
+import '../my_Stock/my_stock_impl/service/my_stock_provider.dart';
+import 'commodity_finance_screen.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class FinanceBank extends ConsumerStatefulWidget {
+  const FinanceBank({super.key});
+
+  @override
+  ConsumerState<FinanceBank> createState() => _FinanceBankState();
+}
+
+class _FinanceBankState extends ConsumerState<FinanceBank> {
+  TextEditingController amountcontroller = TextEditingController();
+  var selectedBankIndex = StateProvider<int?>((ref) => null);
+  String bankId = '';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        extendBody: true,
+        appBar: AppBar(
+          backgroundColor: ColorConstant.maingreen,
+          centerTitle: true,
+          title: Text(
+            AppLocalizations.of(context)!.msgCommodityfinance,
+          ),
+          actions: [
+            TextButton(
+                onPressed: () {
+                  Get.to(CommodityFinance());
+                },
+                child: Text(
+                  'Summary',
+                  style: TextStyle(color: Colors.white),
+                ))
+          ],
+        ),
+        body: Stack(
+          children: [
+            SizedBox(
+              height: Get.height,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(
+                        left: 4.0, right: 4, bottom: 8.0, top: 15.0),
+                    child: CommonTextField(
+                      controller: amountcontroller,
+                      label: AppLocalizations.of(context)!.enterAmt,
+                      textInputAction: TextInputAction.next,
+                      inputType: TextInputType.number,
+                      enabled: true,
+                      isOnlyDigit: true,
+                      isRequired: false,
+                    ),
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(top: 8.0, left: 3.0, right: 3.0),
+                    child: Container(
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                          color: ColorConstant.maingreen,
+                          borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(8),
+                              topRight: Radius.circular(8))),
+                      child: Center(
+                        child: Text(
+                          AppLocalizations.of(context)!.msgChoosebank,
+                          style: AppStyle.lblviewbtnwithdraw
+                              .copyWith(fontSize: Adaptive.sp(16)),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                      child: ref.watch(financeBanksListProvider).when(
+                          data: (financeData) => ListView.builder(
+                              padding: EdgeInsets.only(bottom: 10),
+                              itemCount: financeData.banks?.length ?? 0,
+                              itemBuilder: (BuildContext context, int index) {
+                                return Padding(
+                                    padding: Pad(horizontal: 10, vertical: 10),
+                                    child: InkWell(
+                                      onTap: () {
+                                        ref
+                                            .watch(selectedBankIndex.notifier)
+                                            .state = index;
+
+                                        bankId =
+                                            "${financeData.banks?[index].id}";
+                                      },
+                                      child: Container(
+                                          padding:
+                                              EdgeInsets.fromLTRB(5, 8, 8, 5),
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: ColorConstant.maingreen,
+                                              ),
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                                colors: [
+                                                  Colors.orangeAccent.shade100
+                                                      .withOpacity(0.5),
+                                                  Colors.orangeAccent.shade100
+                                                      .withOpacity(0.7),
+                                                  Colors.orangeAccent.shade100
+                                                ],
+                                              )),
+                                          child: ColumnSuper(
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    bottom: 5.0),
+                                                child: RowSuper(
+                                                  outerDistance: 5,
+                                                  fitHorizontally: true,
+                                                  children: [
+                                                    Text(
+                                                        AppLocalizations.of(
+                                                                context)!
+                                                            .msgBankname,
+                                                        style: TextStyle(
+                                                            color: ColorConstant
+                                                                .maingreen,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            fontSize:
+                                                                Adaptive.sp(
+                                                                    16))),
+                                                    Text(
+                                                        '${financeData.banks?[index].bankName}',
+                                                        style: TextStyle(
+                                                            color: ColorConstant
+                                                                .maingreen,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            fontSize:
+                                                                Adaptive.sp(
+                                                                    16)))
+                                                  ],
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: 10,
+                                              ),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                      child: ColumnSuper(
+                                                    alignment:
+                                                        Alignment.topLeft,
+                                                    children: [
+                                                      Text.rich(TextSpan(
+                                                          text: AppLocalizations.of(context)!.msgProcessing3,
+                                                          style: AppStyle
+                                                              .bankliststl
+                                                              .copyWith(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16)),
+                                                          children: [
+                                                            TextSpan(
+                                                                text: financeData
+                                                                    .banks?[
+                                                                        index]
+                                                                    .processingFee
+                                                                    .toString())
+                                                          ])),
+                                                      Text.rich(TextSpan(
+                                                          text:
+                                                              AppLocalizations.of(context)!.msgLoanpertotal3,
+                                                          style: AppStyle
+                                                              .bankliststl
+                                                              .copyWith(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16)),
+                                                          children: [
+                                                            TextSpan(
+                                                                text: financeData
+                                                                    .banks?[
+                                                                        index]
+                                                                    .loanPerTotalAmount
+                                                                    .toString())
+                                                          ])),
+                                                      Text.rich(TextSpan(
+                                                          text: AppLocalizations
+                                                                  .of(context)!
+                                                              .msgApr,
+                                                          style: AppStyle
+                                                              .bankliststl
+                                                              .copyWith(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16)),
+                                                          children: [
+                                                            TextSpan(
+                                                                text: financeData
+                                                                    .banks?[
+                                                                        index]
+                                                                    .apr
+                                                                    .toString())
+                                                          ])),
+                                                      Text.rich(TextSpan(
+                                                          text:
+                                                              AppLocalizations.of(context)!.msgGeneratorname2,
+                                                          style: AppStyle
+                                                              .bankliststl
+                                                              .copyWith(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16)),
+                                                          children: [
+                                                            TextSpan(
+                                                                text: financeData
+                                                                            .banks?[
+                                                                                index]
+                                                                            .guarantor ==
+                                                                        null
+                                                                    ? ""
+                                                                    : financeData
+                                                                        .banks?[
+                                                                            index]
+                                                                        .guarantor
+                                                                        .toString())
+                                                          ])),
+                                                      Text.rich(TextSpan(
+                                                          text: AppLocalizations
+                                                                  .of(context)!
+                                                              .msgTenor,
+                                                          style: AppStyle
+                                                              .bankliststl
+                                                              .copyWith(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16)),
+                                                          children: [
+                                                            TextSpan(
+                                                                text: financeData
+                                                                    .banks?[
+                                                                        index]
+                                                                    .tenor
+                                                                    .toString())
+                                                          ])),
+                                                    ],
+                                                  )),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            right: 8.0),
+                                                    child: VerticalDivider(
+                                                      color: Colors.blueGrey,
+                                                      thickness: 1,
+                                                      width: 1,
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                      child: ColumnSuper(
+                                                    alignment:
+                                                        Alignment.topLeft,
+                                                    children: [
+                                                      Text.rich(TextSpan(
+                                                          text:
+                                                              AppLocalizations.of(context)!.msgInterestrate3,
+                                                          style: AppStyle
+                                                              .bankliststl
+                                                              .copyWith(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16)),
+                                                          children: [
+                                                            TextSpan(
+                                                                text: financeData
+                                                                    .banks?[
+                                                                        index]
+                                                                    .interestRate
+                                                                    .toString())
+                                                          ])),
+                                                      Text.rich(TextSpan(
+                                                          text:
+                                                              AppLocalizations.of(context)!.msgDisbursement3,
+                                                          style: AppStyle
+                                                              .bankliststl
+                                                              .copyWith(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16)),
+                                                          children: [
+                                                            TextSpan(
+                                                                text: financeData
+                                                                    .banks?[
+                                                                        index]
+                                                                    .loanPassDays
+                                                                    .toString())
+                                                          ])),
+                                                      Text.rich(TextSpan(
+                                                          text: AppLocalizations.of(context)!.msgSanctioned3,
+                                                          style: AppStyle
+                                                              .bankliststl
+                                                              .copyWith(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16)),
+                                                          children: [
+                                                            TextSpan(
+                                                                text: financeData
+                                                                    .banks?[
+                                                                        index]
+                                                                    .sanctionLimit
+                                                                    .toString())
+                                                          ])),
+                                                      Text.rich(TextSpan(
+                                                          text:
+                                                              AppLocalizations.of(context)!.msgGuaranteecommiss2,
+                                                          style: AppStyle
+                                                              .bankliststl
+                                                              .copyWith(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16)),
+                                                          children: [
+                                                            TextSpan(
+                                                              text:
+                                                                  "${financeData.banks?[index].guaranteeFee.toString()}%",
+                                                            )
+                                                          ])),
+                                                    ],
+                                                  )),
+                                                  InkWell(
+                                                    onTap: () {
+                                                      ref
+                                                          .watch(
+                                                              selectedBankIndex
+                                                                  .notifier)
+                                                          .state = index;
+
+                                                      bankId =
+                                                          "${financeData.banks?[index].id}";
+                                                    },
+                                                    child: Container(
+                                                      height: Adaptive.sp(17),
+                                                      width: Adaptive.sp(17),
+                                                      alignment:
+                                                          Alignment.topCenter,
+                                                      decoration: BoxDecoration(
+                                                        border: Border.all(
+                                                            color: ColorConstant
+                                                                .maingreen,
+                                                            width: 1.5),
+                                                      ),
+                                                      child: Center(
+                                                          child: Icon(
+                                                        Icons.check,
+                                                        size: Adaptive.sp(16),
+                                                        color: ref.watch(
+                                                                    selectedBankIndex) ==
+                                                                index
+                                                            ? ColorConstant
+                                                                .maingreen
+                                                            : Colors
+                                                                .transparent,
+                                                      )),
+                                                    ),
+                                                  )
+                                                ],
+                                              )
+                                            ],
+                                          )),
+                                    ));
+                              }),
+                          error: (e, s) => noStockData(context),
+                          loading: () => defaultLoader())),
+                  SizedBox(
+                    height: 10,
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: Pad(all: 10),
+              child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SizedBox(
+                    width: Get.width,
+                    child: ElevatedButton(
+                      style: AppStyle.buttonStyle,
+                      onPressed: () {
+                        if (bankId.isEmpty ||
+                            ref.watch(selectedBankIndex) == null) {
+                          Get.rawSnackbar(
+                              message: AppLocalizations.of(context)!.chooseBank,
+                              duration: const Duration(seconds: 10),
+                              backgroundColor: ColorConstant.red500);
+                        } else if (amountcontroller.text.isEmpty) {
+                          Get.rawSnackbar(
+                              message:
+                                  AppLocalizations.of(context)!.enterAmount,
+                              duration: const Duration(seconds: 10),
+                              backgroundColor: ColorConstant.red500);
+                        } else {
+                          ref
+                              .watch(checkSanctionLimitProvider(bankId: bankId)
+                                  .future)
+                              .then((value) {
+                            ref
+                                .watch(applySenctionLimitProvider(
+                                        bankId: bankId,
+                                        requestedAmount: amountcontroller.text)
+                                    .future)
+                                .then((value) async {
+                              ref.invalidate(myStockProvider);
+
+                              Get.rawSnackbar(
+                                  message: value.message,
+                                  duration: const Duration(seconds: 15),
+                                  backgroundColor: ColorConstant.greenA400);
+                              Get.off(DashboardScreen());
+                            }).onError((e, s) {
+                              errorBottomSheet(context, "$e");
+                            });
+
+                            // Get.off(HtmlDataViewer(
+                            //   htmlData: value["view"],
+                            //   bankId: bankId,
+                            //   amount: amountcontroller.text,
+                            //   dailog: '',
+                            // ));
+                          }).onError((e, s) {
+                            errorBottomSheet(context, "$e");
+                          });
+                        }
+                      },
+                      child: Padding(
+                        padding: Pad(all: 5),
+                        child: Text(
+                          AppLocalizations.of(context)!.msgApply,
+                          style: TextStyle(
+                              color: Colors.white, fontSize: Adaptive.sp(16)),
+                        ),
+                      ),
+                    ),
+                  )),
+            )
+          ],
+        ));
+  }
+}

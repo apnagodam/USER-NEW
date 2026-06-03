@@ -1,0 +1,376 @@
+import 'dart:typed_data';
+
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/comman_dailog.dart';
+import 'package:apnagodam/core/utils/helper.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/extensions/extensions.dart';
+import 'package:apnagodam/presentation/home_screen/controller/home_controller.dart';
+import 'package:apnagodam/presentation/home_screen/service/home_screen_service.dart';
+import 'package:apnagodam/widgets/CommonTextField.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:apnagodam/presentation/home_screen/models/TerminalModel.dart';
+import 'package:get/get.dart';
+
+class Spotdealscreen extends ConsumerStatefulWidget {
+  final commodityid;
+  final commodityName;
+
+  const Spotdealscreen(
+      {super.key, required this.commodityid, required this.commodityName});
+
+  @override
+  ConsumerState<Spotdealscreen> createState() => _SpotdealscreenState();
+}
+
+class _SpotdealscreenState extends ConsumerState<Spotdealscreen> {
+  var result;
+  Terminal? dropdownvalue;
+  var imageProvider = StateProvider<Uint8List?>((ref) => null);
+  var cont = Get.put(HomeController());
+  final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
+  var terminalId = "";
+  var terminalIdProvider = StateProvider<String?>((ref) {
+    return null;
+  });
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('msg_spot_deals'.tr),
+      ),
+      body: ref.watch(userDetailsProvider).when(
+          data: (userData) => Padding(
+                padding: EdgeInsets.all(8.0),
+                child: ref.watch(terminalListProvider).when(
+                    data: (terminalData) => Container(
+                          decoration: BoxDecoration(
+                              border:
+                                  Border.all(color: ColorConstant.maingreen)),
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Form(
+                              key: _formkey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Center(
+                                      child: Text(
+                                    "delivary_at".tr,
+                                    style: TextStyle(
+                                        color: ColorConstant.maingreen,
+                                        fontFamily: 'Roboto'),
+                                  )),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: <Widget>[
+                                      Expanded(
+                                        child: ListTile(
+                                          title: FittedBox(
+                                            fit: BoxFit.fitWidth,
+                                            child: Text('warehouse'.tr),
+                                          ),
+                                          leading: Radio(
+                                            fillColor: MaterialStateProperty
+                                                .resolveWith((states) =>
+                                                    ColorConstant.maingreen),
+                                            value: "ware",
+                                            groupValue: cont.waree,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                cont.waree = value.toString();
+                                                cont.buypriceController.text =
+                                                    "";
+                                                cont.buyquantityController
+                                                    .text = "";
+                                                cont.buyshipmentController
+                                                    .text = "";
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: ListTile(
+                                          title: FittedBox(
+                                            fit: BoxFit.fitWidth,
+                                            child: Text('place'.tr),
+                                          ),
+                                          leading: Radio(
+                                            value: "own",
+                                            fillColor: MaterialStateProperty
+                                                .resolveWith((states) =>
+                                                    ColorConstant.maingreen),
+                                            groupValue: cont.waree,
+                                            onChanged: (value) {
+                                              cont.waree = value.toString();
+                                              cont.buypriceController.text = "";
+                                              cont.buyquantityController.text =
+                                                  "";
+                                              cont.buyshipmentController.text =
+                                                  "";
+                                              dropdownvalue = null;
+                                              cont.update();
+                                              setState(() {});
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(
+                                    height: 15,
+                                  ),
+                                  cont.waree == "ware"
+                                      ? Container(
+                                          decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(8)),
+                                              border: Border.all()),
+                                          height: 60,
+                                          child: DropdownButtonHideUnderline(
+                                            child: DropdownButton<Terminal>(
+                                              isExpanded: true,
+                                              value: dropdownvalue,
+                                              icon: Icon(
+                                                  Icons.keyboard_arrow_down),
+                                              hint: Center(
+                                                  child: Text("terminal".tr)),
+                                              items: terminalData.terminals
+                                                  ?.map((Terminal items) {
+                                                return DropdownMenuItem(
+                                                  alignment:
+                                                      AlignmentDirectional
+                                                          .center,
+                                                  value: items,
+                                                  child: Text(
+                                                      items.name.toString()),
+                                                );
+                                              }).toList(),
+                                              onChanged: (val) {
+                                                setState(() {
+                                                  dropdownvalue = val;
+                                                });
+
+                                                ref
+                                                        .watch(
+                                                            terminalIdProvider
+                                                                .notifier)
+                                                        .state =
+                                                    dropdownvalue!.id
+                                                        .toString();
+                                              },
+                                            ),
+                                          ),
+                                        )
+                                      : SizedBox(),
+                                  SizedBox(
+                                    height: 15,
+                                  ),
+                                  CommonTextField(
+                                    controller: cont.buypriceController,
+                                    label: "msg_Price".tr,
+                                    textInputAction: TextInputAction.next,
+                                    inputType: TextInputType.number,
+                                    enabled: true,
+                                    isOnlyDigit: true,
+                                    isRequired: true,
+                                  ),
+                                  SizedBox(
+                                    height: 15,
+                                  ),
+                                  CommonTextField(
+                                    controller: cont.buyquantityController,
+                                    label: "msg_quantity".tr,
+                                    textInputAction: TextInputAction.next,
+                                    inputType: TextInputType.number,
+                                    enabled: true,
+                                    isOnlyDigit: true,
+                                    isRequired: true,
+                                  ),
+                                  SizedBox(
+                                    height: 15,
+                                  ),
+                                  cont.waree == "own"
+                                      ? Padding(
+                                          padding:
+                                              EdgeInsets.only(bottom: 15.0),
+                                          child: CommonTextField(
+                                            controller:
+                                                cont.buyshipmentController,
+                                            label: "shipment_code".tr,
+                                            textInputAction:
+                                                TextInputAction.next,
+                                            inputType: TextInputType.number,
+                                            enabled: true,
+                                            isOnlyDigit: true,
+                                            isRequired: true,
+                                          ),
+                                        )
+                                      : SizedBox(),
+                                  InkWell(
+                                    onTap: () {
+                                      print(cont.waree);
+                                      if (_formkey.currentState!.validate()) {
+                                        if (cont.waree == "ware") {
+                                          if (ref.watch(terminalIdProvider) ==
+                                              null) {
+                                            Get.rawSnackbar(
+                                              message: "select_terminal".tr,
+                                              duration: Duration(seconds: 10),
+                                              backgroundColor:
+                                                  ColorConstant.maingreen,
+                                            );
+                                          } else {
+                                            if (userData.userDetails?.power
+                                                        .toString() ==
+                                                    '0' &&
+                                                userData.userDetails
+                                                        ?.bnplPower ==
+                                                    0) {
+                                              CommanDialog(
+                                                context,
+                                                "msg_alert".tr,
+                                                "you_can_apply".tr,
+                                                (bool userClickedOK) {
+                                                  if (userClickedOK) {
+                                                    Get.back();
+                                                    CallLaunch(
+                                                        'tel:7733901154');
+                                                  } else {
+                                                    Navigator.of(context).pop();
+                                                  }
+                                                },
+                                              );
+                                            } else {
+                                              ref
+                                                  .watch(punchBuySellOrderProvider(
+                                                          deliveryAt: "1",
+                                                          terminalId: ref.watch(
+                                                              terminalIdProvider),
+                                                          shipmentCode: cont
+                                                              .buyshipmentController
+                                                              .text,
+                                                          commodityId: widget
+                                                              .commodityid,
+                                                          quantity: cont
+                                                              .buyquantityController
+                                                              .text,
+                                                          price: cont
+                                                              .buypriceController
+                                                              .text)
+                                                      .future)
+                                                  .then((value) {
+                                                if (value['status']
+                                                        .toString() ==
+                                                    "1") {
+                                                  context.successToast(
+                                                      value['message']
+                                                          .toString());
+
+                                                  Get.back();
+                                                } else {
+                                                  context.errorToast(
+                                                      value['message']
+                                                          .toString());
+                                                }
+                                              });
+                                            }
+                                          }
+                                        } else {
+                                          if (userData.userDetails?.power
+                                                      .toString() ==
+                                                  '0' &&
+                                              userData.userDetails?.bnplPower ==
+                                                  0) {
+                                            CommanDialog(
+                                              context,
+                                              "msg_alert".tr,
+                                              "you_can_apply".tr,
+                                              (bool userClickedOK) {
+                                                if (userClickedOK) {
+                                                  Get.back();
+                                                  CallLaunch('tel:7733901154');
+                                                } else {
+                                                  Navigator.of(context).pop();
+                                                }
+                                              },
+                                            );
+                                          } else {
+                                            ref
+                                                .watch(punchBuySellOrderProvider(
+                                                        deliveryAt: "2",
+                                                        terminalId: "",
+                                                        shipmentCode: cont
+                                                            .buyshipmentController
+                                                            .text,
+                                                        commodityId:
+                                                            widget.commodityid,
+                                                        quantity: cont
+                                                            .buyquantityController
+                                                            .text,
+                                                        price: cont
+                                                            .buypriceController
+                                                            .text)
+                                                    .future)
+                                                .then((value) {
+                                              if (value['status'].toString() ==
+                                                  "1") {
+                                                context.successToast(
+                                                    value['message']
+                                                        .toString());
+                                              } else {
+                                                context.errorToast(
+                                                    value['message']
+                                                        .toString());
+                                              }
+                                            });
+                                          }
+                                        }
+                                      } else {
+                                        if (cont.waree == "ware") {
+                                          if (dropdownvalue == null) {
+                                            print("there");
+                                            Get.rawSnackbar(
+                                              message: "select_terminal".tr,
+                                              duration: Duration(seconds: 10),
+                                              backgroundColor:
+                                                  ColorConstant.maingreen,
+                                            );
+                                          }
+                                        }
+                                      }
+                                    },
+                                    child: cont.orderLoader
+                                        ? CircularProgressIndicator()
+                                        : Container(
+                                            child: Center(
+                                                child: Text(
+                                              "order".tr,
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontFamily: 'Roboto'),
+                                            )),
+                                            height: 46,
+                                            width: double.infinity,
+                                            decoration: BoxDecoration(
+                                                color: ColorConstant.maingreen,
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(8))),
+                                          ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    error: (e, s) => Container(),
+                    loading: () => Container()),
+              ),
+          error: (e, s) => Container(),
+          loading: () => defaultLoader()),
+    );
+  }
+}

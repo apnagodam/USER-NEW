@@ -1,0 +1,369 @@
+import 'dart:io';
+
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/core/utils/progress_dialog_utils.dart';
+import 'package:apnagodam/presentation/TripId/UpdateTrip/UpdateTripScreen.dart';
+import 'package:apnagodam/presentation/TripId/model/TripRequestsModel.dart';
+import 'package:apnagodam/presentation/TripId/service/TripIdService.dart';
+import 'package:button_animations/button_animations.dart';
+import 'package:data_table_2/data_table_2.dart';
+import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+
+import '../../../core/utils/theme/app_style.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class Triprequestscreen extends ConsumerWidget {
+  const Triprequestscreen({super.key});
+  Widget headerCell(String text, {int flex = 2}) {
+    return Expanded(
+      flex: flex,
+      child: Center(
+        child: Text(
+          text,
+          style: AppStyle.wallatmoneylist.copyWith(
+            fontSize: Adaptive.sp(14),
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget dataCell(String text, {int flex = 2}) {
+    return Expanded(
+        child: Text.rich(
+      TextSpan(text: text),
+      maxLines: 2,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: Adaptive.sp(14),
+        fontWeight: FontWeight.bold,
+      ),
+    ));
+  }
+
+  Widget submitWidget(BuildContext context, Datum data, WidgetRef ref) {
+    if (data.inOutTypes.toString().toLowerCase() == "in") {
+      if (data.driverName == null) {
+        return InkWell(
+          onTap: () {
+            ref
+                .watch(rejectTripRequestProvider(id: "${data.id}").future)
+                .then((value) {
+              if (value['status'].toString() == "1") {
+                ref.invalidate(tripRequestsProvider);
+              }
+            }).onError((e, s) {});
+          },
+          child: Container(
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(
+                    left: 8.0, right: 8.0, bottom: 5.0, top: 5.0),
+                child: Text(
+                  AppLocalizations.of(context)!.reject,
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: Adaptive.sp(12),
+                      fontWeight: FontWeight.w400),
+                ),
+              )),
+        );
+
+        // Text(
+        //   'Transporter Approval Pending',
+        //   textAlign: TextAlign.center,
+        //   style: TextStyle(
+        //       color: ColorConstant.maingreen,
+        //       fontSize: Adaptive.sp(16),
+        //       fontWeight: FontWeight.w800),
+        // )
+      } else if (data.driverName != null && data.weight == null) {
+        return InkWell(
+          onTap: () {
+            Get.to(Updatetripscreen(requestId: "${data.id}"));
+          },
+          child: Container(
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: ColorConstant.maingreen,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(
+                    left: 8.0, right: 8.0, bottom: 5.0, top: 5.0),
+                child: Text(
+                  AppLocalizations.of(context)!.update2,
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: Adaptive.sp(12),
+                      fontWeight: FontWeight.w400),
+                ),
+              )),
+        );
+      } else if (data.weight != null && data.tripStart == null) {
+        return InkWell(
+          onTap: () {
+            ref
+                .watch(rejectTripRequestProvider(id: "${data.id}").future)
+                .then((value) {
+              if (value['status'].toString() == "1") {
+                ref.invalidate(tripRequestsProvider);
+              }
+            }).onError((e, s) {});
+          },
+          child: Column(
+            children: [
+              Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        left: 8.0, right: 8.0, bottom: 5.0, top: 5.0),
+                    child: Text(
+                      AppLocalizations.of(context)!.reject,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: Adaptive.sp(12),
+                          fontWeight: FontWeight.w400),
+                    ),
+                  )),
+              Text(
+                AppLocalizations.of(context)!.tripStartPending2,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: ColorConstant.maingreen,
+                    fontSize: Adaptive.sp(12),
+                    fontWeight: FontWeight.w800),
+              )
+            ],
+          ),
+        );
+      } else if (data.tripStart != null && data.tripEnd == null) {
+        return Text(
+          AppLocalizations.of(context)!.tripEndPending,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+              color: ColorConstant.maingreen,
+              fontSize: Adaptive.sp(12),
+              fontWeight: FontWeight.w800),
+        );
+      }
+    } else {
+      if (data.driverName == null) {
+        return InkWell(
+          onTap: () {
+            ref
+                .watch(rejectTripRequestProvider(id: "${data.id}").future)
+                .then((value) {
+              if (value['status'].toString() == "1") {
+                ref.invalidate(tripRequestsProvider);
+              }
+            }).onError((e, s) {});
+          },
+          child: Container(
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(
+                    left: 8.0, right: 8.0, bottom: 5.0, top: 5.0),
+                child: Text(
+                  AppLocalizations.of(context)!.reject,
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: Adaptive.sp(12),
+                      fontWeight: FontWeight.w400),
+                ),
+              )),
+        );
+      } else if (data.driverName != null && data.weight == null) {
+        return Text(
+          AppLocalizations.of(context)!.caseIdPending,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+              color: ColorConstant.maingreen,
+              fontSize: Adaptive.sp(12),
+              fontWeight: FontWeight.w800),
+        );
+      } else if (data.weight != null && data.tripStart == null) {
+        return InkWell(
+          onTap: () {
+            ref
+                .watch(rejectTripRequestProvider(id: "${data.id}").future)
+                .then((value) {
+              if (value['status'].toString() == "1") {
+                ref.invalidate(tripRequestsProvider);
+              }
+            }).onError((e, s) {});
+          },
+          child: Column(
+            children: [
+              Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        left: 8.0, right: 8.0, bottom: 5.0, top: 5.0),
+                    child: Text(
+                      AppLocalizations.of(context)!.reject,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: Adaptive.sp(12),
+                          fontWeight: FontWeight.w400),
+                    ),
+                  )),
+              Text(
+                AppLocalizations.of(context)!.tripStartPending2,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: ColorConstant.maingreen,
+                    fontSize: Adaptive.sp(12),
+                    fontWeight: FontWeight.w800),
+              )
+            ],
+          ),
+        );
+      } else if (data.tripStart != null && data.tripEnd == null) {
+        return Text(
+          AppLocalizations.of(context)!.tripEndPending,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+              color: ColorConstant.maingreen,
+              fontSize: Adaptive.sp(16),
+              fontWeight: FontWeight.w800),
+        );
+      }
+    }
+    return Text(
+      AppLocalizations.of(context)!.tripComplete2,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+          color: ColorConstant.maingreen,
+          fontSize: Adaptive.sp(12),
+          fontWeight: FontWeight.w800),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final weightController = TextEditingController();
+    final bagsController = TextEditingController();
+
+    final imagePicker = ImagePicker();
+    var kantaImage = StateProvider<File?>((ref) => null);
+    var invoiceImage = StateProvider<File?>((ref) => null);
+    var ewayBill = StateProvider<File?>((ref) => null);
+    var mandiTaxDocumentsImage = StateProvider<File?>((ref) => null);
+    var qualityReportImage = StateProvider<File?>((ref) => null);
+    final updateFrom = GlobalKey<FormState>();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.tripRequests),
+        backgroundColor: ColorConstant.maingreen,
+      ),
+      body: SafeArea(
+        child: ref.watch(tripRequestsProvider).when(
+              data: (data) {
+                final requests = data.data ?? [];
+
+                if (requests.isEmpty) {
+                  return SizedBox(
+                      height: Get.height, child: noStockData(context));
+                }
+
+                return RefreshIndicator.adaptive(
+                  onRefresh: () async {
+                    ref.invalidate(tripRequestsProvider);
+                  },
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(5.0),
+                    itemCount: requests.length + 1,
+                    separatorBuilder: (_, __) => SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        // Header Row
+                        return Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: ColorConstant.maingreen,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              headerCell(AppLocalizations.of(context)!.dealId),
+                              headerCell(
+                                  AppLocalizations.of(context)!.msgCommodityy),
+                              headerCell(AppLocalizations.of(context)!.from2),
+                              headerCell(AppLocalizations.of(context)!.to2),
+                              headerCell(AppLocalizations.of(context)!.action,
+                                  flex: 2),
+                            ],
+                          ),
+                        );
+                      }
+
+                      final item = requests[index - 1];
+
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: index.isEven ? Colors.white : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 10),
+                        child: IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              dataCell(item.tripId ?? AppLocalizations.of(context)!.tripStartPending2),
+                              Divider(
+                                thickness: 1,
+                                color: Colors.black,
+                              ),
+                              dataCell("${item.commodity}"),
+                              Divider(),
+                              dataCell("${item.fromAddress}"),
+                              Divider(),
+                              dataCell("${item.toAddress}"),
+                              submitWidget(context, item, ref),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+              error: (e, s) => Center(child: Text(AppLocalizations.of(context)!.errorE2)),
+              loading: () => SizedBox(
+                height: Get.height,
+                child: Center(child: defaultLoader()),
+              ),
+            ),
+      ),
+    );
+  }
+}

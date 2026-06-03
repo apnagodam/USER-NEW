@@ -1,0 +1,319 @@
+import 'package:apnagodam/auth_provider/AuthProvider.dart';
+import 'package:apnagodam/core/utils/theme/app_style.dart';
+import 'package:apnagodam/presentation/wallet_statement_screen/wallet_statement_screen.dart';
+import 'package:apnagodam/presentation/withdraw_money_screen/withdraw_money_list.dart';
+import 'package:apnagodam/presentation/withdraw_money_screen/withdraw_money_screen.dart';
+import 'package:apnagodam/widgets/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+
+import '../../core/utils/color_constant.dart';
+import '../add_money_screen/add_money_screen.dart';
+import '../add_money_screen/add_money_summary.dart';
+import '../home_screen/service/home_screen_service.dart';
+
+class Wallet extends ConsumerWidget {
+  Wallet({super.key, isAppBarVisible = true});
+
+  List<String> titleList = [
+    AppLocalizations.of(context)!.msgWithdraw,
+    AppLocalizations.of(context)!.msgAddmoney,
+    AppLocalizations.of(context)!.msgStatement
+  ];
+
+  var selectedTabIndex = StateProvider((ref) => 0);
+  bool? isAppBarVisible;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      appBar: (isAppBarVisible ?? false)
+          ? AppBar(
+              backgroundColor: ColorConstant.maingreen,
+              title: Text(
+                titleList[ref.watch(selectedTabIndex)],
+                style: AppStyle.lblAppbar,
+              ),
+              centerTitle: true,
+              actions: [
+                ref.watch(selectedTabIndex) == 0
+                    ? Center(
+                        child: Padding(
+                        padding: const EdgeInsets.only(
+                          right: 10.0,
+                        ),
+                        child: InkWell(
+                            onTap: () {
+                              Get.to(WithdrawlListScreen(
+                                type: "1",
+                              ));
+                            },
+                            child: Text(
+                              AppLocalizations.of(context)!.msgSummary,
+                              style: TextStyle(
+                                  fontSize: Adaptive.sp(16),
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white
+                                  // fontStyle: FontStyle.normal,
+                                  ),
+                            )),
+                      ))
+                    : ref.watch(selectedTabIndex) == 1
+                        ? Center(
+                            child: Padding(
+                            padding: const EdgeInsets.only(
+                              right: 10.0,
+                            ),
+                            child: InkWell(
+                                onTap: () {
+                                  Get.to(AddSummaryScreen(
+                                    type: '1',
+                                  ));
+                                },
+                                child: Text(
+                                  AppLocalizations.of(context)!.msgSummary,
+                                  style: TextStyle(
+                                      fontSize: Adaptive.sp(16),
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white
+                                      // fontStyle: FontStyle.normal,
+                                      ),
+                                )),
+                          ))
+                        : SizedBox()
+              ],
+            )
+          : null,
+      body: SafeArea(
+          child: DefaultTabController(
+              length: 3,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.all(10), // Increased padding
+                    child: Container(
+                      height: 52,
+                      decoration: BoxDecoration(
+                          color: Colors.grey.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(10.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ]),
+                      child: TabBar(
+                          onTap: (index) {
+                            ref.invalidate(userDetailsProvider);
+                            ref.invalidate(toDateProvider);
+                            ref.invalidate(fromDateProvider);
+                            ref.watch(selectedTabIndex.notifier).state = index;
+                          },
+                          labelColor: Colors.white,
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          labelStyle: TextStyle(
+                            fontSize: Adaptive.sp(17),
+                            fontWeight: FontWeight.bold,
+                          ),
+                          unselectedLabelColor: Colors.black87,
+                          indicator: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: ColorConstant.maingreen,
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    ColorConstant.maingreen.withOpacity(0.18),
+                                blurRadius: 6,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          tabs: [
+                            Tab(
+                              child: Text(
+                                AppLocalizations.of(context)!.msgWithdraw,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            Tab(
+                              child: Text(
+                                AppLocalizations.of(context)!.msgAddmoney,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            Tab(
+                              child: Text(
+                                AppLocalizations.of(context)!.msgStatement,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ]),
+                    ),
+                  ),
+                  ref.watch(selectedTabIndex) == 0
+                      ? Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              right: 10.0,
+                            ),
+                            child: simpleButton(
+                                text: AppLocalizations.of(context)!.msgSummary,
+                                callback: () {
+                                  Get.to(WithdrawlListScreen(
+                                    type: "1",
+                                  ));
+                                }),
+                          ),
+                        )
+                      : ref.watch(selectedTabIndex) == 1
+                          ? Align(
+                              alignment: Alignment.centerRight,
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  right: 10.0,
+                                ),
+                                child: simpleButton(
+                                    text: AppLocalizations.of(context)!.msgSummary,
+                                    callback: () {
+                                      Get.to(AddSummaryScreen(
+                                        type: "1",
+                                      ));
+                                    }),
+                              ),
+                            )
+                          : SizedBox(),
+                  ref.watch(authProvider).when(
+                      data: (data) => Expanded(
+                              child: TabBarView(
+                                  physics: NeverScrollableScrollPhysics(),
+                                  children: [
+                                data == AuthStatus.loggedOut
+                                    ? Center(
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 24, vertical: 32),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(18),
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Image.asset(
+                                                  'assets/images/mainlogopng.png',
+                                                  height: 120,
+                                                  width: 120),
+                                              SizedBox(height: 18),
+                                              Text(
+                                                'Login to withdraw money!',
+                                                style: TextStyle(
+                                                  fontSize: Adaptive.sp(16),
+                                                  fontWeight: FontWeight.w600,
+                                                  color:
+                                                      ColorConstant.maingreen,
+                                                ),
+                                              ),
+                                              SizedBox(height: 14),
+                                              simpleButton(
+                                                  text: 'Login',
+                                                  callback: () {
+                                                    showLoginBottomsheet(
+                                                        context);
+                                                  }),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    : WithdrawMoney(),
+                                data == AuthStatus.loggedOut
+                                    ? Center(
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 24, vertical: 32),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(18),
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Image.asset(
+                                                  'assets/images/mainlogopng.png',
+                                                  height: 120,
+                                                  width: 120),
+                                              SizedBox(height: 18),
+                                              Text(
+                                                'Login to add money!',
+                                                style: TextStyle(
+                                                  fontSize: Adaptive.sp(16),
+                                                  fontWeight: FontWeight.w600,
+                                                  color:
+                                                      ColorConstant.maingreen,
+                                                ),
+                                              ),
+                                              SizedBox(height: 14),
+                                              simpleButton(
+                                                  text: 'Login',
+                                                  callback: () {
+                                                    showLoginBottomsheet(
+                                                        context);
+                                                  }),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    : AddMoney(
+                                        isAppBarVisible: false,
+                                      ),
+                                data == AuthStatus.loggedOut
+                                    ? Center(
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 24, vertical: 32),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(18),
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Image.asset(
+                                                  'assets/images/mainlogopng.png',
+                                                  height: 120,
+                                                  width: 120),
+                                              SizedBox(height: 18),
+                                              Text(
+                                                'Login to check your statement!',
+                                                style: TextStyle(
+                                                  fontSize: Adaptive.sp(16),
+                                                  fontWeight: FontWeight.w600,
+                                                  color:
+                                                      ColorConstant.maingreen,
+                                                ),
+                                              ),
+                                              SizedBox(height: 14),
+                                              simpleButton(
+                                                  text: 'Login',
+                                                  callback: () {
+                                                    showLoginBottomsheet(
+                                                        context);
+                                                  }),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    : WalletStatement(),
+                              ])),
+                      error: (e, s) => Container(),
+                      loading: () => Container())
+                ],
+              ))),
+    );
+  }
+}

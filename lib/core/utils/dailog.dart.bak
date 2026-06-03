@@ -1,0 +1,36 @@
+import 'package:apnagodam/core/utils/string.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import 'color_constant.dart';
+
+class comanDiolog extends StatefulWidget {
+  final dailog;
+
+  const comanDiolog({Key? key, required this.dailog}) : super(key: key);
+
+  @override
+  State<comanDiolog> createState() => _comanDiologState();
+}
+
+class _comanDiologState extends State<comanDiolog> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: AlertDialog(
+        title: Text('msg_alert'.tr),
+        content: Text(info),
+        actions: [
+          TextButton(
+              onPressed: () {
+                Get.back();
+              },
+              child: Text(
+                'msg_ok'.tr,
+                style: TextStyle(color: ColorConstant.maingreen),
+              ))
+        ],
+      ),
+    );
+  }
+}

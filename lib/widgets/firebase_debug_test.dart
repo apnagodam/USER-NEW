@@ -1,0 +1,182 @@
+import 'package:flutter/material.dart';
+import 'package:apnagodam/core/utils/notification_service.dart';
+import 'package:get/get.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+/// Firebase Debug Test Widget
+/// Use this to test Firebase notification path without actually sending from Firebase
+class FirebaseDebugTest extends StatelessWidget {
+  const FirebaseDebugTest({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text(
+          'Firebase Path Testing',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Test Firebase path with IPL sound
+        ElevatedButton.icon(
+          onPressed: () => _testFirebasePath('ipl_message'),
+          icon: const Icon(Icons.sports_cricket),
+          label: const Text('Test Firebase Path - IPL Sound'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            foregroundColor: Colors.white,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Test with different sound
+        ElevatedButton.icon(
+          onPressed: () => _testFirebasePath('urgent'),
+          icon: const Icon(Icons.warning),
+          label: const Text('Test Firebase Path - Urgent Sound'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Test without custom sound
+        ElevatedButton.icon(
+          onPressed: () => _testFirebasePathDefault(),
+          icon: const Icon(Icons.notifications),
+          label: const Text('Test Firebase Path - Default Sound'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.grey,
+            foregroundColor: Colors.white,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Get FCM Token
+        ElevatedButton.icon(
+          onPressed: () => _showFCMToken(context),
+          icon: const Icon(Icons.copy),
+          label: Text(
+              AppLocalizations.of(context)!.msgGetFcmTokenForFirebaseConsole),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Instructions
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.blue[200]!),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Firebase Console Setup:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 4),
+              Text('1. Get FCM token using button above'),
+              Text('2. Go to Firebase Console > Messaging'),
+              Text('3. Send test message with your token'),
+              Text('4. Add Custom Data: sound = ipl_message'),
+              Text('5. Check debug console for logs'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _testFirebasePath(String soundType) {
+    print('🧪 Testing Firebase path with sound: $soundType');
+
+    NotificationService.testFirebaseNotificationPath(
+      title: '🧪 Firebase Path Test',
+      body: 'Testing $soundType sound via Firebase path',
+      sound: soundType,
+      type: soundType,
+      additionalData: {
+        'payload': 'firebase_path_test',
+        'test': 'true',
+      },
+    );
+
+    print('✅ Firebase path test sent for $soundType');
+  }
+
+  void _testFirebasePathDefault() {
+    print('🧪 Testing Firebase path with default sound');
+
+    NotificationService.testFirebaseNotificationPath(
+      title: '🧪 Default Firebase Test',
+      body: 'Testing default sound via Firebase path',
+      additionalData: {
+        'payload': 'firebase_default_test',
+        'test': 'true',
+      },
+    );
+
+    print('✅ Default Firebase path test sent');
+  }
+
+  void _showFCMToken(BuildContext context) {
+    final token = NotificationService.fcmToken;
+
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              AppLocalizations.of(context)!.fcmTokenNotAvailableYetPleaseWait),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Print to console for easy copying
+    print('🔑 FCM Token for Firebase Console:');
+    print(token);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.msgFcmToken),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Copy this token for Firebase Console:'),
+            const SizedBox(height: 12),
+            SelectableText(
+              token,
+              style: const TextStyle(
+                fontSize: 12,
+                fontFamily: 'monospace',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.close),
+          ),
+        ],
+      ),
+    );
+  }
+}

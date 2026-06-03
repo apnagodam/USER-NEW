@@ -1,0 +1,177 @@
+import 'package:apnagodam/presentation/dashboard/WarehouseBookings.dart';
+import 'package:apnagodam/presentation/warehousefacility_screen/OutwardsList.dart';
+import 'package:apnagodam/presentation/warehousefacility_screen/WarehouseBookingHistory.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+
+import '../../core/utils/color_constant.dart';
+import '../warehousefacility_screen/inwardList.dart';
+import '../warehousefacility_screen/stackinward_screen.dart';
+import '../warehousefacility_screen/stackoutward_screen.dart';
+import '../warehousefacility_screen/warehousefacility.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+
+class WarehouseTab extends ConsumerWidget {
+  WarehouseTab({super.key});
+
+  List<String> titleList = [
+    "msg_stackboking".tr,
+    "msg_stackinward".tr,
+    "msg_stackoutward".tr,
+    "Quality Consent".tr,
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(titleList[ref.watch(selectedTabIndex)]),
+        backgroundColor: ColorConstant.maingreen,
+        centerTitle: true,
+        actions: [
+          ref.watch(selectedTabIndex) == 0
+              ? Center(
+                  child: Padding(
+                  padding: const EdgeInsets.only(
+                    right: 10.0,
+                  ),
+                  child: InkWell(
+                      onTap: () {
+                        Get.to(const Warehousebookinghistory());
+                      },
+                      child: Text(
+                        "Booking History".tr,
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white
+                            // fontStyle: FontStyle.normal,
+                            ),
+                      )),
+                ))
+              : ref.watch(selectedTabIndex) == 1
+                  ? Center(
+                      child: Padding(
+                      padding: const EdgeInsets.only(
+                        right: 10.0,
+                      ),
+                      child: InkWell(
+                          onTap: () {
+                            Get.to(const InwardList());
+                          },
+                          child: Text(
+                            AppLocalizations.of(context)!.inwordList,
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white
+                                // fontStyle: FontStyle.normal,
+                                ),
+                          )),
+                    ))
+                  : ref.watch(selectedTabIndex) == 2
+                      ? Center(
+                          child: Padding(
+                          padding: const EdgeInsets.only(
+                            right: 10.0,
+                          ),
+                          child: InkWell(
+                              onTap: () {
+                                Get.to(const Outwardslist());
+                              },
+                              child: Text(
+                                "Outwards List".tr,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white
+                                    // fontStyle: FontStyle.normal,
+                                    ),
+                              )),
+                        ))
+                      : const SizedBox(),
+        ],
+      ),
+      body: DefaultTabController(
+          length: 4,
+          child: Column(
+            children: [
+              IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.all(5),
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(
+                          6.0,
+                        )),
+                    child: TabBar(
+                        onTap: (index) {
+                          ref.watch(selectedTabIndex.notifier).state = index;
+                        },
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        labelColor: Colors.white,
+                        indicator: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          color: ColorConstant.maingreen,
+                        ),
+                        tabs: [
+                          Tab(
+                            child: Text.rich(
+                              TextSpan(
+                                text: "msg_stackboking".tr,
+                              ),
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          Tab(
+                            child: Text.rich(
+                              TextSpan(
+                                text: "msg_stackinward".tr,
+                              ),
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          Tab(
+                            child: Text.rich(
+                              TextSpan(
+                                text: "msg_stackoutward".tr,
+                              ),
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          Tab(
+                            child: Text.rich(
+                              TextSpan(
+                                text: "Quality Consent".tr,
+                              ),
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ]),
+                  ),
+                ),
+              ),
+              Expanded(
+                  child: TabBarView(
+                      physics: NeverScrollableScrollPhysics(),
+                      // controller: _tabController,
+                      children: [
+                    StackBooking(),
+                    StackInward(),
+                    StackOutward(),
+                    Warehousebookings()
+                  ]))
+            ],
+          )),
+    );
+  }
+
+  var selectedTabIndex = StateProvider((ref) => 0);
+}

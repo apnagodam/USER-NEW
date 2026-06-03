@@ -1,0 +1,112 @@
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/presentation/warehousefacility_screen/model/available_warehouse_stacks_model.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class StackBookCard extends StatelessWidget {
+  final AvailableStackDatum stack;
+
+  const StackBookCard({super.key, required this.stack});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          elevation: 3,
+          shadowColor: Colors.grey.shade300,
+          margin: EdgeInsets.zero,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              gradient: LinearGradient(
+                colors: [
+                  stack.bookingStatus == 0
+                      ? Colors.green.withOpacity(0.3)
+                      : stack.bookingStatus == 1
+                          ? Colors.red.withOpacity(0.3)
+                          : Colors.green,
+                  stack.bookingStatus == 0
+                      ? Colors.green.shade100.withOpacity(0.3)
+                      : stack.bookingStatus == 1
+                          ? Colors.red.shade100
+                          : Colors.green.shade100
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                      color: stack.bookingStatus == 0
+                          ? ColorConstant.maingreen
+                          : stack.bookingStatus == 1
+                              ? Colors.red.withOpacity(0.3)
+                              : ColorConstant.maingreen,
+                      borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(8),
+                          topRight: Radius.circular(8))),
+                  child: Text(
+                    "${AppLocalizations.of(context)!.msgStackno} ${stack.stackNumber}",
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: Adaptive.sp(15),
+                        color: Colors.white),
+                  ),
+                ),
+                Padding(
+                    padding: Pad(all: 10),
+                    child: Column(
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.capacity +
+                              " \n${stack.stackMaxCapacity} ",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: Adaptive.sp(15)),
+                        ),
+                        Text(
+                          AppLocalizations.of(context)!.occupied +
+                              "\n${num.parse("${stack.stackAccupiedCapacity}").toStringAsFixed(0)}",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: Adaptive.sp(15)),
+                        ),
+                      ],
+                    )),
+                if (stack.stackType.toString().toLowerCase() == "dedicated")
+                  Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                        color: ColorConstant.maingreen,
+                        borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(8),
+                            bottomRight: Radius.circular(8))),
+                    child: Text(
+                      AppLocalizations.of(context)!.msgSell,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: Adaptive.sp(15),
+                          color: Colors.white),
+                    ),
+                  )
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

@@ -1,0 +1,2 @@
+D:/ApnagodamUser-optimisations/android/app/.cxx/debug/3u6q4m65/x86_64/CMakeFiles/edit_cache.dir
+D:/ApnagodamUser-optimisations/android/app/.cxx/debug/3u6q4m65/x86_64/CMakeFiles/rebuild_cache.dir

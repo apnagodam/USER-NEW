@@ -1,0 +1,252 @@
+import 'package:apnagodam/core/constants/constants.dart';
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+import 'package:apnagodam/localization/app_localizations_extras.dart';
+import 'package:apnagodam/presentation/GstProfile/GstProfileScreen.dart';
+import 'package:apnagodam/presentation/GstProfile/Service/GstService.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:elevarm_ui/elevarm_ui.dart';
+
+class Gstlistingscreen extends ConsumerStatefulWidget {
+  const Gstlistingscreen({super.key});
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _GstlistingscreenState();
+}
+
+class _GstlistingscreenState extends ConsumerState<Gstlistingscreen> {
+  @override
+  Widget build(BuildContext context) {
+    final isLoading = ref.watch(gstListProvider).isLoading;
+    final data = ref.watch(gstListProvider).value;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.gstProfiles),
+        backgroundColor: ColorConstant.maingreen,
+        centerTitle: true,
+        elevation: 2,
+        toolbarHeight: 56,
+        actions: [
+          IconButton(
+            onPressed: () {
+              Get.to(Gstprofilescreen());
+            },
+            icon: Icon(Icons.add, color: Colors.white),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          SizedBox(height: 8),
+          Expanded(
+            child:
+                isLoading
+                    ? _buildSkeletonLoader()
+                    : _buildGstList(data?.data ?? []),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonLoader() {
+    return ListView.builder(
+      itemCount: 3,
+      itemBuilder:
+          (context, index) => Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ColorConstant.maingreen, width: 1.0),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(14.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(width: 200, height: 20, color: Colors.grey[300]),
+                    SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      height: 1,
+                      color: Colors.grey[300],
+                    ),
+                    SizedBox(height: 8),
+                    Container(width: 120, height: 16, color: Colors.grey[300]),
+                    SizedBox(height: 8),
+                    Container(width: 150, height: 16, color: Colors.grey[300]),
+                    SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      height: 120,
+                      color: Colors.grey[300],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildGstList(List gstList) {
+    if (gstList.isEmpty) {
+      return noStockData();
+    }
+
+    return ListView.builder(
+      itemCount: gstList.length,
+      itemBuilder: (context, index) {
+        final item = gstList[index];
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: ColorConstant.maingreen, width: 1.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 3,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(14.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.gstNumber ?? 'N/A',
+                          style: TextStyle(
+                            color: ColorConstant.maingreen,
+                            fontWeight: FontWeight.bold,
+                            fontSize: Adaptive.sp(17),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Divider(color: ColorConstant.maingreen, height: 1.0),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_rounded,
+                        color: ColorConstant.maingreen,
+                        size: 16,
+                      ),
+                      SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          item.stateName ?? 'N/A',
+                          style: TextStyle(
+                            fontSize: Adaptive.sp(15),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (item.image != null) ...[
+                    SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.receipt_long,
+                          color: ColorConstant.maingreen,
+                          size: 16,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'GST Certificate:',
+                          style: TextStyle(
+                            fontSize: Adaptive.sp(15),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 6),
+                    Container(
+                      width: double.infinity,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          "$IMAGE_BASE_URL_FRONTEND${item.imageUrl ?? ''}",
+                          fit: BoxFit.contain,
+                          errorBuilder:
+                              (context, obj, st) => Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.image_not_supported,
+                                      color: Colors.grey[400],
+                                      size: 30,
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Image not available',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.receipt_long,
+                          color: Colors.grey[400],
+                          size: 16,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'No certificate image available',
+                          style: TextStyle(
+                            fontSize: Adaptive.sp(14),
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey[600],
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

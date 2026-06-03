@@ -1,0 +1,2751 @@
+import 'package:apnagodam/auth_provider/AuthProvider.dart';
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/theme/app_style.dart';
+import 'package:apnagodam/presentation/dashboard/model/wahouse_deal_model.dart';
+import 'package:apnagodam/presentation/home_screen/models/InvoicesModel.dart';
+import 'package:apnagodam/presentation/home_screen/service/home_screen_service.dart';
+import 'package:apnagodam/presentation/mybuy_screen/service/contract_note_service.dart';
+import 'package:apnagodam/presentation/sbt/ContractNotes/service/SbtContractNotesService.dart';
+import 'package:apnagodam/presentation/sbt/service/model/SbtContractListModel.dart';
+import 'package:apnagodam/widgets/GlobalBottomSheet.dart';
+import 'package:apnagodam/widgets/invoice.dart';
+import 'package:apnagodam/widgets/widgets.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:easy_pdf_viewer/easy_pdf_viewer.dart';
+import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:file_saver/file_saver.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:open_file/open_file.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class InvoicesScreen extends ConsumerStatefulWidget {
+  const InvoicesScreen({super.key});
+
+  @override
+  ConsumerState<InvoicesScreen> createState() => _InvoicesScreenState();
+}
+
+class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
+  final isLoadingProvider = StateProvider((ref) => false);
+  List<String> get titleList => [
+        AppLocalizations.of(context)!.invoicesRaisedByMe,
+        AppLocalizations.of(context)!.invoicesRaisedToMe,
+      ];
+
+  List<InvoicesDatum>? buyInvoicesList = [];
+  List<InvoicesDatum>? sellInvoicesList = [];
+  var selectedTabIndex = StateProvider((ref) => 0);
+
+  // Filter state for Buy tab (Invoices Raised By Me)
+  DateTime? _buyStartDate;
+  DateTime? _buyEndDate;
+  String? _buySelectedType = "All";
+  String? _buySelectedCommodity = "All";
+  String _buySelectedDateFilter = "1 Month";
+
+  // Filter state for Sell tab (Invoices Raised To Me)
+  DateTime? _sellStartDate;
+  DateTime? _sellEndDate;
+  String? _sellSelectedType = "All";
+  String? _sellSelectedCommodity = "All";
+  String _sellSelectedDateFilter = "1 Month";
+
+  List<String> _dealTypes = [
+    "All"
+  ]; // Will be populated dynamically from API data
+  List<String> _commodityTypes = [];
+
+  void _showFilterSheet(BuildContext context, bool isBuyTab) {
+    // Get current tab's filter values
+    DateTime? currentStartDate = isBuyTab ? _buyStartDate : _sellStartDate;
+    DateTime? currentEndDate = isBuyTab ? _buyEndDate : _sellEndDate;
+    String currentSelectedType =
+        isBuyTab ? (_buySelectedType ?? "All") : (_sellSelectedType ?? "All");
+    String currentSelectedCommodity = isBuyTab
+        ? (_buySelectedCommodity ?? "All")
+        : (_sellSelectedCommodity ?? "All");
+    String currentDateFilter =
+        isBuyTab ? _buySelectedDateFilter : _sellSelectedDateFilter;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return ElevarmDraggableBottomSheet(
+            title: AppLocalizations.of(ctx)!.filter,
+            onPressedClose: () {
+              Get.back();
+            },
+            children: [
+              Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(ctx).viewInsets.bottom,
+                ),
+                child: StatefulBuilder(
+                  builder: (context, setModalState) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            AppLocalizations.of(context)!.date,
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(15),
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            ChoiceChip(
+                              checkmarkColor: Colors.white,
+                              label:
+                                  Text(AppLocalizations.of(context)!.oneMonth),
+                              selected: currentDateFilter == "1 Month",
+                              onSelected: (isSelected) {
+                                if (isSelected) {
+                                  setModalState(() {
+                                    currentDateFilter = "1 Month";
+                                    currentStartDate = DateTime.now()
+                                        .subtract(Duration(days: 30));
+                                    currentEndDate = DateTime.now();
+                                  });
+                                  setState(() {});
+                                }
+                              },
+                              selectedColor: ColorConstant.maingreen,
+                              backgroundColor: Colors.grey[200],
+                              labelStyle: TextStyle(
+                                color: currentDateFilter == "1 Month"
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
+                            ),
+                            ChoiceChip(
+                              checkmarkColor: Colors.white,
+                              label: Text(
+                                  AppLocalizations.of(context)!.threeMonths),
+                              selected: currentDateFilter == "3 Months",
+                              onSelected: (isSelected) {
+                                if (isSelected) {
+                                  setModalState(() {
+                                    currentDateFilter = "3 Months";
+                                    currentStartDate = DateTime.now()
+                                        .subtract(Duration(days: 90));
+                                    currentEndDate = DateTime.now();
+                                  });
+                                  setState(() {});
+                                }
+                              },
+                              selectedColor: ColorConstant.maingreen,
+                              backgroundColor: Colors.grey[200],
+                              labelStyle: TextStyle(
+                                color: currentDateFilter == "3 Months"
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
+                            ),
+                            ChoiceChip(
+                              checkmarkColor: Colors.white,
+                              label:
+                                  Text(AppLocalizations.of(context)!.sixMonths),
+                              selected: currentDateFilter == "6 Months",
+                              onSelected: (isSelected) {
+                                if (isSelected) {
+                                  setModalState(() {
+                                    currentDateFilter = "6 Months";
+                                    currentStartDate = DateTime.now()
+                                        .subtract(Duration(days: 180));
+                                    currentEndDate = DateTime.now();
+                                  });
+
+                                  setState(() {});
+                                }
+                              },
+                              selectedColor: ColorConstant.maingreen,
+                              backgroundColor: Colors.grey[200],
+                              labelStyle: TextStyle(
+                                color: currentDateFilter == "6 Months"
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
+                            ),
+                            ChoiceChip(
+                              checkmarkColor: Colors.white,
+                              label: Text(
+                                  AppLocalizations.of(context)!.customDate),
+                              selected: currentDateFilter == "Custom",
+                              onSelected: (isSelected) async {
+                                if (isSelected) {
+                                  DateTime tempFromDate =
+                                      currentStartDate ?? DateTime.now();
+                                  DateTime tempToDate =
+                                      currentEndDate ?? DateTime.now();
+                                  await showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    builder: (context) {
+                                      return StatefulBuilder(
+                                        builder: (context, setState) {
+                                          return Padding(
+                                            padding: EdgeInsets.only(
+                                              bottom: MediaQuery.of(context)
+                                                  .viewInsets
+                                                  .bottom,
+                                              left: 16,
+                                              right: 16,
+                                              top: 24,
+                                            ),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                    AppLocalizations.of(
+                                                            context)!
+                                                        .selectDateRange,
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize:
+                                                            Adaptive.sp(17))),
+                                                SizedBox(height: 16),
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: InkWell(
+                                                        onTap: () async {
+                                                          DateTime? picked =
+                                                              await showDatePicker(
+                                                            context: context,
+                                                            initialDate:
+                                                                tempFromDate,
+                                                            firstDate:
+                                                                DateTime(2020),
+                                                            lastDate:
+                                                                DateTime.now(),
+                                                          );
+                                                          if (picked != null) {
+                                                            setState(() =>
+                                                                tempFromDate =
+                                                                    picked);
+                                                          }
+                                                        },
+                                                        child: Container(
+                                                          padding: EdgeInsets
+                                                              .symmetric(
+                                                                  vertical: 12),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            border: Border.all(
+                                                                color:
+                                                                    ColorConstant
+                                                                        .grey),
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                          ),
+                                                          child: Center(
+                                                            child: Text(
+                                                              "${AppLocalizations.of(context)!.msgFromDate}${tempFromDate.day.toString().padLeft(2, '0')}/${tempFromDate.month.toString().padLeft(2, '0')}/${tempFromDate.year}",
+                                                              style: TextStyle(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16)),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    SizedBox(width: 10),
+                                                    Expanded(
+                                                      child: InkWell(
+                                                        onTap: () async {
+                                                          DateTime? picked =
+                                                              await showDatePicker(
+                                                            context: context,
+                                                            initialDate:
+                                                                tempToDate,
+                                                            firstDate:
+                                                                tempFromDate,
+                                                            lastDate:
+                                                                DateTime.now(),
+                                                          );
+                                                          if (picked != null) {
+                                                            setState(() =>
+                                                                tempToDate =
+                                                                    picked);
+                                                          }
+                                                        },
+                                                        child: Container(
+                                                          padding: EdgeInsets
+                                                              .symmetric(
+                                                                  vertical: 12),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            border: Border.all(
+                                                                color:
+                                                                    ColorConstant
+                                                                        .grey),
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                          ),
+                                                          child: Center(
+                                                            child: Text(
+                                                              "${AppLocalizations.of(context)!.msgToDate} ${tempToDate.day.toString().padLeft(2, '0')}/${tempToDate.month.toString().padLeft(2, '0')}/${tempToDate.year}",
+                                                              style: TextStyle(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16)),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 24),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    setModalState(() {
+                                                      currentDateFilter =
+                                                          "Custom";
+                                                      currentStartDate =
+                                                          tempFromDate;
+                                                      currentEndDate =
+                                                          tempToDate;
+                                                    });
+                                                    setState(() {});
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        ColorConstant.maingreen,
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            vertical: 12),
+                                                  ),
+                                                  child: Text(
+                                                      AppLocalizations.of(
+                                                              context)!
+                                                          .apply,
+                                                      style: AppStyle
+                                                          .lblviewbtnwithdraw
+                                                          .copyWith(
+                                                              fontSize:
+                                                                  Adaptive.sp(
+                                                                      14))),
+                                                ),
+                                                SizedBox(height: 16),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  );
+                                }
+                              },
+                              selectedColor: ColorConstant.maingreen,
+                              backgroundColor: Colors.grey[200],
+                              labelStyle: TextStyle(
+                                color: currentDateFilter == "Custom"
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        // Deal Type Label
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            AppLocalizations.of(context)!.typeLabel,
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(15),
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          value: currentSelectedType,
+                          decoration: InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 8),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                          ),
+                          items: _dealTypes
+                              .map((type) => DropdownMenuItem(
+                                    value: type,
+                                    child: Text(type,
+                                        style:
+                                            TextStyle(color: Colors.black87)),
+                                  ))
+                              .toList(),
+                          onChanged: (val) {
+                            setModalState(
+                                () => currentSelectedType = val ?? "All");
+                          },
+                          isExpanded: true,
+                          icon: Icon(Icons.arrow_drop_down),
+                          style: TextStyle(fontSize: Adaptive.sp(15)),
+                          dropdownColor: Colors.white,
+                        ),
+                        SizedBox(height: 16),
+                        // Commodity Type Label
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            AppLocalizations.of(context)!.commodityType,
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(15),
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          value: currentSelectedCommodity,
+                          decoration: InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 8),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                          ),
+                          items: _commodityTypes
+                              .map((type) => DropdownMenuItem(
+                                    value: type,
+                                    child: Text(type,
+                                        style:
+                                            TextStyle(color: Colors.black87)),
+                                  ))
+                              .toList(),
+                          onChanged: (val) {
+                            setModalState(
+                                () => currentSelectedCommodity = val ?? "All");
+                          },
+                          isExpanded: true,
+                          icon: Icon(Icons.arrow_drop_down),
+                          style: TextStyle(fontSize: Adaptive.sp(15)),
+                          dropdownColor: Colors.white,
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: simpleButton(
+                                  text: AppLocalizations.of(context)!.clearAll,
+                                  callback: () {
+                                    setModalState(() {
+                                      currentStartDate = null;
+                                      currentEndDate = null;
+                                      currentSelectedType = "All";
+                                      currentSelectedCommodity = "All";
+                                      currentDateFilter = "All Time";
+                                    });
+                                    Navigator.pop(context);
+                                    setState(() {
+                                      if (isBuyTab) {
+                                        _buyStartDate = null;
+                                        _buyEndDate = null;
+                                        _buySelectedType = "All";
+                                        _buySelectedCommodity = "All";
+                                        _buySelectedDateFilter = "All Time";
+                                      } else {
+                                        _sellStartDate = null;
+                                        _sellEndDate = null;
+                                        _sellSelectedType = "All";
+                                        _sellSelectedCommodity = "All";
+                                        _sellSelectedDateFilter = "All Time";
+                                      }
+                                    });
+                                  }),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: simpleButton(
+                                  text: AppLocalizations.of(context)!.apply,
+                                  callback: () {
+                                    Navigator.pop(context);
+                                    setState(() {
+                                      if (isBuyTab) {
+                                        _buyStartDate = currentStartDate;
+                                        _buyEndDate = currentEndDate;
+                                        _buySelectedType = currentSelectedType;
+                                        _buySelectedCommodity =
+                                            currentSelectedCommodity;
+                                        _buySelectedDateFilter =
+                                            currentDateFilter;
+                                      } else {
+                                        _sellStartDate = currentStartDate;
+                                        _sellEndDate = currentEndDate;
+                                        _sellSelectedType = currentSelectedType;
+                                        _sellSelectedCommodity =
+                                            currentSelectedCommodity;
+                                        _sellSelectedDateFilter =
+                                            currentDateFilter;
+                                      }
+                                    });
+                                  }),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                      ],
+                    );
+                  },
+                ),
+              )
+            ]);
+      },
+    );
+  }
+
+  List<SbtContractDatum> _sortSbtListByDate(List<SbtContractDatum>? list) {
+    if (list == null) return [];
+    list.sort((a, b) {
+      final aDateStr = a.createdAt?.toString() ?? '';
+      final bDateStr = b.createdAt?.toString() ?? '';
+      final aDate = DateTime.tryParse(aDateStr);
+      final bDate = DateTime.tryParse(bDateStr);
+      return (bDate ?? DateTime(2000)).compareTo(aDate ?? DateTime(2000));
+    });
+    return list;
+  }
+
+  List<InventoryDatum> _sortWarehouseListByDate(List<InventoryDatum>? list) {
+    if (list == null) return [];
+    list.sort((a, b) {
+      final aDateStr = a.createdAt?.toString() ?? '';
+      final bDateStr = b.createdAt?.toString() ?? '';
+      final aDate = DateTime.tryParse(aDateStr);
+      final bDate = DateTime.tryParse(bDateStr);
+      return (bDate ?? DateTime(2000)).compareTo(aDate ?? DateTime(2000));
+    });
+    return list;
+  }
+
+  List<dynamic> _sortStackBuyListByDate(List<dynamic>? list) {
+    if (list == null) return [];
+    list.sort((a, b) {
+      final aDateStr = (a['createdAt'] ?? a['date'] ?? '').toString();
+      final bDateStr = (b['createdAt'] ?? b['date'] ?? '').toString();
+      final aDate = DateTime.tryParse(aDateStr);
+      final bDate = DateTime.tryParse(bDateStr);
+      return (bDate ?? DateTime(2000)).compareTo(aDate ?? DateTime(2000));
+    });
+    return list;
+  }
+
+  String _formatDate(String dateStr) {
+    try {
+      final date = DateTime.tryParse(dateStr);
+      if (date == null) return dateStr;
+      return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+    } catch (_) {
+      return dateStr;
+    }
+  }
+
+  // Helper to get all commodity types from the lists
+  List<String> _getAllCommodityTypes() {
+    final Set<String> commodities = {};
+    for (var item in buyInvoicesList ?? []) {
+      if (item.commodity != null && item.commodity!.isNotEmpty) {
+        commodities.add(item.commodity!);
+      }
+    }
+    return ["All", ...commodities];
+  }
+
+  // Helper to get all deal types from the lists
+  List<String> _getAllDealTypes(List<InvoicesDatum> list) {
+    final Set<String> dealTypes = {};
+    for (var item in list) {
+      if (item.dealType != null && item.dealType!.isNotEmpty) {
+        dealTypes.add(item.dealType!);
+      }
+    }
+    return ["All", ...dealTypes];
+  }
+
+  // Filtering logic
+  List<InvoicesDatum> _applyFilters(List<InvoicesDatum> list, bool isBuyTab) {
+    DateTime? startDate = isBuyTab ? _buyStartDate : _sellStartDate;
+    DateTime? endDate = isBuyTab ? _buyEndDate : _sellEndDate;
+    String? selectedType = isBuyTab ? _buySelectedType : _sellSelectedType;
+    String? selectedCommodity =
+        isBuyTab ? _buySelectedCommodity : _sellSelectedCommodity;
+
+    return list.where((item) {
+      // Date filter (range)
+      if (startDate != null && endDate != null) {
+        String dateStr = item.date ?? '';
+        // Parse DD-MM-YYYY format
+        DateTime? itemDate;
+        try {
+          final parts = dateStr.split('-');
+          if (parts.length == 3) {
+            final day = int.tryParse(parts[0]);
+            final month = int.tryParse(parts[1]);
+            final year = int.tryParse(parts[2]);
+            if (day != null && month != null && year != null) {
+              itemDate = DateTime(year, month, day);
+            }
+          }
+        } catch (e) {
+          debugPrint('Error parsing date: $dateStr, error: $e');
+        }
+
+        if (itemDate == null ||
+            itemDate.isBefore(startDate) ||
+            itemDate.isAfter(endDate)) {
+          return false;
+        }
+      }
+      // Type filter
+      if (selectedType != null && selectedType != "All") {
+        String flag = item.dealType ?? '';
+        if (flag != selectedType) return false;
+      }
+      // Commodity filter
+      if (selectedCommodity != null && selectedCommodity != "All") {
+        String commodity = item.commodity ?? '';
+        if (commodity != selectedCommodity) return false;
+      }
+      return true;
+    }).toList();
+  }
+
+  Future<void> _handleDownload(BuildContext context, dynamic item,
+      {bool isSell = false}) async {
+    try {
+      if (isSell) {
+        final contractNote = await ref.watch(sellerContractNoteProvider(
+                orderId: item.orderId.toString(), type: "Seller")
+            .future);
+
+        final file = await sellerContractPdf(contractNote, ref);
+        if (file != null) {
+          await FileSaver.instance
+              .saveAs(
+                  name: 'seller_sbt_contract_note',
+                  file: file,
+                  mimeType: MimeType.pdf,
+                  ext: '.pdf')
+              .then((value) {
+            OpenFile.open(value);
+          });
+
+          Fluttertoast.showToast(
+            msg: 'File saved successfully!',
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: ColorConstant.maingreen,
+          );
+
+          final doc = await PDFDocument.fromFile(file);
+
+          Get.bottomSheet(
+            Stack(
+              children: [
+                PDFViewer(document: doc),
+                Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: ElevatedButton(
+                      style: AppStyle.buttonStyle,
+                      onPressed: () {},
+                      child: Text(
+                        'Download',
+                        style: TextStyle(
+                          fontSize: Adaptive.sp(16),
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            isScrollControlled: true,
+          );
+        }
+      } else {
+        final contractNote = await ref.watch(buyerContractNoteProvider(
+                orderId: item.orderId.toString(), type: "Buyer")
+            .future);
+
+        final file = await settlementPdf(contractNote, "222", "2222", ref);
+        if (file != null) {
+          await FileSaver.instance
+              .saveAs(
+                  name: 'buyer_sbt_contract_note',
+                  file: file,
+                  mimeType: MimeType.pdf,
+                  ext: '.pdf')
+              .then((value) {
+            OpenFile.open(value);
+          });
+
+          Fluttertoast.showToast(
+            msg: 'File saved successfully!',
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: ColorConstant.maingreen,
+          );
+
+          final doc = await PDFDocument.fromFile(file);
+
+          Get.bottomSheet(
+            Stack(
+              children: [
+                PDFViewer(document: doc),
+                Padding(
+                  padding: Pad(all: 10),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: ElevatedButton(
+                      style: AppStyle.buttonStyle,
+                      onPressed: () {},
+                      child: Text(
+                        'Download',
+                        style: TextStyle(
+                          fontSize: Adaptive.sp(16),
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            isScrollControlled: true,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  void _showContractNoteStack(
+      BuildContext context, String? dealId, String buySellType) {
+    if (dealId == null) return;
+
+    ref.read(stackContractNoteProvider(id: dealId).future).then((value) async {
+      if (buySellType == "buy") {
+        stackContractNotePdf(value, ref, buySellType).then((file) async {
+          await FileSaver.instance
+              .saveAs(
+                  name: 'buyer_stack_contract_note',
+                  file: file,
+                  mimeType: MimeType.pdf,
+                  ext: '.pdf')
+              .then((value) {});
+          Fluttertoast.showToast(
+            msg: 'File saved successfully!',
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: ColorConstant.maingreen,
+          );
+
+          OpenFile.open(file?.path);
+        });
+      } else {
+        stackContractNotePdfSeller(value, ref, buySellType).then((file) async {
+          await FileSaver.instance
+              .saveAs(
+                  name: 'seller_stack_contract_note',
+                  file: file,
+                  mimeType: MimeType.pdf,
+                  ext: '.pdf')
+              .then((value) {
+            // OpenFile.open(value);
+          });
+          Fluttertoast.showToast(
+            msg: 'File saved successfully!',
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: ColorConstant.maingreen,
+          );
+          OpenFile.open(file?.path);
+        });
+      }
+    });
+  }
+
+  // Add this method for Gatepass contract notes
+  void _showContractNote(BuildContext context, String? dealId) {
+    if (dealId == null) return;
+
+    ref.read(contractNotesProvider(dealId: dealId).future).then((value) {
+      GlobalBottomSheet.show(
+        context,
+        content: Text(AppLocalizations.of(context)!.yourBottomSheetContent),
+        contractNote: value,
+        callback: (dynamic result) {
+          if (result == true) Get.back();
+        },
+      );
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      ref.watch(isLoadingProvider.notifier).state = true;
+      debugPrint('Fetching invoices...');
+
+      try {
+        // Fetch both invoice lists in parallel
+        final results = await Future.wait([
+          ref.watch(getInvoicesProvider(type: 'sell').future),
+          ref.watch(getInvoicesProvider(type: 'buy').future),
+        ]);
+
+        // Update sell invoices (Invoices Raised By Me)
+        if (results[0].data != null) {
+          sellInvoicesList = results[0].data ?? [];
+        }
+
+        // Update buy invoices (Invoices Raised To Me)
+        if (results[1].data != null) {
+          buyInvoicesList = results[1].data ?? [];
+        }
+
+        setState(() {});
+      } catch (e) {
+        debugPrint('Error fetching invoices: $e');
+      } finally {
+        ref.watch(isLoadingProvider.notifier).state = false;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tabIndex = ref.watch(selectedTabIndex);
+    final isBuyTab = tabIndex == 0;
+
+    debugPrint('Build called - isBuyTab: $isBuyTab');
+    debugPrint('buyInvoicesList length: ${buyInvoicesList?.length ?? 0}');
+    debugPrint('sellInvoicesList length: ${sellInvoicesList?.length ?? 0}');
+
+    // Get commodity types for the current tab
+    final commodityTypesList = isBuyTab
+        ? _getAllCommodityTypes()
+        : (() {
+            final Set<String> commodities = {};
+            for (var item in sellInvoicesList ?? []) {
+              if (item.commodity != null && item.commodity!.isNotEmpty) {
+                commodities.add(item.commodity!);
+              }
+            }
+            return ["All", ...commodities];
+          })();
+
+    _commodityTypes = commodityTypesList;
+
+    // Get deal types for the current tab
+    _dealTypes = _getAllDealTypes(
+        isBuyTab ? (buyInvoicesList ?? []) : (sellInvoicesList ?? []));
+
+    final filteredList = _applyFilters(
+        isBuyTab ? (buyInvoicesList ?? []) : (sellInvoicesList ?? []),
+        isBuyTab);
+
+    debugPrint('Filtered list length: ${filteredList.length}');
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.msgInvoices),
+        backgroundColor: ColorConstant.maingreen,
+        centerTitle: true,
+        actions: [
+          if (ref.watch(authProvider.notifier).loginStatus !=
+              AuthStatus.loggedIn)
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ElevatedButton(
+                      style: AppStyle.loginButtonStyle,
+                      onPressed: () {
+                        showLoginBottomsheet(context);
+                      },
+                      child: Text(
+                        AppLocalizations.of(context)!.msgLoging,
+                        style: TextStyle(color: ColorConstant.maingreen),
+                      )),
+                ],
+              ),
+            ),
+        ],
+      ),
+      body: SafeArea(
+        child: DefaultTabController(
+          length: 2,
+          child: ref.watch(isLoadingProvider)
+              ? invoiceLoader()
+              : Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(10),
+                      child: Container(
+                        height: 52,
+                        decoration: BoxDecoration(
+                            color: Colors.grey.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(10.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ]),
+                        child: TabBar(
+                            onTap: (index) {
+                              ref.watch(selectedTabIndex.notifier).state =
+                                  index;
+                            },
+                            labelColor: Colors.white,
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            labelStyle: TextStyle(
+                              fontSize: Adaptive.sp(17),
+                              fontWeight: FontWeight.bold,
+                            ),
+                            unselectedLabelColor: Colors.black87,
+                            indicator: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: ColorConstant.maingreen,
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      ColorConstant.maingreen.withOpacity(0.18),
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            tabs: [
+                              Tab(
+                                child: Text(
+                                  AppLocalizations.of(context)!
+                                      .invoicesRaisedByMe,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Tab(
+                                child: Text(
+                                  AppLocalizations.of(context)!
+                                      .invoicesRaisedToMe,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ]),
+                      ),
+                    ),
+                    // Add filter buttons above each tab view
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all(
+                                    ColorConstant.maingreen),
+                                shape: WidgetStateProperty.all(
+                                    RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                )),
+                              ),
+                              icon: Icon(Icons.filter_alt_outlined,
+                                  color: Colors.white),
+                              label: Text(
+                                isBuyTab
+                                    ? AppLocalizations.of(context)!
+                                        .filterMyInvoices
+                                    : AppLocalizations.of(context)!
+                                        .filterReceivedInvoices,
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: Adaptive.sp(15)),
+                              ),
+                              onPressed: () =>
+                                  _showFilterSheet(context, isBuyTab),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Show applied filters
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if ((isBuyTab &&
+                                  (_buyStartDate != null ||
+                                      _buyEndDate != null)) ||
+                              (!isBuyTab &&
+                                  (_sellStartDate != null ||
+                                      _sellEndDate != null)))
+                            Row(
+                              children: [
+                                Icon(Icons.calendar_today,
+                                    size: 16, color: ColorConstant.maingreen),
+                                SizedBox(width: 6),
+                                Text(
+                                  "${AppLocalizations.of(context)!.msgDate}${(isBuyTab ? _buyStartDate : _sellStartDate) != null ? "${(isBuyTab ? _buyStartDate : _sellStartDate)!.day.toString().padLeft(2, '0')}/${(isBuyTab ? _buyStartDate : _sellStartDate)!.month.toString().padLeft(2, '0')}/${(isBuyTab ? _buyStartDate : _sellStartDate)!.year}" : "Any"} - ${(isBuyTab ? _buyEndDate : _sellEndDate) != null ? "${(isBuyTab ? _buyEndDate : _sellEndDate)!.day.toString().padLeft(2, '0')}/${(isBuyTab ? _buyEndDate : _sellEndDate)!.month.toString().padLeft(2, '0')}/${(isBuyTab ? _buyEndDate : _sellEndDate)!.year}" : "Any"}",
+                                  style: TextStyle(
+                                    fontSize: Adaptive.sp(14),
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if ((isBuyTab &&
+                                  _buySelectedType != null &&
+                                  _buySelectedType != "All") ||
+                              (!isBuyTab &&
+                                  _sellSelectedType != null &&
+                                  _sellSelectedType != "All"))
+                            Row(
+                              children: [
+                                Icon(Icons.category,
+                                    size: 16, color: ColorConstant.maingreen),
+                                SizedBox(width: 6),
+                                Text(
+                                  "${AppLocalizations.of(context)!.typeLabel}: ${isBuyTab ? _buySelectedType : _sellSelectedType}",
+                                  style: TextStyle(
+                                    fontSize: Adaptive.sp(14),
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if ((isBuyTab &&
+                                  _buySelectedCommodity != null &&
+                                  _buySelectedCommodity != "All") ||
+                              (!isBuyTab &&
+                                  _sellSelectedCommodity != null &&
+                                  _sellSelectedCommodity != "All"))
+                            Row(
+                              children: [
+                                Icon(Icons.shopping_bag,
+                                    size: 16, color: ColorConstant.maingreen),
+                                SizedBox(width: 6),
+                                Text(
+                                  "${AppLocalizations.of(context)!.msgCommodityy}: ${isBuyTab ? _buySelectedCommodity : _sellSelectedCommodity}",
+                                  style: TextStyle(
+                                    fontSize: Adaptive.sp(14),
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                    ref.watch(authProvider).when(
+                        data: (data) => Expanded(
+                              child: TabBarView(
+                                physics: NeverScrollableScrollPhysics(),
+                                children: [
+                                  // Buy Tab
+                                  data == AuthStatus.loggedOut
+                                      ? Center(
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 24, vertical: 32),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(18),
+                                            ),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Image.asset(
+                                                    'assets/images/mainlogopng.png',
+                                                    height: 120,
+                                                    width: 120),
+                                                SizedBox(height: 18),
+                                                Text(
+                                                  AppLocalizations.of(context)!
+                                                      .loginToViewInvoices,
+                                                  style: TextStyle(
+                                                    fontSize: Adaptive.sp(16),
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        ColorConstant.maingreen,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 14),
+                                                simpleButton(
+                                                    text: AppLocalizations.of(
+                                                            context)!
+                                                        .msgLoging,
+                                                    callback: () {
+                                                      showLoginBottomsheet(
+                                                          context);
+                                                    }),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      : filteredList.isEmpty
+                                          ? Center(
+                                              child: Text(
+                                                AppLocalizations.of(context)!
+                                                    .noInvoicesFound,
+                                                style: TextStyle(
+                                                  fontSize: Adaptive.sp(16),
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            )
+                                          : ListView.builder(
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 12, vertical: 8),
+                                              itemCount: filteredList.length,
+                                              itemBuilder: (context, index) {
+                                                final item =
+                                                    filteredList[index];
+                                                String dealId =
+                                                    "${item.invoiceNumber ?? "N/A"}";
+                                                String commodity =
+                                                    "${item.commodity ?? "N/A"}";
+                                                String district =
+                                                    "${item.location ?? "N/A"}";
+                                                String date = _formatDate(
+                                                    "${item.date ?? "N/A"}");
+                                                String price =
+                                                    item.rate?.toString() ?? '';
+                                                String quantity =
+                                                    item.qty?.toString() ?? '';
+                                                String warehouse =
+                                                    "${item.location ?? ''}";
+                                                String name =
+                                                    item.buyerSellerName ?? '';
+                                                String flag =
+                                                    item.dealType ?? "N/A";
+
+                                                return Card(
+                                                  color: Colors.white,
+                                                  margin: EdgeInsets.symmetric(
+                                                      vertical: 6,
+                                                      horizontal: 2),
+                                                  elevation: 5,
+                                                  shape: RoundedRectangleBorder(
+                                                    side: BorderSide(
+                                                        color: ColorConstant
+                                                            .maingreen),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            12),
+                                                  ),
+                                                  child: Padding(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 14,
+                                                        vertical: 10),
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Row(
+                                                          children: [
+                                                            Expanded(
+                                                              child: Row(
+                                                                children: [
+                                                                  Expanded(
+                                                                    child: Text(
+                                                                      commodity,
+                                                                      style:
+                                                                          TextStyle(
+                                                                        fontWeight:
+                                                                            FontWeight.bold,
+                                                                        fontSize:
+                                                                            Adaptive.sp(17),
+                                                                        color: ColorConstant
+                                                                            .maingreen,
+                                                                      ),
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                      maxLines:
+                                                                          1,
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(
+                                                                      width: 8),
+                                                                  Container(
+                                                                    padding: EdgeInsets.symmetric(
+                                                                        horizontal:
+                                                                            8,
+                                                                        vertical:
+                                                                            2),
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      color: Colors
+                                                                          .grey
+                                                                          .shade200,
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              6),
+                                                                    ),
+                                                                    child: Text(
+                                                                      flag,
+                                                                      style:
+                                                                          TextStyle(
+                                                                        fontSize:
+                                                                            Adaptive.sp(13),
+                                                                        color: Colors
+                                                                            .black87,
+                                                                        fontWeight:
+                                                                            FontWeight.w600,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(
+                                                                      width: 8),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                            Container(
+                                                              padding: EdgeInsets
+                                                                  .symmetric(
+                                                                      horizontal:
+                                                                          8,
+                                                                      vertical:
+                                                                          2),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: ColorConstant
+                                                                    .maingreen
+                                                                    .withOpacity(
+                                                                        0.10),
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            6),
+                                                              ),
+                                                              child: Text(
+                                                                date,
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          15),
+                                                                  color: ColorConstant
+                                                                      .maingreen,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        SizedBox(height: 8),
+                                                        Divider(
+                                                            height: 1,
+                                                            color: Colors
+                                                                .grey[300]),
+                                                        SizedBox(height: 8),
+                                                        Row(
+                                                          children: [
+                                                            Icon(
+                                                                Icons
+                                                                    .confirmation_number,
+                                                                size: 18,
+                                                                color: Colors
+                                                                    .grey[700]),
+                                                            SizedBox(width: 6),
+                                                            Text(
+                                                              AppLocalizations.of(
+                                                                      context)!
+                                                                  .dealId,
+                                                              style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                fontSize:
+                                                                    Adaptive.sp(
+                                                                        16),
+                                                                color: Colors
+                                                                    .grey[700],
+                                                              ),
+                                                            ),
+                                                            Expanded(
+                                                              child: Text(
+                                                                dealId,
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16),
+                                                                  color: Colors
+                                                                      .black87,
+                                                                ),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        SizedBox(height: 6),
+                                                        Row(
+                                                          children: [
+                                                            Icon(
+                                                                Icons
+                                                                    .location_on,
+                                                                size: 18,
+                                                                color: Colors
+                                                                    .grey[700]),
+                                                            SizedBox(width: 6),
+                                                            Expanded(
+                                                              child: Text(
+                                                                district,
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16),
+                                                                  color: Colors
+                                                                      .black87,
+                                                                ),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        SizedBox(height: 6),
+                                                        Row(
+                                                          children: [
+                                                            Icon(
+                                                                Icons
+                                                                    .inventory_2,
+                                                                size: 18,
+                                                                color: Colors
+                                                                    .grey[700]),
+                                                            SizedBox(width: 6),
+                                                            Text(
+                                                              AppLocalizations.of(
+                                                                      context)!
+                                                                  .msgQuantity,
+                                                              style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                fontSize:
+                                                                    Adaptive.sp(
+                                                                        16),
+                                                                color: Colors
+                                                                    .grey[700],
+                                                              ),
+                                                            ),
+                                                            Flexible(
+                                                              child: Text(
+                                                                quantity.isNotEmpty
+                                                                    ? "$quantity quintal"
+                                                                    : "N/A",
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16),
+                                                                  color: Colors
+                                                                      .black87,
+                                                                ),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                            SizedBox(width: 14),
+                                                            Icon(
+                                                                Icons
+                                                                    .currency_rupee,
+                                                                size: 18,
+                                                                color: Colors
+                                                                    .grey[700]),
+                                                            SizedBox(width: 6),
+                                                            Flexible(
+                                                              child: Text(
+                                                                price.isNotEmpty
+                                                                    ? "$price ${AppLocalizations.of(context)!.perQntl}"
+                                                                    : "N/A",
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16),
+                                                                  color: Colors
+                                                                      .black87,
+                                                                ),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        SizedBox(height: 10),
+                                                        Row(
+                                                          children: [
+                                                            Expanded(
+                                                              child:
+                                                                  ElevatedButton(
+                                                                style:
+                                                                    ButtonStyle(
+                                                                  padding: WidgetStateProperty.all(
+                                                                      EdgeInsets.symmetric(
+                                                                          horizontal:
+                                                                              8,
+                                                                          vertical:
+                                                                              6)),
+                                                                  backgroundColor:
+                                                                      WidgetStateProperty.all(
+                                                                          ColorConstant
+                                                                              .maingreen),
+                                                                  shape: WidgetStateProperty
+                                                                      .all(
+                                                                          RoundedRectangleBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(6),
+                                                                  )),
+                                                                ),
+                                                                onPressed:
+                                                                    () async {
+                                                                  try {
+                                                                    final invoicePdfData =
+                                                                        await ref
+                                                                            .read(getInvoicePdfProvider(invoiceId: item.id?.toString()).future);
+
+                                                                    if (invoicePdfData
+                                                                            .data !=
+                                                                        null) {
+                                                                      final file = await invoiceContractNotePdf(
+                                                                          context,
+                                                                          invoicePdfData
+                                                                              .data,
+                                                                          ref);
+
+                                                                      if (file !=
+                                                                          null) {
+                                                                        await FileSaver
+                                                                            .instance
+                                                                            .saveAs(
+                                                                                name: 'invoice_contract_note_${item.invoiceNumber}',
+                                                                                file: file,
+                                                                                mimeType: MimeType.pdf,
+                                                                                ext: '.pdf')
+                                                                            .then((value) {
+                                                                          OpenFile.open(
+                                                                              value);
+                                                                        });
+                                                                        Fluttertoast
+                                                                            .showToast(
+                                                                          msg:
+                                                                              'Contract note downloaded successfully!',
+                                                                          toastLength:
+                                                                              Toast.LENGTH_LONG,
+                                                                          backgroundColor:
+                                                                              ColorConstant.maingreen,
+                                                                        );
+                                                                      }
+                                                                    } else {
+                                                                      Fluttertoast
+                                                                          .showToast(
+                                                                        msg:
+                                                                            'No data available for this invoice',
+                                                                        toastLength:
+                                                                            Toast.LENGTH_SHORT,
+                                                                        backgroundColor:
+                                                                            Colors.red,
+                                                                      );
+                                                                    }
+                                                                  } catch (e) {
+                                                                    debugPrint(
+                                                                        'Error generating contract note: $e');
+                                                                    Fluttertoast
+                                                                        .showToast(
+                                                                      msg:
+                                                                          'Failed to generate contract note',
+                                                                      toastLength:
+                                                                          Toast
+                                                                              .LENGTH_SHORT,
+                                                                      backgroundColor:
+                                                                          Colors
+                                                                              .red,
+                                                                    );
+                                                                  }
+                                                                },
+                                                                child: Text(
+                                                                  AppLocalizations.of(
+                                                                          context)!
+                                                                      .msgNote,
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          Adaptive.sp(
+                                                                              13),
+                                                                      color: Colors
+                                                                          .white),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            SizedBox(width: 10),
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                showDialog(
+                                                                  context:
+                                                                      context,
+                                                                  builder: (ctx) =>
+                                                                      AlertDialog(
+                                                                    shape: RoundedRectangleBorder(
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(16)),
+                                                                    title: Row(
+                                                                      children: [
+                                                                        Icon(
+                                                                            Icons
+                                                                                .info_outline,
+                                                                            color:
+                                                                                ColorConstant.maingreen,
+                                                                            size: 28),
+                                                                        SizedBox(
+                                                                            width:
+                                                                                8),
+                                                                        Text(
+                                                                          "${AppLocalizations.of(context)!.detail} - $flag",
+                                                                          style:
+                                                                              TextStyle(
+                                                                            fontWeight:
+                                                                                FontWeight.bold,
+                                                                            fontSize:
+                                                                                Adaptive.sp(19),
+                                                                            color:
+                                                                                ColorConstant.maingreen,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    content:
+                                                                        SingleChildScrollView(
+                                                                      child:
+                                                                          Table(
+                                                                        columnWidths: const {
+                                                                          0: IntrinsicColumnWidth(),
+                                                                          1: FlexColumnWidth(),
+                                                                        },
+                                                                        defaultVerticalAlignment:
+                                                                            TableCellVerticalAlignment.middle,
+                                                                        children: [
+                                                                          _richTableRow(
+                                                                              Icons.shopping_bag,
+                                                                              AppLocalizations.of(context)!.msgCommodityy,
+                                                                              commodity),
+                                                                          _richTableRow(
+                                                                              Icons.confirmation_number,
+                                                                              AppLocalizations.of(context)!.dealId,
+                                                                              dealId),
+                                                                          _richTableRow(
+                                                                              Icons.location_on,
+                                                                              AppLocalizations.of(context)!.msgDistrict,
+                                                                              district),
+                                                                          _richTableRow(
+                                                                              Icons.calendar_today,
+                                                                              AppLocalizations.of(context)!.msgDate,
+                                                                              date),
+                                                                          _richTableRow(
+                                                                              Icons.inventory_2,
+                                                                              AppLocalizations.of(context)!.quantityLabel,
+                                                                              quantity.isNotEmpty ? "$quantity ${AppLocalizations.of(context)!.perQntl}" : "N/A"),
+                                                                          _richTableRow(
+                                                                              Icons.currency_rupee,
+                                                                              AppLocalizations.of(context)!.price,
+                                                                              price.isNotEmpty ? "$price ${AppLocalizations.of(context)!.perQtl}" : "N/A"),
+                                                                          _richTableRow(
+                                                                              Icons.category,
+                                                                              AppLocalizations.of(context)!.typeLabel,
+                                                                              flag),
+                                                                          if (warehouse
+                                                                              .isNotEmpty)
+                                                                            _richTableRow(
+                                                                                Icons.home_work,
+                                                                                AppLocalizations.of(context)!.warehousename,
+                                                                                warehouse),
+                                                                          if (name
+                                                                              .isNotEmpty)
+                                                                            _richTableRow(
+                                                                                Icons.person,
+                                                                                AppLocalizations.of(context)!.msgName,
+                                                                                name),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                    actions: [
+                                                                      TextButton(
+                                                                        onPressed:
+                                                                            () =>
+                                                                                Navigator.of(ctx).pop(),
+                                                                        child:
+                                                                            Text(
+                                                                          AppLocalizations.of(context)!
+                                                                              .close,
+                                                                          style:
+                                                                              TextStyle(
+                                                                            color:
+                                                                                ColorConstant.maingreen,
+                                                                            fontSize:
+                                                                                Adaptive.sp(16),
+                                                                            fontWeight:
+                                                                                FontWeight.bold,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                );
+                                                              },
+                                                              child: Text(
+                                                                AppLocalizations.of(
+                                                                        context)!
+                                                                    .showDetails,
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize:
+                                                                      Adaptive.sp(
+                                                                          16),
+                                                                  color: ColorConstant
+                                                                      .maingreen,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                  // Sell Tab
+                                  data == AuthStatus.loggedOut
+                                      ? Center(
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 24, vertical: 32),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(18),
+                                            ),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Image.asset(
+                                                    'assets/images/mainlogopng.png',
+                                                    height: 120,
+                                                    width: 120),
+                                                SizedBox(height: 18),
+                                                Text(
+                                                  AppLocalizations.of(context)!
+                                                      .loginToViewInvoices,
+                                                  style: TextStyle(
+                                                    fontSize: Adaptive.sp(16),
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        ColorConstant.maingreen,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 14),
+                                                simpleButton(
+                                                    text: AppLocalizations.of(
+                                                            context)!
+                                                        .msgLoging,
+                                                    callback: () {
+                                                      showLoginBottomsheet(
+                                                          context);
+                                                    }),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      : (() {
+                                          final filteredSellList =
+                                              _applyFilters(
+                                                  sellInvoicesList ?? [],
+                                                  false);
+                                          if (filteredSellList.isEmpty) {
+                                            return Center(
+                                              child: Text(
+                                                AppLocalizations.of(context)!
+                                                    .noInvoicesFound,
+                                                style: TextStyle(
+                                                  fontSize: Adaptive.sp(16),
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                          return ListView.builder(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 8),
+                                            itemCount: filteredSellList.length,
+                                            itemBuilder: (context, index) {
+                                              final item =
+                                                  filteredSellList[index];
+                                              String dealId =
+                                                  "${item.invoiceNumber ?? "N/A"}";
+                                              String commodity =
+                                                  "${item.commodity ?? "N/A"}";
+                                              String district =
+                                                  "${item.location ?? "N/A"}";
+                                              String date = _formatDate(
+                                                  "${item.date ?? "N/A"}");
+                                              String price =
+                                                  item.rate?.toString() ?? '';
+                                              String quantity =
+                                                  item.qty?.toString() ?? '';
+                                              String warehouse =
+                                                  "${item.location ?? ''}";
+                                              String name =
+                                                  "${item.buyerSellerName ?? ''}";
+                                              String flag =
+                                                  "${item.dealType ?? "N/A"}";
+
+                                              return Card(
+                                                color: Colors.white,
+                                                margin: EdgeInsets.symmetric(
+                                                    vertical: 6, horizontal: 2),
+                                                elevation: 5,
+                                                shape: RoundedRectangleBorder(
+                                                  side: BorderSide(
+                                                      color: ColorConstant
+                                                          .maingreen),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 14,
+                                                      vertical: 10),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Row(
+                                                        children: [
+                                                          Expanded(
+                                                            child: Row(
+                                                              children: [
+                                                                Expanded(
+                                                                  child: Text(
+                                                                    commodity,
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      fontSize:
+                                                                          Adaptive.sp(
+                                                                              18),
+                                                                      color: ColorConstant
+                                                                          .maingreen,
+                                                                    ),
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    maxLines: 1,
+                                                                  ),
+                                                                ),
+                                                                SizedBox(
+                                                                    width: 8),
+                                                                Container(
+                                                                  padding: EdgeInsets
+                                                                      .symmetric(
+                                                                          horizontal:
+                                                                              8,
+                                                                          vertical:
+                                                                              2),
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    color: Colors
+                                                                        .grey
+                                                                        .shade200,
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(6),
+                                                                  ),
+                                                                  child: Text(
+                                                                    flag,
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontSize:
+                                                                          Adaptive.sp(
+                                                                              13),
+                                                                      color: Colors
+                                                                          .black87,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w600,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                SizedBox(
+                                                                    width: 8),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          Container(
+                                                            padding: EdgeInsets
+                                                                .symmetric(
+                                                                    horizontal:
+                                                                        8,
+                                                                    vertical:
+                                                                        2),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: ColorConstant
+                                                                  .maingreen
+                                                                  .withOpacity(
+                                                                      0.10),
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          6),
+                                                            ),
+                                                            child: Text(
+                                                              date,
+                                                              style: TextStyle(
+                                                                fontSize:
+                                                                    Adaptive.sp(
+                                                                        15),
+                                                                color: ColorConstant
+                                                                    .maingreen,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: 8),
+                                                      Divider(
+                                                          height: 1,
+                                                          color:
+                                                              Colors.grey[300]),
+                                                      SizedBox(height: 8),
+                                                      Row(
+                                                        children: [
+                                                          Icon(
+                                                              Icons
+                                                                  .confirmation_number,
+                                                              size: 18,
+                                                              color: Colors
+                                                                  .grey[700]),
+                                                          SizedBox(width: 6),
+                                                          Text(
+                                                            "${AppLocalizations.of(context)!.dealId}:",
+                                                            style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              fontSize:
+                                                                  Adaptive.sp(
+                                                                      16),
+                                                              color: Colors
+                                                                  .grey[700],
+                                                            ),
+                                                          ),
+                                                          Expanded(
+                                                            child: Text(
+                                                              dealId,
+                                                              style: TextStyle(
+                                                                fontSize:
+                                                                    Adaptive.sp(
+                                                                        16),
+                                                                color: Colors
+                                                                    .black87,
+                                                              ),
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: 6),
+                                                      Row(
+                                                        children: [
+                                                          Icon(
+                                                              Icons.location_on,
+                                                              size: 18,
+                                                              color: Colors
+                                                                  .grey[700]),
+                                                          SizedBox(width: 6),
+                                                          Expanded(
+                                                            child: Text(
+                                                              district,
+                                                              style: TextStyle(
+                                                                fontSize:
+                                                                    Adaptive.sp(
+                                                                        16),
+                                                                color: Colors
+                                                                    .black87,
+                                                              ),
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: 6),
+                                                      Row(
+                                                        children: [
+                                                          Icon(
+                                                              Icons.inventory_2,
+                                                              size: 18,
+                                                              color: Colors
+                                                                  .grey[700]),
+                                                          SizedBox(width: 6),
+                                                          Text(
+                                                            "${AppLocalizations.of(context)!.quantityLabel}:",
+                                                            style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              fontSize:
+                                                                  Adaptive.sp(
+                                                                      16),
+                                                              color: Colors
+                                                                  .grey[700],
+                                                            ),
+                                                          ),
+                                                          Flexible(
+                                                            child: Text(
+                                                              quantity.isNotEmpty
+                                                                  ? "$quantity quintal"
+                                                                  : "N/A",
+                                                              style: TextStyle(
+                                                                fontSize:
+                                                                    Adaptive.sp(
+                                                                        16),
+                                                                color: Colors
+                                                                    .black87,
+                                                              ),
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 14),
+                                                          Icon(
+                                                              Icons
+                                                                  .currency_rupee,
+                                                              size: 18,
+                                                              color: Colors
+                                                                  .grey[700]),
+                                                          SizedBox(width: 6),
+                                                          Flexible(
+                                                            child: Text(
+                                                              price.isNotEmpty
+                                                                  ? "$price ${AppLocalizations.of(context)!.perQtl} "
+                                                                  : "N/A",
+                                                              style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                fontSize:
+                                                                    Adaptive.sp(
+                                                                        16),
+                                                                color: Colors
+                                                                    .black87,
+                                                              ),
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: 10),
+                                                      Row(
+                                                        children: [
+                                                          Expanded(
+                                                            child:
+                                                                ElevatedButton(
+                                                              style:
+                                                                  ButtonStyle(
+                                                                padding: WidgetStateProperty.all(
+                                                                    EdgeInsets.symmetric(
+                                                                        horizontal:
+                                                                            8,
+                                                                        vertical:
+                                                                            6)),
+                                                                backgroundColor:
+                                                                    WidgetStateProperty.all(
+                                                                        ColorConstant
+                                                                            .maingreen),
+                                                                shape: WidgetStateProperty
+                                                                    .all(
+                                                                        RoundedRectangleBorder(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              6),
+                                                                )),
+                                                              ),
+                                                              onPressed:
+                                                                  () async {
+                                                                try {
+                                                                  final invoicePdfData =
+                                                                      await ref.read(
+                                                                          getInvoicePdfProvider(invoiceId: item.id?.toString())
+                                                                              .future);
+
+                                                                  if (invoicePdfData
+                                                                          .data !=
+                                                                      null) {
+                                                                    final file = await invoiceContractNotePdf(
+                                                                        context,
+                                                                        invoicePdfData
+                                                                            .data,
+                                                                        ref);
+
+                                                                    if (file !=
+                                                                        null) {
+                                                                      await FileSaver
+                                                                          .instance
+                                                                          .saveAs(
+                                                                              name: 'invoice_contract_note_${item.invoiceNumber}',
+                                                                              file: file,
+                                                                              mimeType: MimeType.pdf,
+                                                                              ext: '.pdf')
+                                                                          .then((value) {
+                                                                        OpenFile.open(
+                                                                            value);
+                                                                      });
+                                                                      Fluttertoast
+                                                                          .showToast(
+                                                                        msg:
+                                                                            'Contract note downloaded successfully!',
+                                                                        toastLength:
+                                                                            Toast.LENGTH_LONG,
+                                                                        backgroundColor:
+                                                                            ColorConstant.maingreen,
+                                                                      );
+                                                                    }
+                                                                  } else {
+                                                                    Fluttertoast
+                                                                        .showToast(
+                                                                      msg:
+                                                                          'No data available for this invoice',
+                                                                      toastLength:
+                                                                          Toast
+                                                                              .LENGTH_SHORT,
+                                                                      backgroundColor:
+                                                                          Colors
+                                                                              .red,
+                                                                    );
+                                                                  }
+                                                                } catch (e) {
+                                                                  debugPrint(
+                                                                      'Error generating contract note: $e');
+                                                                  Fluttertoast
+                                                                      .showToast(
+                                                                    msg:
+                                                                        'Failed to generate contract note',
+                                                                    toastLength:
+                                                                        Toast
+                                                                            .LENGTH_SHORT,
+                                                                    backgroundColor:
+                                                                        Colors
+                                                                            .red,
+                                                                  );
+                                                                }
+                                                              },
+                                                              child: Text(
+                                                                AppLocalizations.of(
+                                                                        context)!
+                                                                    .msgNote,
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        Adaptive.sp(
+                                                                            13),
+                                                                    color: Colors
+                                                                        .white),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 10),
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              showDialog(
+                                                                context:
+                                                                    context,
+                                                                builder: (ctx) =>
+                                                                    AlertDialog(
+                                                                  shape: RoundedRectangleBorder(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              16)),
+                                                                  title: Row(
+                                                                    children: [
+                                                                      Icon(
+                                                                          Icons
+                                                                              .info_outline,
+                                                                          color: ColorConstant
+                                                                              .maingreen,
+                                                                          size:
+                                                                              28),
+                                                                      SizedBox(
+                                                                          width:
+                                                                              8),
+                                                                      Text(
+                                                                        "${AppLocalizations.of(context)!.detail}- $flag",
+                                                                        style:
+                                                                            TextStyle(
+                                                                          fontWeight:
+                                                                              FontWeight.bold,
+                                                                          fontSize:
+                                                                              Adaptive.sp(19),
+                                                                          color:
+                                                                              ColorConstant.maingreen,
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  content:
+                                                                      SingleChildScrollView(
+                                                                    child:
+                                                                        Table(
+                                                                      columnWidths: const {
+                                                                        0: IntrinsicColumnWidth(),
+                                                                        1: FlexColumnWidth(),
+                                                                      },
+                                                                      defaultVerticalAlignment:
+                                                                          TableCellVerticalAlignment
+                                                                              .middle,
+                                                                      children: [
+                                                                        _richTableRow(
+                                                                            Icons.shopping_bag,
+                                                                            AppLocalizations.of(context)!.msgCommodityy,
+                                                                            commodity),
+                                                                        _richTableRow(
+                                                                            Icons.confirmation_number,
+                                                                            AppLocalizations.of(context)!.dealId,
+                                                                            dealId),
+                                                                        _richTableRow(
+                                                                            Icons.location_on,
+                                                                            AppLocalizations.of(context)!.msgDistrict,
+                                                                            district),
+                                                                        _richTableRow(
+                                                                            Icons.calendar_today,
+                                                                            AppLocalizations.of(context)!.msgDate,
+                                                                            date),
+                                                                        _richTableRow(
+                                                                            Icons
+                                                                                .inventory_2,
+                                                                            "${AppLocalizations.of(context)!.quantityLabel}:",
+                                                                            quantity.isNotEmpty
+                                                                                ? "$quantity ${AppLocalizations.of(context)!.perQntl}"
+                                                                                : "N/A"),
+                                                                        _richTableRow(
+                                                                            Icons
+                                                                                .currency_rupee,
+                                                                            AppLocalizations.of(context)!
+                                                                                .price,
+                                                                            price.isNotEmpty
+                                                                                ? "$price ${AppLocalizations.of(context)!.perQtl}"
+                                                                                : "N/A"),
+                                                                        _richTableRow(
+                                                                            Icons.category,
+                                                                            AppLocalizations.of(context)!.typeLabel,
+                                                                            flag),
+                                                                        if (warehouse
+                                                                            .isNotEmpty)
+                                                                          _richTableRow(
+                                                                              Icons.home_work,
+                                                                              AppLocalizations.of(context)!.msgWarehouse,
+                                                                              warehouse),
+                                                                        if (name
+                                                                            .isNotEmpty)
+                                                                          _richTableRow(
+                                                                              Icons.person,
+                                                                              AppLocalizations.of(context)!.msgName,
+                                                                              name),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                  actions: [
+                                                                    TextButton(
+                                                                      onPressed:
+                                                                          () =>
+                                                                              Navigator.of(ctx).pop(),
+                                                                      child:
+                                                                          Text(
+                                                                        "Close",
+                                                                        style:
+                                                                            TextStyle(
+                                                                          color:
+                                                                              ColorConstant.maingreen,
+                                                                          fontSize:
+                                                                              Adaptive.sp(16),
+                                                                          fontWeight:
+                                                                              FontWeight.bold,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              );
+                                                            },
+                                                            child: Text(
+                                                              AppLocalizations.of(
+                                                                      context)!
+                                                                  .showDetails,
+                                                              style: TextStyle(
+                                                                fontSize:
+                                                                    Adaptive.sp(
+                                                                        16),
+                                                                color: ColorConstant
+                                                                    .maingreen,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        })(),
+                                ],
+                              ),
+                            ),
+                        error: (e, s) => Container(),
+                        loading: () => Container())
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderCell(String title) {
+    return Expanded(
+      flex: 1,
+      child: Center(
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: Adaptive.sp(16),
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCell(String value) {
+    return Expanded(
+      flex: 1,
+      child: Center(
+        child: Text(
+          value,
+          textAlign: TextAlign.center,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: Adaptive.sp(16),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _verticalDivider() {
+    return Container(
+      width: 1,
+      color: Colors.grey.shade300,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+    );
+  }
+
+  Widget _buildActionCell(BuildContext context, dynamic item) {
+    return Expanded(
+      flex: 1,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton(
+            style: ButtonStyle(
+              padding: WidgetStateProperty.all(EdgeInsets.all(8)),
+              backgroundColor: WidgetStateProperty.all(ColorConstant.maingreen),
+            ),
+            onPressed: () {},
+            child: Text(
+              AppLocalizations.of(context)!.msgNote,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: Adaptive.sp(16), color: Colors.white),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Text(
+            "$label: ",
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: Adaptive.sp(14),
+              color: Colors.grey[700],
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: Adaptive.sp(14),
+                color: Colors.black87,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRowWithIcon(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: ColorConstant.maingreen),
+          SizedBox(width: 8),
+          Text(
+            "$label: ",
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: Adaptive.sp(15),
+              color: Colors.grey[800],
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: Adaptive.sp(15),
+                color: Colors.black87,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  TableRow _tableRow(IconData icon, String label, String value) {
+    return TableRow(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: ColorConstant.maingreen),
+              SizedBox(width: 6),
+              Text(
+                "$label:",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: Adaptive.sp(15),
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: Adaptive.sp(15),
+              color: Colors.black87,
+            ),
+            softWrap: true,
+          ),
+        ),
+      ],
+    );
+  }
+
+  TableRow _richTableRow(IconData icon, String label, String value) {
+    return TableRow(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: ColorConstant.maingreen),
+              SizedBox(width: 6),
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "$label:",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: Adaptive.sp(15),
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: Adaptive.sp(15),
+              color: Colors.black87,
+              fontWeight: FontWeight.w400,
+            ),
+            softWrap: true,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget invoiceLoader() => Skeletonizer(
+        child: ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          itemCount: 5,
+          itemBuilder: (context, index) {
+            return Card(
+              color: Colors.white,
+              margin: EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+              elevation: 5,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(color: ColorConstant.maingreen),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Loading...',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: Adaptive.sp(17),
+                                    color: ColorConstant.maingreen,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'Loading...',
+                                  style: TextStyle(
+                                    fontSize: Adaptive.sp(13),
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: ColorConstant.maingreen.withOpacity(0.10),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Loading...',
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(15),
+                              color: ColorConstant.maingreen,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    Divider(height: 1, color: Colors.grey[300]),
+                    SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.confirmation_number,
+                            size: 18, color: Colors.grey[700]),
+                        SizedBox(width: 6),
+                        Text(
+                          "Deal Id: ",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: Adaptive.sp(16),
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        Text(
+                          'Loading...',
+                          style: TextStyle(
+                            fontSize: Adaptive.sp(16),
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on,
+                            size: 18, color: Colors.grey[700]),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Loading...',
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(16),
+                              color: Colors.black87,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.inventory_2,
+                            size: 18, color: Colors.grey[700]),
+                        SizedBox(width: 6),
+                        Text(
+                          "Qty: ",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: Adaptive.sp(16),
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        Text(
+                          "N/A",
+                          style: TextStyle(
+                            fontSize: Adaptive.sp(16),
+                            color: Colors.black87,
+                          ),
+                        ),
+                        SizedBox(width: 14),
+                        Icon(Icons.currency_rupee,
+                            size: 18, color: Colors.grey[700]),
+                        SizedBox(width: 6),
+                        Text(
+                          "N/A",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: Adaptive.sp(16),
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ButtonStyle(
+                              padding: WidgetStateProperty.all(
+                                  EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 6)),
+                              backgroundColor: WidgetStateProperty.all(
+                                  ColorConstant.maingreen),
+                              shape: WidgetStateProperty.all(
+                                  RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              )),
+                            ),
+                            onPressed: () {},
+                            child: Text(
+                              AppLocalizations.of(context)!.msgNote,
+                              style: TextStyle(
+                                  fontSize: Adaptive.sp(13),
+                                  color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        TextButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16)),
+                                title: Row(
+                                  children: [
+                                    Icon(Icons.info_outline,
+                                        color: ColorConstant.maingreen,
+                                        size: 28),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      "Details - ",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: Adaptive.sp(19),
+                                        color: ColorConstant.maingreen,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                content: SingleChildScrollView(
+                                  child: Table(
+                                    columnWidths: const {
+                                      0: IntrinsicColumnWidth(),
+                                      1: FlexColumnWidth(),
+                                    },
+                                    defaultVerticalAlignment:
+                                        TableCellVerticalAlignment.middle,
+                                    children: [
+                                      _richTableRow(Icons.shopping_bag,
+                                          "Commodity", 'Loading...'),
+                                      _richTableRow(Icons.confirmation_number,
+                                          "Deal Id", 'Loading...'),
+                                      _richTableRow(Icons.location_on,
+                                          "District", 'Loading...'),
+                                      _richTableRow(Icons.calendar_today,
+                                          "Date", 'Loading...'),
+                                      _richTableRow(
+                                          Icons.inventory_2, "Qty", "N/A"),
+                                      _richTableRow(
+                                          Icons.currency_rupee, "Price", "N/A"),
+                                      _richTableRow(
+                                          Icons.category, "Type", 'Loading...'),
+                                    ],
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(ctx).pop(),
+                                    child: Text(
+                                      "Close",
+                                      style: TextStyle(
+                                        color: ColorConstant.maingreen,
+                                        fontSize: Adaptive.sp(16),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          child: Text(
+                            "Show Details",
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(16),
+                              color: ColorConstant.maingreen,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      );
+}

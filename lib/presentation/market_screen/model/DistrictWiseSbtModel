@@ -1,0 +1,53 @@
+// To parse this JSON data, do
+//
+//     final districtWiseSbtModel = districtWiseSbtModelFromMap(jsonString);
+
+import 'dart:convert';
+
+DistrictWiseSbtModel districtWiseSbtModelFromMap(String str) => DistrictWiseSbtModel.fromMap(json.decode(str));
+
+String districtWiseSbtModelToMap(DistrictWiseSbtModel data) => json.encode(data.toMap());
+
+class DistrictWiseSbtModel {
+    List<Datum>? data;
+    dynamic status;
+    dynamic message;
+
+    DistrictWiseSbtModel({
+        this.data,
+        this.status,
+        this.message,
+    });
+
+    factory DistrictWiseSbtModel.fromMap(Map<String, dynamic> json) => DistrictWiseSbtModel(
+        data: json["data"] == null ? [] : List<Datum>.from(json["data"]!.map((x) => Datum.fromMap(x))),
+        status: json["status"],
+        message: json["message"],
+    );
+
+    Map<String, dynamic> toMap() => {
+        "data": data == null ? [] : List<dynamic>.from(data!.map((x) => x.toMap())),
+        "status": status,
+        "message": message,
+    };
+}
+
+class Datum {
+    int? id;
+    dynamic name;
+
+    Datum({
+        this.id,
+        this.name,
+    });
+
+    factory Datum.fromMap(Map<String, dynamic> json) => Datum(
+        id: json["id"],
+        name: json["name"],
+    );
+
+    Map<String, dynamic> toMap() => {
+        "id": id,
+        "name": name,
+    };
+}

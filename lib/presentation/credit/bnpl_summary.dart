@@ -1,0 +1,191 @@
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/presentation/credit/service/bnpl_service.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+
+import '../../core/utils/color_constant.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class BnplSummaryScreen extends ConsumerWidget {
+  const BnplSummaryScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      // appBar: AppBar(
+      //   backgroundColor: ColorConstant.maingreen,
+      //   title: Text(
+      //     AppLocalizations.of(context)!.msgBnplSummary,
+      //     style: AppStyle.lblAppbar,
+      //   ),
+      //   centerTitle: true,
+      // ),
+      body: ref.watch(bnplSummaryProvider).when(
+            data: (data) => (data.data ?? []).isEmpty
+                ? noBnplData()
+                : ListView.builder(
+                    itemCount: data.data?.length ?? 0,
+                    padding: EdgeInsets.all(10),
+                    itemBuilder: (BuildContext context, int index) {
+                      var updatedDate = DateFormat('dd-MM-yyyy').format(
+                          DateTime.parse(data.data?[index].updatedAt ?? ""));
+                      return Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: ColorConstant.maingreen,
+                            ),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.orangeAccent.shade100.withOpacity(0.5),
+                                Colors.orangeAccent.shade100.withOpacity(0.7),
+                                Colors.orangeAccent.shade100
+                              ],
+                            )),
+                        margin: EdgeInsets.symmetric(vertical: 10),
+                        child: ColumnSuper(
+                          children: [
+                            Text(
+                              '${data.data?[index].uniqueId}',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: ColorConstant.maingreen,
+                                  fontSize: Adaptive.sp(16),
+                                  fontFamily: 'Roboto'),
+                            ),
+                            Text(
+                              "Requested Date: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(data.data?[index].createdAt ?? ""))}" ??
+                                  "",
+                              style: TextStyle(
+                                  // fontSize: 13,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: Adaptive.sp(16),
+                                  fontFamily: 'Roboto'),
+                            ),
+                            RowSuper(
+                              fill: true,
+                              children: [
+                                ColumnSuper(
+                                  alignment: Alignment.topLeft,
+                                  children: [
+                                    Text.rich(TextSpan(
+                                        text: AppLocalizations.of(context)!
+                                            .msgInterestrate,
+                                        style: TextStyle(
+                                            // fontSize: 13,
+                                            color: Colors.black,
+                                            fontSize: Adaptive.sp(16),
+                                            fontFamily: 'Roboto'),
+                                        children: [
+                                          TextSpan(
+                                            text: double.parse(
+                                                    "${data.data?[index].interestRate ?? 0.0}")
+                                                .toString(),
+                                          )
+                                        ])),
+                                    Text(
+                                      "interest \u{20B9}${data.data?[index].interestCount ?? 0.0}"
+                                          .tr,
+                                      style: TextStyle(
+                                          fontSize: Adaptive.sp(16),
+                                          color: Colors.black,
+                                          fontFamily: 'Roboto'),
+                                    ),
+                                    Text(
+                                      '${data.data?[index].remark}',
+                                      style:
+                                          TextStyle(fontSize: Adaptive.sp(16)),
+                                    ),
+                                  ],
+                                ),
+                                ColumnSuper(
+                                  alignment: Alignment.centerRight,
+                                  children: [
+                                    Text.rich(TextSpan(
+                                        text: "Status : ",
+                                        children: [
+                                          TextSpan(
+                                              text: data.data?[index].status ==
+                                                      1
+                                                  ? AppLocalizations.of(
+                                                          context)!
+                                                      .running
+                                                  : data.data?[index].status ==
+                                                          2
+                                                      ? AppLocalizations.of(
+                                                              context)!
+                                                          .paid
+                                                      : "",
+                                              style: TextStyle(
+                                                  color: data.data?[index]
+                                                              .status ==
+                                                          1
+                                                      ? Colors.orange
+                                                      : data.data?[index]
+                                                                  .status ==
+                                                              2
+                                                          ? Colors.green
+                                                          : Colors.green,
+                                                  fontSize: Adaptive.sp(16),
+                                                  fontWeight: FontWeight.w500))
+                                        ],
+                                        style: TextStyle(
+                                            fontSize: Adaptive.sp(16),
+                                            fontWeight: FontWeight.w500))),
+                                    data.data?[index].status == 2
+                                        ? Text(
+                                            updatedDate,
+                                            style: TextStyle(
+                                                fontSize: Adaptive.sp(16)),
+                                          )
+                                        : const SizedBox(),
+                                    Text.rich(TextSpan(
+                                        text: AppLocalizations.of(context)!
+                                            .usedamount,
+                                        style: TextStyle(
+                                            // fontSize: 13,
+                                            color: Colors.black,
+                                            fontSize: Adaptive.sp(16),
+                                            fontFamily: 'Roboto'),
+                                        children: [
+                                          TextSpan(
+                                            text:
+                                                ': ${data.data?[index].amount}',
+                                          )
+                                        ])),
+                                    Text.rich(TextSpan(
+                                        text: AppLocalizations.of(context)!
+                                            .balance,
+                                        style: TextStyle(
+                                            // fontSize: 13,
+                                            color: Colors.black,
+                                            fontSize: Adaptive.sp(16),
+                                            fontFamily: 'Roboto'),
+                                        children: [
+                                          TextSpan(
+                                            text:
+                                                '\u{20B9}${data.data?[index].remainingAmount}',
+                                          )
+                                        ])),
+                                  ],
+                                )
+                              ],
+                            )
+                          ],
+                        ),
+                      );
+                    }),
+            error: (e, s) => Text(e.toString()),
+            loading: () => defaultLoader(),
+          ),
+    );
+  }
+}

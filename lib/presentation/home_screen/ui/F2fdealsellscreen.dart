@@ -1,0 +1,484 @@
+import 'dart:convert';
+
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/core/utils/string.dart';
+import 'package:apnagodam/core/utils/theme/app_style.dart';
+import 'package:apnagodam/presentation/LP_list_screen/lp_list_screen.dart';
+import 'package:apnagodam/presentation/home_screen/controller/home_controller.dart';
+import 'package:apnagodam/widgets/CommonTextField.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:apnagodam/presentation/LP_list_screen/service/LpService.dart';
+import 'package:apnagodam/presentation/home_screen/service/home_screen_service.dart';
+import 'package:apnagodam/presentation/my_Stock/my_stock_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class F2fdealsellscreen extends ConsumerStatefulWidget {
+  final commodityid;
+  final commodityName;
+
+  const F2fdealsellscreen(
+      {super.key, required this.commodityid, required this.commodityName});
+
+  @override
+  ConsumerState<F2fdealsellscreen> createState() => _F2fdealsellscreenState();
+}
+
+class _F2fdealsellscreenState extends ConsumerState<F2fdealsellscreen> {
+  final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
+
+  var cont = Get.put(HomeController());
+  var bage = "0";
+  var salesStutas = "0";
+
+  @override
+  void initState() {
+    _getLocation();
+    cont.salectedSell = "";
+    cont.salectedSellUnder = "";
+    cont.salectedSellUndertwo = "";
+    cont.salectedSellUnderthree = "";
+    cont.pricecontroller.clear();
+    cont.quantitycontroller.clear();
+    cont.commoditycontroller.clear();
+    cont.ownquantitycontroller.clear();
+    cont.commoditycontroller.text = widget.commodityName;
+    // TODO: implement initState
+    super.initState();
+  }
+
+  Future<void> _getLocation() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    // Check and request location permission
+    var status = await Permission.location.request();
+
+    if (status == PermissionStatus.granted) {
+      try {
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+
+        setState(() {
+          latitude = position.latitude.toString();
+          longitude = position.longitude.toString();
+          prefs.setString("lat", latitude);
+          prefs.setString("long", longitude);
+        });
+      } catch (e) {}
+    } else {
+      // Handle the case where the user denied the location permission
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: ColorConstant.maingreen,
+        title: Center(child: Text(AppLocalizations.of(context)!.msgSell)),
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: 15.0),
+            child: Icon(
+              Icons.notifications,
+              color: ColorConstant.maingreen,
+            ),
+          )
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: ref.watch(userDetailsProvider).when(
+            data: (userData) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Stack(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(top: 8.0),
+                          child: Container(
+                            height: 48,
+                            width: 250,
+                            decoration:
+                                BoxDecoration(color: ColorConstant.maingreen),
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 15.0),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    AppLocalizations.of(context)!
+                                        .msgChooseoption,
+                                    style: AppStyle.lblbuydetail,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: -40,
+                          bottom: 0,
+                          top: 0,
+                          child: Transform.rotate(
+                            angle: 0.9, // Adjust the angle as needed
+                            child: Container(
+                              width: 120,
+                              height: 190,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        // Other widgets can be added here...
+                      ],
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                salesStutas = "1";
+
+                                cont.salectedSell = "kisasni";
+                                cont.salectedSellUnder = "";
+                                cont.update();
+                                setState(() {});
+                              },
+                              child: Container(
+                                height: 48,
+                                decoration: BoxDecoration(
+                                    color: cont.salectedSell == "kisasni"
+                                        ? ColorConstant.maingreen
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(10),
+                                        bottomLeft: Radius.circular(10)),
+                                    border: Border.all(
+                                        color: ColorConstant.maingreen)),
+                                child: Center(
+                                    child: Text(
+                                  AppLocalizations.of(context)!.msgKisasni,
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontWeight: FontWeight.bold,
+                                    color: cont.salectedSell == "kisasni"
+                                        ? Colors.white
+                                        : ColorConstant.maingreen,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                )),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                salesStutas = "2";
+                                cont.salectedSell = "manditaxpaid";
+                                cont.salectedSellUnder = "";
+                                cont.update();
+                                setState(() {});
+                              },
+                              child: Container(
+                                height: 48,
+                                decoration: BoxDecoration(
+                                    color: cont.salectedSell == "manditaxpaid"
+                                        ? ColorConstant.maingreen
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.only(
+                                        topRight: Radius.circular(10),
+                                        bottomRight: Radius.circular(10)),
+                                    border: Border.all(
+                                        color: ColorConstant.maingreen)),
+                                child: Center(
+                                    child: Text(
+                                  AppLocalizations.of(context)!.msgManditaxpaid,
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontWeight: FontWeight.bold,
+                                    color: cont.salectedSell == "manditaxpaid"
+                                        ? Colors.white
+                                        : ColorConstant.maingreen,
+                                  ),
+                                )),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Container(
+                          decoration: BoxDecoration(
+                              border:
+                                  Border.all(color: ColorConstant.maingreen)),
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Form(
+                              key: _formkey,
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    height: 25,
+                                  ),
+                                  CommonTextField(
+                                    controller: cont.pricecontroller,
+                                    label: AppLocalizations.of(context)!
+                                        .msgPriceorder,
+                                    textInputAction: TextInputAction.next,
+                                    inputType: TextInputType.number,
+                                    enabled: true,
+                                    isOnlyDigit: true,
+                                    isRequired: true,
+                                  ),
+                                  SizedBox(
+                                    height: 15,
+                                  ),
+                                  CommonTextField(
+                                    controller: cont.quantitycontroller,
+                                    label: AppLocalizations.of(context)!
+                                        .msgQuantity,
+                                    textInputAction: TextInputAction.next,
+                                    inputType: TextInputType.number,
+                                    enabled: true,
+                                    isOnlyDigit: true,
+                                    isRequired: true,
+                                  ),
+                                  SizedBox(
+                                    height: 25,
+                                  ),
+                                  InkWell(
+                                    onTap: () async {
+                                      SharedPreferences prefs =
+                                          await SharedPreferences.getInstance();
+                                      if (_formkey.currentState!.validate()) {
+                                        Map<String, String> formData = {
+                                          'seller_id':
+                                              "${userData.userDetails?.id}",
+                                          'seller_lat':
+                                              prefs.getString("lat").toString(),
+                                          'seller_long': prefs
+                                              .getString("long")
+                                              .toString(),
+                                          'commodity':
+                                              widget.commodityid.toString(),
+                                          'bags': bage.toString(),
+                                          'sales_status':
+                                              salesStutas.toString(),
+                                          'weight':
+                                              cont.quantitycontroller.text,
+                                          'price': cont.pricecontroller.text,
+                                        };
+                                        String encodedJson =
+                                            jsonEncode(formData);
+
+                                        showModalBottomSheet(
+                                            context: context,
+                                            builder: (context) {
+                                              return SizedBox(
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    0.3,
+                                                child: Center(
+                                                  child: QrImageView(
+                                                    data: encodedJson,
+                                                    version: QrVersions.auto,
+                                                    size: 200.0,
+                                                    gapless: false,
+                                                  ),
+                                                ),
+                                              );
+                                            });
+                                      } else {}
+                                    },
+                                    child: Container(
+                                      height: 46,
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                          color: ColorConstant.maingreen,
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(6))),
+                                      child: Center(
+                                          child: Text(
+                                        AppLocalizations.of(context)!.msgSubmit,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: 'Roboto',
+                                        ),
+                                      )),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: 15,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )),
+                    ),
+                    cont.salectedSellUndertwo == "ownvehicle" ||
+                            cont.salectedSellUndertwo == "apana_godam_vehicle"
+                        ? Form(
+                            key: _formkey,
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: ColorConstant.maingreen),
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Column(
+                                    children: [
+                                      Center(
+                                          child: Padding(
+                                        padding: EdgeInsets.only(
+                                            top: 10.0, bottom: 10),
+                                        child: Text(
+                                            AppLocalizations.of(context)!
+                                                .msgYourcommodity),
+                                      )),
+                                      CommonTextField(
+                                        controller: cont.commoditycontroller,
+                                        label: AppLocalizations.of(context)!
+                                            .msgCommodity,
+                                        textInputAction: TextInputAction.next,
+                                        inputType: TextInputType.number,
+                                        readOnly: true,
+                                        enabled: true,
+                                        isOnlyDigit: true,
+                                        isRequired: true,
+                                      ),
+                                      SizedBox(
+                                        height: 15,
+                                      ),
+                                      CommonTextField(
+                                        controller: cont.ownquantitycontroller,
+                                        label: AppLocalizations.of(context)!
+                                            .msgQuantity,
+                                        textInputAction: TextInputAction.next,
+                                        inputType: TextInputType.number,
+                                        enabled: true,
+                                        isOnlyDigit: true,
+                                        isRequired: true,
+                                      ),
+                                      SizedBox(
+                                        height: 15,
+                                      ),
+                                      InkWell(
+                                        onTap: () {
+                                          Geolocator.checkPermission()
+                                              .then((status) {
+                                            switch (status) {
+                                              case LocationPermission.denied:
+                                                Geolocator.requestPermission();
+                                                break;
+                                              case LocationPermission
+                                                    .deniedForever:
+                                                if (GetPlatform.isAndroid) {
+                                                  Geolocator
+                                                      .openLocationSettings();
+                                                }
+                                                break;
+                                              case LocationPermission
+                                                    .whileInUse:
+                                                break;
+                                              case LocationPermission.always:
+                                                break;
+                                              case LocationPermission
+                                                    .unableToDetermine:
+                                                break;
+                                            }
+                                          });
+                                          Geolocator.getCurrentPosition()
+                                              .then((position) {
+                                            if (_formkey.currentState!
+                                                .validate()) {
+                                              if (cont.salectedSellUndertwo ==
+                                                  "apana_godam_vehicle") {
+                                                Get.to(() => Lplistscreen(
+                                                      lat: position.latitude
+                                                          .toString(),
+                                                      long: position.longitude
+                                                          .toString(),
+                                                      commoditId: widget
+                                                          .commodityid
+                                                          .toString(),
+                                                      quantity: cont
+                                                          .ownquantitycontroller
+                                                          .text
+                                                          .toString(),
+                                                      dealType: "SPOT",
+                                                      salesStatus: salesStutas,
+                                                    ));
+                                              } else {
+                                                Get.to(() => Lplistscreen(
+                                                      lat: position.latitude
+                                                          .toString(),
+                                                      long: position.longitude
+                                                          .toString(),
+                                                      commoditId: widget
+                                                          .commodityid
+                                                          .toString(),
+                                                      quantity: cont
+                                                          .ownquantitycontroller
+                                                          .text
+                                                          .toString(),
+                                                      dealType: "MGP",
+                                                      salesStatus: salesStutas,
+                                                    ));
+                                              }
+                                            } else {}
+                                          });
+                                        },
+                                        child: Container(
+                                          height: 46,
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                              color: ColorConstant.maingreen,
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(6))),
+                                          child: Center(
+                                              child: Text(
+                                            AppLocalizations.of(context)!
+                                                .msgSubmit,
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontFamily: 'Roboto'),
+                                          )),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : SizedBox(),
+                  ],
+                ),
+            error: (e, s) => Container(),
+            loading: () => defaultLoader()),
+      ),
+    );
+  }
+}

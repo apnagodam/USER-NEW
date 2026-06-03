@@ -1,0 +1,151 @@
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/presentation/my_Stock/my_stock_impl/service/my_stock_impl.dart';
+import 'package:apnagodam/widgets/widgets.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:apnagodam/core/utils/no_data_found_widget.dart';
+import 'package:get/get.dart';
+import 'package:apnagodam/l10n/app_localizations.dart';
+
+class Stackssettlementscreen extends ConsumerWidget {
+  Stackssettlementscreen({
+    super.key,
+    required this.commodityId,
+    required this.price,
+    required this.stackId,
+    required this.terminalId,
+  });
+  String commodityId;
+  String price;
+  String stackId;
+  String terminalId;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settlement = ref.watch(
+      stackSettlementProvider(
+        commodityId: commodityId,
+        price: price,
+        stackId: stackId,
+        terminalId: terminalId,
+      ),
+    );
+
+    return Scaffold(
+      // appBar: AppBar(title:  Text("Stack Settlement")),
+      body: settlement.when(
+        data: (data) {
+          if (data.data == null) return noStockData(context);
+          num dealAmount = num.parse(
+            "${num.parse("${data.data?.qty ?? 0}") * num.parse(price)}",
+          );
+          var totalPendingAmount = num.parse(
+            "${num.parse("${data.data?.idleTime ?? 0}") + num.parse("${data.data?.idleCapacity ?? 0}") + num.parse("${data.data?.loan ?? 0}") + num.parse("${data.data?.intrest ?? 0}") + num.parse("${data.data?.panelIntrest ?? 0}")}",
+          );
+          var approxBalance = (dealAmount - num.parse("$totalPendingAmount"))
+              .toStringAsFixed(2);
+
+          var totalWalletBalance =
+              num.parse("${data.data?.walletBalance ?? 0}") +
+              num.parse("$totalPendingAmount");
+
+          num agComission =
+              dealAmount *
+              (num.parse("${data.data?.sellerAgCommisionAmount}") / 100);
+
+          num settlementAmount = dealAmount - agComission - totalPendingAmount;
+
+          return Column(
+            children: [
+              SizedBox(height: 10),
+              _buildRow(
+                AppLocalizations.of(context)!.msgTotalquantity,
+                "${data.data?.qty}",
+              ),
+              ElevarmDivider(),
+              _buildRow(
+                AppLocalizations.of(context)!.msgApproxdeal,
+                "\u{20B9}${dealAmount.toStringAsFixed(2)}",
+              ),
+              ElevarmDivider(),
+              Container(
+                child: Column(
+                  children: [
+                    _buildRow(
+                      AppLocalizations.of(context)!.rentAmount2,
+                      "\u{20B9}${num.parse("${num.parse("${data.data?.idleTime ?? 0}") + num.parse("${data.data?.idleCapacity ?? 0}")}").toStringAsFixed(2)}",
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 10),
+              ElevarmDivider(),
+
+              _buildRow(
+                AppLocalizations.of(context)!.agCommission,
+                "\u{20B9}${agComission.toStringAsFixed(2)}",
+              ),
+              ElevarmDivider(),
+              _buildRow(
+                AppLocalizations.of(context)!.totalPandigAmount,
+                "\u{20B9}${totalPendingAmount.toStringAsFixed(2)}",
+              ),
+              ElevarmDivider(),
+              _buildRow(
+                AppLocalizations.of(context)!.approxBalanceAmount,
+                "\u{20B9}$approxBalance",
+              ),
+
+              //  ElevarmDivider(),
+              // if (data.data?.stackType.toString().toLowerCase() == "dedicated")
+              //   _buildRow('Loan Amount', "\u{20B9}${data.data?.loan}"),
+              //  ElevarmDivider(),
+              // if (data.data?.stackType.toString().toLowerCase() == "dedicated")
+              //   _buildRow('Interest Amount', "\u{20B9}${data.data?.intrest}"),
+              //  ElevarmDivider(),
+              // if (data.data?.stackType.toString().toLowerCase() == "dedicated")
+              //   _buildRow('Penal Interest Amount',
+              //       "\u{20B9}${data.data?.panelIntrest}"),
+              ElevarmDivider(),
+              _buildRow(
+                AppLocalizations.of(context)!.msgWalletbalance,
+                "\u{20B9}${data.data?.walletBalance ?? 0}",
+              ),
+              ElevarmDivider(),
+              _buildRow(
+                AppLocalizations.of(context)!.walletTotalBalance,
+                "\u{20B9}${(num.parse("${data.data?.walletBalance ?? 0}") + num.parse(approxBalance)).toStringAsFixed(2)}",
+              ),
+              //  ElevarmDivider(),
+              // _buildRow('Settlement Amount',
+              //     "\u{20B9}${settlementAmount.toStringAsFixed(2) ?? 0}",
+              //     highlight: true),
+            ],
+          );
+        },
+        loading: () => Center(child: CircularProgressIndicator()),
+        error: (e, s) => Center(child: Text('Error: $e')),
+      ),
+    );
+  }
+
+  Widget _buildRow(String label, String value, {bool highlight = false}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontWeight: FontWeight.w600)),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: highlight ? FontWeight.bold : FontWeight.normal,
+              color: highlight ? ColorConstant.maingreen : Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
