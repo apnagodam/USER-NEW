@@ -1326,18 +1326,8 @@ class _BuyerListSBTState extends ConsumerState<BuyerListSBT> {
                                                                                 backgroundColor:
                                                                                     ColorConstant.maingreen,
                                                                               );
-                                                                            } else {
-                                                                              Get.rawSnackbar(
-                                                                                message:
-                                                                                    "${value['message']}",
-                                                                                duration: Duration(
-                                                                                  seconds:
-                                                                                      2,
-                                                                                ),
-                                                                                backgroundColor:
-                                                                                    ColorConstant.red500,
-                                                                              );
                                                                             }
+                                                                            // else: error already surfaced by the global Dio response interceptor.
                                                                           })
                                                                           .onError(
                                                                             (

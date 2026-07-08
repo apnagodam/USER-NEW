@@ -5,10 +5,18 @@ import 'package:lottie/lottie.dart';
 import 'image_constant.dart';
 
 class ProgressDialogUtils {
+  static Route<void>? _progressRoute;
+
   ///common method for showing progress dialog
-  static void showProgressDialog({isCancellable = true}) async {
-    Get.dialog(
-      Center(
+  static void showProgressDialog({isCancellable = true}) {
+    if (_progressRoute?.isActive ?? false) return;
+    final context = Get.overlayContext ?? Get.context;
+    if (context == null) return;
+
+    final route = DialogRoute<void>(
+      context: context,
+      barrierDismissible: isCancellable,
+      builder: (dialogContext) => Center(
         child: Container(
           width: 150,
           height: 150,
@@ -25,12 +33,18 @@ class ProgressDialogUtils {
           ),
         ),
       ),
-      barrierDismissible: isCancellable,
     );
+    _progressRoute = route;
+    Navigator.of(context, rootNavigator: true).push(route);
   }
 
   ///common method for hiding progress dialog
   static void hideProgressDialog() {
-    Get.back(canPop: false);
+    final route = _progressRoute;
+    _progressRoute = null;
+    if (route == null || !route.isActive) return;
+    final context = Get.overlayContext ?? Get.context;
+    if (context == null) return;
+    Navigator.of(context, rootNavigator: true).removeRoute(route);
   }
 }

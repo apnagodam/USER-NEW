@@ -61,8 +61,11 @@ extension toast on BuildContext {
       msg: text, backgroundColor: Colors.green, toastLength: Toast.LENGTH_LONG);
 }
 
+final List<Route<void>> _loaderRoutes = [];
+
 extension loader on BuildContext {
-  showLoader() => showDialog(
+  void showLoader() {
+    final route = DialogRoute<void>(
       context: this,
       builder: (dialogContext) => Container(
             width: 150,
@@ -78,9 +81,19 @@ extension loader on BuildContext {
                 fit: BoxFit.cover,
               ),
             ),
-          ));
+          ),
+    );
+    _loaderRoutes.add(route);
+    Navigator.of(this).push(route);
+  }
 
-  hideloader() => Navigator.of(this).pop();
+  void hideloader() {
+    if (_loaderRoutes.isEmpty) return;
+    final route = _loaderRoutes.removeLast();
+    if (route.isActive) {
+      Navigator.of(this).removeRoute(route);
+    }
+  }
 }
 
 class UpperCaseTextFormatter extends TextInputFormatter {

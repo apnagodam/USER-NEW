@@ -24,9 +24,7 @@ class Diointerceptor extends InterceptorsWrapper {
 
   void _safeStopAllLoaders() {
     try {
-      if (getx.Get.isDialogOpen ?? false) {
-        ProgressDialogUtils.hideProgressDialog();
-      }
+      ProgressDialogUtils.hideProgressDialog();
     } catch (_) {}
   }
 

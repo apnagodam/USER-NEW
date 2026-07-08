@@ -546,13 +546,8 @@ class BuyerList extends ConsumerWidget {
               duration: Duration(seconds: 10),
               backgroundColor: ColorConstant.maingreen,
             );
-          } else {
-            Get.rawSnackbar(
-              message: "${value['message']}",
-              duration: Duration(seconds: 10),
-              backgroundColor: ColorConstant.red500,
-            );
           }
+          // else: error already surfaced by the global Dio response interceptor.
         })
         .onError((e, s) {});
   }

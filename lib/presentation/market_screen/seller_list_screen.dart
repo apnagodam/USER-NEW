@@ -568,11 +568,8 @@ class SellerList extends ConsumerWidget {
                                                                                             value['message'],
                                                                                           );
                                                                                           Get.back();
-                                                                                        } else {
-                                                                                          context.errorToast(
-                                                                                            value['message'],
-                                                                                          );
                                                                                         }
+                                                                                        // else: error already surfaced by the global Dio response interceptor.
                                                                                       },
                                                                                     )
                                                                                     .onError(

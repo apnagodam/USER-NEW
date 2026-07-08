@@ -85,8 +85,8 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
     WidgetsBinding.instance.addObserver(this);
     buyPriceController = TextEditingController();
     sellPriceController = TextEditingController();
-    buyWeightController = TextEditingController(text: '0');
-    sellWeightController = TextEditingController(text: '0');
+    buyWeightController = TextEditingController();
+    sellWeightController = TextEditingController();
     _buyPrice = 0.0;
   }
 
@@ -480,8 +480,7 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                     buyPriceController
                                                                         .clear();
                                                                     buyWeightController
-                                                                            .text =
-                                                                        '0';
+                                                                        .clear();
 
                                                                     showBarModalBottomSheet(
                                                                       context:
@@ -1339,8 +1338,7 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                   sellPriceController
                                                                       .clear();
                                                                   sellWeightController
-                                                                          .text =
-                                                                      '0';
+                                                                      .clear();
                                                                   ref
                                                                           .watch(
                                                                             sellWeight.notifier,
@@ -1717,6 +1715,8 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                                                   .areYouSure,
                                                                                                               subtitle: '${AppLocalizations.of(context)!.commodityPrice} ${sellPriceController.text}\n${AppLocalizations.of(context)!.commodityWeight}${ref.watch(sellWeight)} in Quintal',
                                                                                                               onPositiveButton: () async {
+                                                                                                                Get.back();
+
                                                                                                                 await ref
                                                                                                                     .read(
                                                                                                                   postSbtProvider(
@@ -1747,24 +1747,14 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                                                       Navigator.of(
                                                                                                                         sheetContext,
                                                                                                                       ).pop();
-                                                                                                                      Get.back();
 
                                                                                                                       Fluttertoast.showToast(
                                                                                                                         msg: value['message'],
                                                                                                                         toastLength: Toast.LENGTH_LONG,
                                                                                                                         backgroundColor: Colors.green,
                                                                                                                       );
-                                                                                                                    } else {
-                                                                                                                      if (value['message'].toString().contains(
-                                                                                                                            'User don\'t have suffcient balance.',
-                                                                                                                          )) {
-                                                                                                                        Fluttertoast.showToast(
-                                                                                                                          msg: value['message'],
-                                                                                                                          toastLength: Toast.LENGTH_LONG,
-                                                                                                                          backgroundColor: Colors.red,
-                                                                                                                        );
-                                                                                                                      }
                                                                                                                     }
+                                                                                                                    // else: error already surfaced by the global Dio response interceptor.
                                                                                                                   },
                                                                                                                 ).onError(
                                                                                                                   (
@@ -5857,14 +5847,8 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
               context.hideloader();
             });
           } else {
-             context.hideloader();
              if (value['status'].toString() == "0") {
-  Fluttertoast.showToast(
-    msg: value['message']?.toString() ?? 'Something went wrong',
-    toastLength: Toast.LENGTH_LONG,
-    backgroundColor: Colors.red,
-    textColor: Colors.white,
-  );
+  // Error message already surfaced by the global Dio response interceptor.
   return;
 }
                final errorType = value['error_type']?.toString().toLowerCase() ?? '';
