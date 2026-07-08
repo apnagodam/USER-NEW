@@ -78,18 +78,34 @@ class NotificationService {
 
   ///setup the FCM token to receive notifications
   static void _getFCMToken() async {
-    if (GetPlatform.isIOS) {
-      _token = await _messaging.getAPNSToken();
-    } else {
-      _token = await _messaging.getToken();
-    }
-
-    ///onTokenRefresh stream allows us to listen to the token value whenever it changes
+    ///onTokenRefresh stream allows us to listen to the token value whenever it changes.
+    ///Registered up front so a refresh is still picked up even if the initial fetch below fails.
     _messaging.onTokenRefresh.listen((newValue) {
       _token = newValue;
+      debugPrint('FCM Token refreshed: $_token');
     });
 
-    debugPrint('FCM Token: $_token');
+    // getToken()/getAPNSToken() can fail with a transient error (e.g.
+    // SERVICE_NOT_AVAILABLE when Play Services is momentarily unreachable),
+    // so retry a few times with a short backoff instead of giving up for the session.
+    const maxAttempts = 3;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        if (GetPlatform.isIOS) {
+          _token = await _messaging.getAPNSToken();
+        } else {
+          _token = await _messaging.getToken();
+        }
+        debugPrint('FCM Token: $_token');
+        return;
+      } catch (e) {
+        debugPrint('FCM token fetch attempt $attempt failed: $e');
+        if (attempt < maxAttempts) {
+          await Future.delayed(Duration(seconds: attempt * 2));
+        }
+      }
+    }
+    debugPrint('FCM token fetch failed after $maxAttempts attempts');
   }
 
   static void _configureLocalNotificationPlugin(WidgetRef ref) async {

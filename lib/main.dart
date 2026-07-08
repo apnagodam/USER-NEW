@@ -60,24 +60,6 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform, // No need to add this line
   );
 
-  try {
-    if (GetPlatform.isIOS) {
-      String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-      if (apnsToken == null) {
-        await Future.delayed(Duration(seconds: 2));
-        apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-      }
-      if (apnsToken != null) {
-        // Now safe to subscribe or get FCM token
-        await FirebaseMessaging.instance.subscribeToTopic('all');
-      }
-    } else {
-      await FirebaseMessaging.instance.subscribeToTopic('all');
-    }
-  } catch (e) {
-    print(e.toString());
-  }
-
   FlutterError.onError = (errorDetails) {
     FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
   };
@@ -138,6 +120,28 @@ void main() async {
       child: const MyApp(),
     ),
   );
+
+  _subscribeToFcmTopic();
+}
+
+Future<void> _subscribeToFcmTopic() async {
+  try {
+    if (GetPlatform.isIOS) {
+      String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+      if (apnsToken == null) {
+        await Future.delayed(Duration(seconds: 2));
+        apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+      }
+      if (apnsToken != null) {
+        // Now safe to subscribe or get FCM token
+        await FirebaseMessaging.instance.subscribeToTopic('all');
+      }
+    } else {
+      await FirebaseMessaging.instance.subscribeToTopic('all');
+    }
+  } catch (e) {
+    print(e.toString());
+  }
 }
 
 class MyApp extends ConsumerStatefulWidget {

@@ -227,19 +227,25 @@ class _OtpscreenState extends ConsumerState<Otpscreen> {
   Future<void> _verifyOtp(String otp) async {
     var token = '';
 
-    if (GetPlatform.isIOS) {
-      String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-      if (apnsToken == null) {
-        await Future.delayed(Duration(seconds: 2));
-        apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-      }
-      if (apnsToken != null) {
-        // Now safe to subscribe or get FCM token
-        await FirebaseMessaging.instance.subscribeToTopic('all');
+    try {
+      if (GetPlatform.isIOS) {
+        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        if (apnsToken == null) {
+          await Future.delayed(Duration(seconds: 2));
+          apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        }
+        if (apnsToken != null) {
+          // Now safe to subscribe or get FCM token
+          await FirebaseMessaging.instance.subscribeToTopic('all');
+          token = await FirebaseMessaging.instance.getToken() ?? "";
+        }
+      } else {
         token = await FirebaseMessaging.instance.getToken() ?? "";
       }
-    } else {
-      token = await FirebaseMessaging.instance.getToken() ?? "";
+    } catch (e) {
+      // FCM token retrieval can fail (e.g. Play Services unavailable/unreachable).
+      // Login must not be blocked by a missing push token.
+      token = '';
     }
 
     ref

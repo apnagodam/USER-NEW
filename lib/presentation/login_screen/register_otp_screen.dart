@@ -155,21 +155,27 @@ class _OtpscreenState extends ConsumerState<RegisterOtpScreen> {
                 if (pin.length == 6) {
                   var token = '';
 
-                  if (GetPlatform.isIOS) {
-                    String? apnsToken =
-                        await FirebaseMessaging.instance.getAPNSToken();
-                    if (apnsToken == null) {
-                      await Future.delayed(Duration(seconds: 2));
-                      apnsToken =
+                  try {
+                    if (GetPlatform.isIOS) {
+                      String? apnsToken =
                           await FirebaseMessaging.instance.getAPNSToken();
-                    }
-                    if (apnsToken != null) {
-                      // Now safe to subscribe or get FCM token
-                      await FirebaseMessaging.instance.subscribeToTopic('all');
+                      if (apnsToken == null) {
+                        await Future.delayed(Duration(seconds: 2));
+                        apnsToken =
+                            await FirebaseMessaging.instance.getAPNSToken();
+                      }
+                      if (apnsToken != null) {
+                        // Now safe to subscribe or get FCM token
+                        await FirebaseMessaging.instance.subscribeToTopic('all');
+                        token = await FirebaseMessaging.instance.getToken() ?? "";
+                      }
+                    } else {
                       token = await FirebaseMessaging.instance.getToken() ?? "";
                     }
-                  } else {
-                    token = await FirebaseMessaging.instance.getToken() ?? "";
+                  } catch (e) {
+                    // FCM token retrieval can fail (e.g. Play Services unavailable/unreachable).
+                    // Registration must not be blocked by a missing push token.
+                    token = '';
                   }
                   ref
                       .watch(verifyOtpProvider(
@@ -199,21 +205,27 @@ class _OtpscreenState extends ConsumerState<RegisterOtpScreen> {
                 if (value.length == 6) {
                   var token = '';
 
-                  if (GetPlatform.isIOS) {
-                    String? apnsToken =
-                        await FirebaseMessaging.instance.getAPNSToken();
-                    if (apnsToken == null) {
-                      await Future.delayed(Duration(seconds: 2));
-                      apnsToken =
+                  try {
+                    if (GetPlatform.isIOS) {
+                      String? apnsToken =
                           await FirebaseMessaging.instance.getAPNSToken();
-                    }
-                    if (apnsToken != null) {
-                      // Now safe to subscribe or get FCM token
-                      await FirebaseMessaging.instance.subscribeToTopic('all');
+                      if (apnsToken == null) {
+                        await Future.delayed(Duration(seconds: 2));
+                        apnsToken =
+                            await FirebaseMessaging.instance.getAPNSToken();
+                      }
+                      if (apnsToken != null) {
+                        // Now safe to subscribe or get FCM token
+                        await FirebaseMessaging.instance.subscribeToTopic('all');
+                        token = await FirebaseMessaging.instance.getToken() ?? "";
+                      }
+                    } else {
                       token = await FirebaseMessaging.instance.getToken() ?? "";
                     }
-                  } else {
-                    token = await FirebaseMessaging.instance.getToken() ?? "";
+                  } catch (e) {
+                    // FCM token retrieval can fail (e.g. Play Services unavailable/unreachable).
+                    // Registration must not be blocked by a missing push token.
+                    token = '';
                   }
                   ref
                       .watch(verifyOtpProvider(
@@ -327,23 +339,29 @@ class _OtpscreenState extends ConsumerState<RegisterOtpScreen> {
                   onPressed: () async {
                     var token = '';
 
-                    if (GetPlatform.isIOS) {
-                      String? apnsToken =
-                          await FirebaseMessaging.instance.getAPNSToken();
-                      if (apnsToken == null) {
-                        await Future.delayed(Duration(seconds: 2));
-                        apnsToken =
+                    try {
+                      if (GetPlatform.isIOS) {
+                        String? apnsToken =
                             await FirebaseMessaging.instance.getAPNSToken();
+                        if (apnsToken == null) {
+                          await Future.delayed(Duration(seconds: 2));
+                          apnsToken =
+                              await FirebaseMessaging.instance.getAPNSToken();
+                        }
+                        if (apnsToken != null) {
+                          // Now safe to subscribe or get FCM token
+                          await FirebaseMessaging.instance
+                              .subscribeToTopic('all');
+                          token =
+                              await FirebaseMessaging.instance.getToken() ?? "";
+                        }
+                      } else {
+                        token = await FirebaseMessaging.instance.getToken() ?? "";
                       }
-                      if (apnsToken != null) {
-                        // Now safe to subscribe or get FCM token
-                        await FirebaseMessaging.instance
-                            .subscribeToTopic('all');
-                        token =
-                            await FirebaseMessaging.instance.getToken() ?? "";
-                      }
-                    } else {
-                      token = await FirebaseMessaging.instance.getToken() ?? "";
+                    } catch (e) {
+                      // FCM token retrieval can fail (e.g. Play Services unavailable/unreachable).
+                      // Registration must not be blocked by a missing push token.
+                      token = '';
                     }
                     ref
                         .watch(verifyOtpProvider(
