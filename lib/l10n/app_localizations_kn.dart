@@ -255,6 +255,18 @@ class AppLocalizationsKn extends AppLocalizations {
   String get msgWarehousefacility => 'ಗೋದಾಮಿನ ಸೌಲಭ್ಯ';
 
   @override
+  String get findMyTm => 'ನನ್ನ ಟಿಎಂ ಹುಡುಕಿ';
+
+  @override
+  String get searchTmByName => 'ಹೆಸರಿನ ಮೂಲಕ ಟಿಎಂ ಹುಡುಕಿ';
+
+  @override
+  String get noTmFound => 'ಯಾವುದೇ ಟಿಎಂ ಕಂಡುಬಂದಿಲ್ಲ';
+
+  @override
+  String get somethingWentWrong => 'ಏನೋ ತಪ್ಪಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
   String get msgCredit => 'ಕ್ರೆಡಿಟ್';
 
   @override

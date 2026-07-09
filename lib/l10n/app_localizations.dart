@@ -580,6 +580,30 @@ abstract class AppLocalizations {
   /// **'Warehouse Facility'**
   String get msgWarehousefacility;
 
+  /// No description provided for @findMyTm.
+  ///
+  /// In en, this message translates to:
+  /// **'Find My TM'**
+  String get findMyTm;
+
+  /// No description provided for @searchTmByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Search TM by name'**
+  String get searchTmByName;
+
+  /// No description provided for @noTmFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No TM found'**
+  String get noTmFound;
+
+  /// No description provided for @somethingWentWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get somethingWentWrong;
+
   /// No description provided for @msgCredit.
   ///
   /// In en, this message translates to:

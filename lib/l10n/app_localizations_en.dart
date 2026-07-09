@@ -254,6 +254,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get msgWarehousefacility => 'Warehouse Facility';
 
   @override
+  String get findMyTm => 'Find My TM';
+
+  @override
+  String get searchTmByName => 'Search TM by name';
+
+  @override
+  String get noTmFound => 'No TM found';
+
+  @override
+  String get somethingWentWrong => 'Something went wrong. Please try again.';
+
+  @override
   String get msgCredit => 'Credit Amount';
 
   @override

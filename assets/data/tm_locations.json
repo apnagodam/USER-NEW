@@ -1,0 +1,136 @@
+{
+  "tms": [
+    {
+      "id": "TM001",
+      "name": "Ramesh Kumar Sharma",
+      "phone": "+91 98290 12345",
+      "city": "Jaipur",
+      "address": "Grain Market, Chandpole, Jaipur, Rajasthan",
+      "latitude": 26.9124,
+      "longitude": 75.7873,
+      "status": "active",
+      "coverageRadiusKm": 40
+    },
+    {
+      "id": "TM002",
+      "name": "Suresh Choudhary",
+      "phone": "+91 98290 22345",
+      "city": "Jodhpur",
+      "address": "Mandi Road, Jodhpur, Rajasthan",
+      "latitude": 26.2389,
+      "longitude": 73.0243,
+      "status": "active",
+      "coverageRadiusKm": 50
+    },
+    {
+      "id": "TM003",
+      "name": "Mahesh Patel",
+      "phone": "+91 98290 32345",
+      "city": "Udaipur",
+      "address": "Krishi Upaj Mandi, Udaipur, Rajasthan",
+      "latitude": 24.5854,
+      "longitude": 73.7125,
+      "status": "active",
+      "coverageRadiusKm": 30
+    },
+    {
+      "id": "TM004",
+      "name": "Dinesh Agarwal",
+      "phone": "+91 98290 42345",
+      "city": "Kota",
+      "address": "Anaj Mandi, Kota, Rajasthan",
+      "latitude": 25.2138,
+      "longitude": 75.8648,
+      "status": "active",
+      "coverageRadiusKm": 25
+    },
+    {
+      "id": "TM005",
+      "name": "Vijay Singh Rathore",
+      "phone": "+91 98290 52345",
+      "city": "Bikaner",
+      "address": "Grain Market, Bikaner, Rajasthan",
+      "latitude": 28.0229,
+      "longitude": 73.3119,
+      "status": "active",
+      "coverageRadiusKm": 45
+    },
+    {
+      "id": "TM006",
+      "name": "Naresh Jain",
+      "phone": "+91 98290 62345",
+      "city": "Ajmer",
+      "address": "Mandi Gate, Ajmer, Rajasthan",
+      "latitude": 26.4499,
+      "longitude": 74.6399,
+      "status": "active",
+      "coverageRadiusKm": 35
+    },
+    {
+      "id": "TM007",
+      "name": "Rakesh Meena",
+      "phone": "+91 98290 72345",
+      "city": "Alwar",
+      "address": "Krishi Mandi, Alwar, Rajasthan",
+      "latitude": 27.5530,
+      "longitude": 76.6346,
+      "status": "active",
+      "coverageRadiusKm": 30
+    },
+    {
+      "id": "TM008",
+      "name": "Prakash Gupta",
+      "phone": "+91 98290 82345",
+      "city": "Bharatpur",
+      "address": "Anaj Mandi, Bharatpur, Rajasthan",
+      "latitude": 27.2152,
+      "longitude": 77.4900,
+      "status": "active",
+      "coverageRadiusKm": 25
+    },
+    {
+      "id": "TM009",
+      "name": "Sanjay Soni",
+      "phone": "+91 98290 92345",
+      "city": "Sikar",
+      "address": "Grain Market, Sikar, Rajasthan",
+      "latitude": 27.6094,
+      "longitude": 75.1399,
+      "status": "active",
+      "coverageRadiusKm": 30
+    },
+    {
+      "id": "TM010",
+      "name": "Ashok Beniwal",
+      "phone": "+91 98290 10245",
+      "city": "Sri Ganganagar",
+      "address": "Krishi Upaj Mandi, Sri Ganganagar, Rajasthan",
+      "latitude": 29.9094,
+      "longitude": 73.8800,
+      "status": "active",
+      "coverageRadiusKm": 50
+    },
+    {
+      "id": "TM011",
+      "name": "Mukesh Chittora",
+      "phone": "+91 98290 11245",
+      "city": "Chittorgarh",
+      "address": "Mandi Road, Chittorgarh, Rajasthan",
+      "latitude": 24.8887,
+      "longitude": 74.6269,
+      "status": "active",
+      "coverageRadiusKm": 35
+    },
+    {
+      "id": "TM012",
+      "name": "Girish Purohit",
+      "phone": "+91 98290 12945",
+      "city": "Pali",
+      "address": "Anaj Mandi, Pali, Rajasthan",
+      "latitude": 25.7781,
+      "longitude": 73.3234,
+      "status": "active",
+      "coverageRadiusKm": 40
+    }
+  ]
+}

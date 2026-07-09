@@ -18,6 +18,7 @@ import 'package:apnagodam/presentation/home_screen/service/home_response_model.d
 import 'package:apnagodam/presentation/home_screen/ui/AccountSettings.dart';
 import 'package:apnagodam/presentation/home_screen/ui/Findwarehousescreen.dart';
 import 'package:apnagodam/presentation/home_screen/ui/QualityCalculationScreen.dart';
+import 'package:apnagodam/presentation/find_my_tm/view/find_my_tm_screen.dart';
 import 'package:apnagodam/presentation/market_screen/service/market_service.dart';
 import 'package:apnagodam/presentation/mybuy_screen/BuySellScreen.dart';
 import 'package:apnagodam/presentation/sbt/service/model/MatchedOrdersModel.dart';
@@ -1286,6 +1287,39 @@ class _HomepageState extends ConsumerState<Homepage> {
                               context,
                             )!
                                 .qualityVarianceCalculator,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: Adaptive.sp(16),
+                              color: ColorConstant.maingreen,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 10),
+                InkWell(
+                  onTap: () {
+                    Get.to(FindMyTmScreen());
+                  },
+                  child: Padding(
+                    padding: Pad(all: 10),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.map_outlined,
+                          color: ColorConstant.maingreen,
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            textAlign: TextAlign.start,
+                            AppLocalizations.of(
+                              context,
+                            )!
+                                .findMyTm,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: Adaptive.sp(16),

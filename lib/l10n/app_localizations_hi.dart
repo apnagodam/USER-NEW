@@ -255,6 +255,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get msgWarehousefacility => 'गोदाम सुविधा';
 
   @override
+  String get findMyTm => 'मेरा टीएम खोजें';
+
+  @override
+  String get searchTmByName => 'नाम से टीएम खोजें';
+
+  @override
+  String get noTmFound => 'कोई टीएम नहीं मिला';
+
+  @override
+  String get somethingWentWrong => 'कुछ गलत हो गया। कृपया पुनः प्रयास करें।';
+
+  @override
   String get msgCredit => ' क्रेडिट ';
 
   @override
