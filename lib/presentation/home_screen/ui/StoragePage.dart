@@ -108,7 +108,7 @@ class _StoragepageState extends ConsumerState<Storagepage> {
         centerTitle: true,
         backgroundColor: ColorConstant.maingreen,
         actions: [
-          if (ref.watch(authProvider.notifier).loginStatus !=
+          if (ref.watch(authProvider).value !=
               AuthStatus.loggedIn)
             Center(
               child: Column(

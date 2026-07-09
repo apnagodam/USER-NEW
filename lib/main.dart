@@ -168,7 +168,7 @@ class _MyAppState extends ConsumerState<MyApp> {
     final deviceInfo = DeviceInfoPlugin();
     final androidInfo = await deviceInfo.androidInfo;
 
-    if (ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn) {
+    if (ref.watch(authProvider).value == AuthStatus.loggedIn) {
       final userData = await ref.watch(userDetailsProvider.future);
       if (userData.userDetails != null) {
         await _updateDeviceId(androidInfo.id, userData);

@@ -117,9 +117,7 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
       ref.invalidate(getSbtCommodityProvider);
 
       // Invalidate other commonly-used providers on this screen if needed.
-      // Example:
-      // ref.invalidate(warehouseListProvider);
-      // ref.invalidate(matchedOrdersProvider);
+      ref.invalidate(matchedOrdersProvider);
 
       // Force a rebuild so UI updates immediately
       setState(() {});
@@ -2534,7 +2532,10 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                         onPressed: () {
                                                                                           Get.to(
                                                                                             Sbtdeals(),
-                                                                                          )?.then((_) => ref.invalidate(getSbtCommodityProvider));
+                                                                                          )?.then((_) {
+                                                                                                ref.invalidate(getSbtCommodityProvider);
+                                                                                                ref.invalidate(matchedOrdersProvider);
+                                                                                              });
                                                                                         },
                                                                                         buttonThemeData: ElevarmPrimaryButtonThemeData(
                                                                                           primaryColor: ColorConstant.maingreen,
@@ -2614,7 +2615,10 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                                   ],
                                                                                                 ),
                                                                                                 isScrollControlled: true,
-                                                                                              ).then((_) => ref.invalidate(getSbtCommodityProvider));
+                                                                                              ).then((_) {
+                                                                                                ref.invalidate(getSbtCommodityProvider);
+                                                                                                ref.invalidate(matchedOrdersProvider);
+                                                                                              });
                                                                                             } else {
                                                                                               showModalBottomSheet(
                                                                                                 context: context,
@@ -2631,7 +2635,10 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                                   ],
                                                                                                 ),
                                                                                                 isScrollControlled: true,
-                                                                                              ).then((_) => ref.invalidate(getSbtCommodityProvider));
+                                                                                              ).then((_) {
+                                                                                                ref.invalidate(getSbtCommodityProvider);
+                                                                                                ref.invalidate(matchedOrdersProvider);
+                                                                                              });
                                                                                             }
                                                                                           },
                                                                                           child: Text(
@@ -2654,7 +2661,10 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                             Get.back();
                                                                                             Get.to(
                                                                                               Tradewalletscreen(),
-                                                                                            )?.then((_) => ref.invalidate(getSbtCommodityProvider));
+                                                                                            )?.then((_) {
+                                                                                                ref.invalidate(getSbtCommodityProvider);
+                                                                                                ref.invalidate(matchedOrdersProvider);
+                                                                                              });
                                                                                           },
                                                                                           child: Text(
                                                                                             AppLocalizations.of(
@@ -2700,13 +2710,19 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                                   StackInward(
                                                                                                     isAppbarVisible: true,
                                                                                                   ),
-                                                                                                )?.then((_) => ref.invalidate(getSbtCommodityProvider));
+                                                                                                )?.then((_) {
+                                                                                                ref.invalidate(getSbtCommodityProvider);
+                                                                                                ref.invalidate(matchedOrdersProvider);
+                                                                                              });
                                                                                               } else {
                                                                                                 Get.to(
                                                                                                   FactoryDispatchRequestsScreen(
                                                                                                     sbtOrder: data.tradeOrderData?[index].orderId,
                                                                                                   ),
-                                                                                                )?.then((_) => ref.invalidate(getSbtCommodityProvider));
+                                                                                                )?.then((_) {
+                                                                                                ref.invalidate(getSbtCommodityProvider);
+                                                                                                ref.invalidate(matchedOrdersProvider);
+                                                                                              });
                                                                                               }
                                                                                             },
                                                                                           ),
@@ -2748,13 +2764,19 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                                             : 0,
                                                                                                     sbtOrderId: data.tradeOrderData?[index].orderId ?? "",
                                                                                                   ),
-                                                                                                )?.then((_) => ref.invalidate(getSbtCommodityProvider));
+                                                                                                )?.then((_) {
+                                                                                                ref.invalidate(getSbtCommodityProvider);
+                                                                                                ref.invalidate(matchedOrdersProvider);
+                                                                                              });
                                                                                               } else {
                                                                                                 Get.to(
                                                                                                   Dispatchrequestslisting(
                                                                                                     orderId: data.tradeOrderData?[index].orderId ?? "",
                                                                                                   ),
-                                                                                                )?.then((_) => ref.invalidate(getSbtCommodityProvider));
+                                                                                                )?.then((_) {
+                                                                                                ref.invalidate(getSbtCommodityProvider);
+                                                                                                ref.invalidate(matchedOrdersProvider);
+                                                                                              });
                                                                                               }
                                                                                             },
                                                                                           ),
@@ -2772,7 +2794,10 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                               Get.back();
                                                                                               Get.to(
                                                                                                 Tradewalletscreen(),
-                                                                                              )?.then((_) => ref.invalidate(getSbtCommodityProvider));
+                                                                                              )?.then((_) {
+                                                                                                ref.invalidate(getSbtCommodityProvider);
+                                                                                                ref.invalidate(matchedOrdersProvider);
+                                                                                              });
                                                                                             },
                                                                                           ),
                                                                                         ),
@@ -2910,7 +2935,7 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                     error: (e, s) => noStockData(),
                     loading: () => _sbttLoader(),
                   ),
-                  ref.watch(authProvider.notifier).loginStatus ==
+                  ref.watch(authProvider).value ==
                           AuthStatus.loggedIn
                       ? DeliveryMarking(isScreen: false)
                       : Center(

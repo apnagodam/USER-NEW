@@ -1,5 +1,6 @@
 import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/presentation/home_screen/service/home_screen_service.dart';
 import 'package:apnagodam/presentation/login_screen/login_screen.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
@@ -45,15 +46,7 @@ class Auth extends _$Auth {
       backgroundColor: ColorConstant.maingreen,
     );
     state = const AsyncData(AuthStatus.loggedIn);
-
-    //   ref.invalidate(userDetailsProvider);
-    // Get.back(
-    //   closeOverlays: true,
-    // );
-    // Update the auth state to logged in
-    Future.delayed(Duration(seconds: 1));
-
-    print(ref.watch(authProvider));
+    ref.invalidate(userDetailsProvider);
   }
 
   Future<void> logout() async {

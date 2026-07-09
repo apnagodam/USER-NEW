@@ -186,7 +186,7 @@ class _HomepageState extends ConsumerState<Homepage> {
 
   Future<void> _initializeHomePage() async {
     try {
-      if (ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn) {
+      if (ref.watch(authProvider).value == AuthStatus.loggedIn) {
         await _fetchProfiles();
       }
       await _fetchHomeData();
@@ -248,7 +248,7 @@ class _HomepageState extends ConsumerState<Homepage> {
     final deviceInfo = DeviceInfoPlugin();
     final androidInfo = await deviceInfo.androidInfo;
 
-    if (ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn) {
+    if (ref.watch(authProvider).value == AuthStatus.loggedIn) {
       final userData = await ref.watch(userDetailsProvider.future);
       if (userData.userDetails != null) {
         await _updateDeviceId(androidInfo.id, userData);
@@ -1031,7 +1031,7 @@ class _HomepageState extends ConsumerState<Homepage> {
             // Get.to(Profilingregistration());
           },
           child: Text(
-            ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn
+            ref.watch(authProvider).value == AuthStatus.loggedIn
                 ? ref.watch(sharedUtilityProvider).isKycComplete()
                     ? AppLocalizations.of(context)!.dashboard
                     : AppLocalizations.of(context)!.msgKycupdate
@@ -1056,12 +1056,12 @@ class _HomepageState extends ConsumerState<Homepage> {
           //     ),
           //   ),
           // ),
-          ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn
+          ref.watch(authProvider).value == AuthStatus.loggedIn
               ? IconButton(
                   onPressed: () {
                     Get.to(Profile());
                   },
-                  icon: ref.watch(authProvider.notifier).loginStatus ==
+                  icon: ref.watch(authProvider).value ==
                           AuthStatus.loggedOut
                       ? CircleAvatar(
                           child: Icon(
@@ -1127,7 +1127,7 @@ class _HomepageState extends ConsumerState<Homepage> {
             ),
             child: ListView(
               children: [
-                ref.watch(authProvider.notifier).loginStatus ==
+                ref.watch(authProvider).value ==
                         AuthStatus.loggedIn
                     ? InkWell(
                         onTap: () {
@@ -1299,7 +1299,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                 ),
 
                 SizedBox(height: 10),
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   InkWell(
                     onTap: () {
@@ -1340,10 +1340,10 @@ class _HomepageState extends ConsumerState<Homepage> {
                     ),
                   ),
 
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   SizedBox(height: 10),
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   InkWell(
                     onTap: () {
@@ -1380,10 +1380,10 @@ class _HomepageState extends ConsumerState<Homepage> {
                       ),
                     ),
                   ),
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   SizedBox(height: 10),
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   ExpansionTile(
                     tilePadding: Pad(left: 10),
@@ -1603,11 +1603,11 @@ class _HomepageState extends ConsumerState<Homepage> {
                     ],
                   ),
 
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   SizedBox(height: 10),
 
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   ExpansionTile(
                     tilePadding: Pad(left: 10),
@@ -1827,11 +1827,11 @@ class _HomepageState extends ConsumerState<Homepage> {
                     ),
                   ],
                 ),
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   SizedBox(height: 10),
 
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   InkWell(
                     onTap: () {
@@ -1947,10 +1947,10 @@ class _HomepageState extends ConsumerState<Homepage> {
                     SizedBox(height: 10),
                   ],
                 ),
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   SizedBox(height: 10),
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   InkWell(
                     onTap: () {
@@ -2155,11 +2155,11 @@ class _HomepageState extends ConsumerState<Homepage> {
                     ),
                   ),
                 ),
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   SizedBox(height: 10),
 
-                if (ref.watch(authProvider.notifier).loginStatus ==
+                if (ref.watch(authProvider).value ==
                     AuthStatus.loggedIn)
                   InkWell(
                     onTap: () {
@@ -2402,7 +2402,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                     _buildGridItem(
                       context,
                       onTap: () {
-                        if (ref.watch(authProvider.notifier).loginStatus ==
+                        if (ref.watch(authProvider).value ==
                             AuthStatus.loggedIn) {
                           Get.to(StackInward(isAppbarVisible: true));
                         } else {
@@ -2420,7 +2420,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                     _buildGridItem(
                       context,
                       onTap: () {
-                        if (ref.watch(authProvider.notifier).loginStatus ==
+                        if (ref.watch(authProvider).value ==
                             AuthStatus.loggedIn) {
                           Get.to(StackOutward(isAppBarVisible: true));
                         } else {
@@ -2438,7 +2438,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                     _buildGridItem(
                       context,
                       onTap: () {
-                        if (ref.watch(authProvider.notifier).loginStatus ==
+                        if (ref.watch(authProvider).value ==
                             AuthStatus.loggedIn) {
                           Get.to(Warehousebookings(isAppBarVisible: true));
                         } else {
@@ -2456,7 +2456,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                     _buildGridItem(
                       context,
                       onTap: () {
-                        if (ref.watch(authProvider.notifier).loginStatus ==
+                        if (ref.watch(authProvider).value ==
                             AuthStatus.loggedIn) {
                           Get.to(RepaymentScreen());
                         } else {

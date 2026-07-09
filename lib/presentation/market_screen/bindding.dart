@@ -14,7 +14,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
-import 'package:input_quantity/input_quantity.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
@@ -243,6 +242,7 @@ class _BiddingState extends ConsumerState<Bidding> {
                             child: ElevatedButton(
                           style: AppStyle.buttonStyle,
                           onPressed: () {
+                            yourpricecontroller.clear();
                             showModalBottomSheet(
                                 context: context,
                                 isScrollControlled: true,
@@ -273,79 +273,97 @@ class _BiddingState extends ConsumerState<Bidding> {
                                             ),
                                             Padding(
                                               padding: Pad(all: 10),
-                                              child: SizedBox(
-                                                width: Get.width,
-                                                child: InputQty(
-                                                    maxVal: 25000,
-                                                    initVal: 0.0,
-                                                    minVal: 0.0,
-                                                    steps: 10,
-                                                    qtyFormProps: QtyFormProps(
-                                                        keyboardType: TextInputType
-                                                            .numberWithOptions(
-                                                                decimal:
-                                                                    false)),
-                                                    onQtyChanged: (val) {
+                                              child: Row(
+                                                children: [
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      final current = double
+                                                              .tryParse(
+                                                                  yourpricecontroller
+                                                                      .text) ??
+                                                          0.0;
                                                       yourpricecontroller.text =
-                                                          double.tryParse(
-                                                                  '${val ?? 0.0}')
+                                                          (current - 10)
+                                                              .clamp(0.0, 25000.0)
                                                               .toString();
-                                                      print(val);
                                                     },
-                                                    decoration:
-                                                        QtyDecorationProps(
-                                                            border: OutlineInputBorder(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5),
-                                                                borderSide: BorderSide(
-                                                                    color: ColorConstant
-                                                                        .maingreen)),
-                                                            qtyStyle: QtyStyle
-                                                                .classic,
-                                                            minusBtn: Container(
-                                                              decoration: BoxDecoration(
-                                                                  color: ColorConstant
-                                                                      .maingreen,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              5)),
-                                                              padding:
-                                                                  Pad(all: 10),
-                                                              child: Text('-10',
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize:
-                                                                          Adaptive.sp(
-                                                                              18))),
-                                                            ),
-                                                            plusBtn: Container(
-                                                              decoration: BoxDecoration(
-                                                                  color: ColorConstant
-                                                                      .maingreen,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              5)),
-                                                              padding:
-                                                                  Pad(all: 10),
-                                                              child: Text('+10',
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize:
-                                                                          Adaptive.sp(
-                                                                              18))),
-                                                            ))),
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                          color: ColorConstant
+                                                              .maingreen,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(5)),
+                                                      padding: Pad(all: 10),
+                                                      child: Text('-10',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize:
+                                                                  Adaptive.sp(
+                                                                      18))),
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: TextFormField(
+                                                      controller:
+                                                          yourpricecontroller,
+                                                      keyboardType: TextInputType
+                                                          .numberWithOptions(
+                                                              decimal: false),
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      decoration:
+                                                          InputDecoration(
+                                                        hintText: '0.0',
+                                                        border: OutlineInputBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(5),
+                                                            borderSide: BorderSide(
+                                                                color: ColorConstant
+                                                                    .maingreen)),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      final current = double
+                                                              .tryParse(
+                                                                  yourpricecontroller
+                                                                      .text) ??
+                                                          0.0;
+                                                      yourpricecontroller.text =
+                                                          (current + 10)
+                                                              .clamp(0.0, 25000.0)
+                                                              .toString();
+                                                    },
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                          color: ColorConstant
+                                                              .maingreen,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(5)),
+                                                      padding: Pad(all: 10),
+                                                      child: Text('+10',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize:
+                                                                  Adaptive.sp(
+                                                                      18))),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                             // CommonTextField(
@@ -893,6 +911,7 @@ class _BiddingState extends ConsumerState<Bidding> {
                                             ? ElevatedButton(
                                                 style: AppStyle.buttonStyle,
                                                 onPressed: () async {
+                                                  yourpricecontroller.clear();
                                                   showBarModalBottomSheet(
                                                       context: context,
                                                       builder:
@@ -938,29 +957,45 @@ class _BiddingState extends ConsumerState<Bidding> {
                                                                             SizedBox(
                                                                           width:
                                                                               Get.width,
-                                                                          child: InputQty(
-                                                                              maxVal: 25000,
-                                                                              initVal: 0.0,
-                                                                              minVal: 0.0,
-                                                                              steps: 10,
-                                                                              qtyFormProps: QtyFormProps(keyboardType: TextInputType.numberWithOptions(decimal: false)),
-                                                                              onQtyChanged: (val) {
-                                                                                yourpricecontroller.text = double.tryParse('${val ?? 0.0}').toString();
-                                                                                print(val);
-                                                                              },
-                                                                              decoration: QtyDecorationProps(
-                                                                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(5), borderSide: BorderSide(color: ColorConstant.maingreen)),
-                                                                                  qtyStyle: QtyStyle.classic,
-                                                                                  minusBtn: Container(
-                                                                                    decoration: BoxDecoration(color: ColorConstant.maingreen, borderRadius: BorderRadius.circular(5)),
-                                                                                    padding: Pad(all: 10),
-                                                                                    child: Text('-10', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: Adaptive.sp(17))),
+                                                                          child: Row(
+                                                                            children: [
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  final current = double.tryParse(yourpricecontroller.text) ?? 0.0;
+                                                                                  yourpricecontroller.text = (current - 10).clamp(0.0, 25000.0).toString();
+                                                                                },
+                                                                                child: Container(
+                                                                                  decoration: BoxDecoration(color: ColorConstant.maingreen, borderRadius: BorderRadius.circular(5)),
+                                                                                  padding: Pad(all: 10),
+                                                                                  child: Text('-10', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: Adaptive.sp(17))),
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(width: 8),
+                                                                              Expanded(
+                                                                                child: TextFormField(
+                                                                                  controller: yourpricecontroller,
+                                                                                  keyboardType: TextInputType.numberWithOptions(decimal: false),
+                                                                                  textAlign: TextAlign.center,
+                                                                                  decoration: InputDecoration(
+                                                                                    hintText: '0.0',
+                                                                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(5), borderSide: BorderSide(color: ColorConstant.maingreen)),
                                                                                   ),
-                                                                                  plusBtn: Container(
-                                                                                    decoration: BoxDecoration(color: ColorConstant.maingreen, borderRadius: BorderRadius.circular(5)),
-                                                                                    padding: Pad(all: 10),
-                                                                                    child: Text('+10', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: Adaptive.sp(17))),
-                                                                                  ))),
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(width: 8),
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  final current = double.tryParse(yourpricecontroller.text) ?? 0.0;
+                                                                                  yourpricecontroller.text = (current + 10).clamp(0.0, 25000.0).toString();
+                                                                                },
+                                                                                child: Container(
+                                                                                  decoration: BoxDecoration(color: ColorConstant.maingreen, borderRadius: BorderRadius.circular(5)),
+                                                                                  padding: Pad(all: 10),
+                                                                                  child: Text('+10', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: Adaptive.sp(17))),
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
                                                                         ),
                                                                       ),
                                                                       // CommonTextField(

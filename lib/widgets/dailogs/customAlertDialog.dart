@@ -1,6 +1,5 @@
 import 'package:apnagodam/core/utils/color_constant.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -158,17 +157,15 @@ Future<void> showImageSourceFilePickerDialog(
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: Text(AppLocalizations.of(context)!.storage),
+              title: Text(AppLocalizations.of(context)!.gallery),
               onTap: () async {
                 Navigator.of(context, rootNavigator: false)
                     .pop(); // Close the dialog
 
-                FilePickerResult? result = await FilePicker.platform.pickFiles(
-                  type: FileType.custom,
-                  allowedExtensions: ['jpg', 'jpeg', 'pdf', 'png'],
-                );
-                if (result != null) {
-                  onImagePicked(XFile(result.files.single.path!));
+                final XFile? image =
+                    await picker.pickImage(source: ImageSource.gallery);
+                if (image != null) {
+                  onImagePicked(image);
                 }
               },
             ),

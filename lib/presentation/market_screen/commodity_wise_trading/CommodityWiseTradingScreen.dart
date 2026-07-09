@@ -2689,14 +2689,20 @@ class _CommoditywisetradingscreenState
                                                                                                       isAppbarVisible:
                                                                                                           true,
                                                                                                     ),
-                                                                                                  );
+                                                                                                  )?.then((_) {
+                                                                                                    ref.invalidate(getSbtCommodityProvider);
+                                                                                                    ref.invalidate(matchedOrdersProvider);
+                                                                                                  });
                                                                                                 } else {
                                                                                                   Get.to(
                                                                                                     Dispatchrequestscreen(
                                                                                                       sbtOrder:
                                                                                                           data.tradeOrderData?[index].orderId,
                                                                                                     ),
-                                                                                                  );
+                                                                                                  )?.then((_) {
+                                                                                                    ref.invalidate(getSbtCommodityProvider);
+                                                                                                    ref.invalidate(matchedOrdersProvider);
+                                                                                                  });
                                                                                                 }
                                                                                               },
                                                                                               child: Text(
@@ -2749,7 +2755,10 @@ class _CommoditywisetradingscreenState
                                                                                                           data.tradeOrderData?[index].orderId ??
                                                                                                           "",
                                                                                                     ),
-                                                                                                  );
+                                                                                                  )?.then((_) {
+                                                                                                    ref.invalidate(getSbtCommodityProvider);
+                                                                                                    ref.invalidate(matchedOrdersProvider);
+                                                                                                  });
                                                                                                 } else {
                                                                                                   Get.to(
                                                                                                     Dispatchrequestslisting(
@@ -2757,7 +2766,10 @@ class _CommoditywisetradingscreenState
                                                                                                           data.tradeOrderData?[index].orderId ??
                                                                                                           "",
                                                                                                     ),
-                                                                                                  );
+                                                                                                  )?.then((_) {
+                                                                                                    ref.invalidate(getSbtCommodityProvider);
+                                                                                                    ref.invalidate(matchedOrdersProvider);
+                                                                                                  });
                                                                                                 }
                                                                                               },
                                                                                               child: Text(
@@ -2780,7 +2792,10 @@ class _CommoditywisetradingscreenState
                                                                                                 Get.back();
                                                                                                 Get.to(
                                                                                                   Wallet(),
-                                                                                                );
+                                                                                                )?.then((_) {
+                                                                                                  ref.invalidate(getSbtCommodityProvider);
+                                                                                                  ref.invalidate(matchedOrdersProvider);
+                                                                                                });
                                                                                               },
                                                                                               child: Text(
                                                                                                 'Wallet Refund',
@@ -2830,14 +2845,20 @@ class _CommoditywisetradingscreenState
                                                                                                         isAppbarVisible:
                                                                                                             true,
                                                                                                       ),
-                                                                                                    );
+                                                                                                    )?.then((_) {
+                                                                                                      ref.invalidate(getSbtCommodityProvider);
+                                                                                                      ref.invalidate(matchedOrdersProvider);
+                                                                                                    });
                                                                                                   } else {
                                                                                                     Get.to(
                                                                                                       Dispatchrequestscreen(
                                                                                                         sbtOrder:
                                                                                                             data.tradeOrderData?[index].orderId,
                                                                                                       ),
-                                                                                                    );
+                                                                                                    )?.then((_) {
+                                                                                                      ref.invalidate(getSbtCommodityProvider);
+                                                                                                      ref.invalidate(matchedOrdersProvider);
+                                                                                                    });
                                                                                                   }
                                                                                                 },
                                                                                               ),
@@ -2884,7 +2905,10 @@ class _CommoditywisetradingscreenState
                                                                                                             data.tradeOrderData?[index].orderId ??
                                                                                                             "",
                                                                                                       ),
-                                                                                                    );
+                                                                                                    )?.then((_) {
+                                                                                                      ref.invalidate(getSbtCommodityProvider);
+                                                                                                      ref.invalidate(matchedOrdersProvider);
+                                                                                                    });
                                                                                                   } else {
                                                                                                     Get.to(
                                                                                                       Dispatchrequestslisting(
@@ -2892,7 +2916,10 @@ class _CommoditywisetradingscreenState
                                                                                                             data.tradeOrderData?[index].orderId ??
                                                                                                             "",
                                                                                                       ),
-                                                                                                    );
+                                                                                                    )?.then((_) {
+                                                                                                      ref.invalidate(getSbtCommodityProvider);
+                                                                                                      ref.invalidate(matchedOrdersProvider);
+                                                                                                    });
                                                                                                   }
                                                                                                 },
                                                                                               ),
@@ -2911,7 +2938,10 @@ class _CommoditywisetradingscreenState
                                                                                                   Get.back();
                                                                                                   Get.to(
                                                                                                     Wallet(),
-                                                                                                  );
+                                                                                                  )?.then((_) {
+                                                                                                    ref.invalidate(getSbtCommodityProvider);
+                                                                                                    ref.invalidate(matchedOrdersProvider);
+                                                                                                  });
                                                                                                 },
                                                                                               ),
                                                                                             ),

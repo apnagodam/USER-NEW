@@ -1874,14 +1874,20 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                           isAppbarVisible:
                                                                                               true,
                                                                                         ),
-                                                                                      );
+                                                                                      )?.then((_) {
+                                                                                        ref.invalidate(getSbtCommodityProvider);
+                                                                                        ref.invalidate(matchedOrdersProvider);
+                                                                                      });
                                                                                     } else {
                                                                                       Get.to(
                                                                                         Dispatchrequestscreen(
                                                                                           sbtOrder:
                                                                                               data.tradeOrderData?[index].orderId,
                                                                                         ),
-                                                                                      );
+                                                                                      )?.then((_) {
+                                                                                        ref.invalidate(getSbtCommodityProvider);
+                                                                                        ref.invalidate(matchedOrdersProvider);
+                                                                                      });
                                                                                     }
                                                                                   },
                                                                                   child: Text(
@@ -1929,7 +1935,10 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                             ),
                                                                                         isScrollControlled:
                                                                                             true,
-                                                                                      );
+                                                                                      ).then((_) {
+                                                                                        ref.invalidate(getSbtCommodityProvider);
+                                                                                        ref.invalidate(matchedOrdersProvider);
+                                                                                      });
                                                                                     } else {
                                                                                       showModalBottomSheet(
                                                                                         context:
@@ -1953,7 +1962,10 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                             ),
                                                                                         isScrollControlled:
                                                                                             true,
-                                                                                      );
+                                                                                      ).then((_) {
+                                                                                        ref.invalidate(getSbtCommodityProvider);
+                                                                                        ref.invalidate(matchedOrdersProvider);
+                                                                                      });
                                                                                     }
                                                                                   },
                                                                                   child: Text(
@@ -1976,7 +1988,10 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                     Get.back();
                                                                                     Get.to(
                                                                                       Tradewalletscreen(),
-                                                                                    );
+                                                                                    )?.then((_) {
+                                                                                      ref.invalidate(getSbtCommodityProvider);
+                                                                                      ref.invalidate(matchedOrdersProvider);
+                                                                                    });
                                                                                   },
                                                                                   child: Text(
                                                                                     'Wallet Refund',
@@ -2026,14 +2041,20 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                             isAppbarVisible:
                                                                                                 true,
                                                                                           ),
-                                                                                        );
+                                                                                        )?.then((_) {
+                                                                                          ref.invalidate(getSbtCommodityProvider);
+                                                                                          ref.invalidate(matchedOrdersProvider);
+                                                                                        });
                                                                                       } else {
                                                                                         Get.to(
                                                                                           Dispatchrequestscreen(
                                                                                             sbtOrder:
                                                                                                 data.tradeOrderData?[index].orderId,
                                                                                           ),
-                                                                                        );
+                                                                                        )?.then((_) {
+                                                                                          ref.invalidate(getSbtCommodityProvider);
+                                                                                          ref.invalidate(matchedOrdersProvider);
+                                                                                        });
                                                                                       }
                                                                                     },
                                                                                   ),
@@ -2080,7 +2101,10 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                                 data.tradeOrderData?[index].orderId ??
                                                                                                 "",
                                                                                           ),
-                                                                                        );
+                                                                                        )?.then((_) {
+                                                                                          ref.invalidate(getSbtCommodityProvider);
+                                                                                          ref.invalidate(matchedOrdersProvider);
+                                                                                        });
                                                                                       } else {
                                                                                         Get.to(
                                                                                           Dispatchrequestslisting(
@@ -2088,7 +2112,10 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                                 data.tradeOrderData?[index].orderId ??
                                                                                                 "",
                                                                                           ),
-                                                                                        );
+                                                                                        )?.then((_) {
+                                                                                          ref.invalidate(getSbtCommodityProvider);
+                                                                                          ref.invalidate(matchedOrdersProvider);
+                                                                                        });
                                                                                       }
                                                                                     },
                                                                                   ),
@@ -2107,7 +2134,10 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                       Get.back();
                                                                                       Get.to(
                                                                                         Tradewalletscreen(),
-                                                                                      );
+                                                                                      )?.then((_) {
+                                                                                        ref.invalidate(getSbtCommodityProvider);
+                                                                                        ref.invalidate(matchedOrdersProvider);
+                                                                                      });
                                                                                     },
                                                                                   ),
                                                                                 ),

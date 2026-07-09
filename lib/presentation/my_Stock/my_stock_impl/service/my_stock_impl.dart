@@ -166,7 +166,7 @@ Future<Map<String, dynamic>> stackWantToSell(StackWantToSellRef ref,
 @riverpod
 Stream<StackSellListModel> stackSellList(StackSellListRef ref) async* {
   var response = await ref.watch(dioProvider).post(
-      ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn
+      ref.watch(authProvider).value == AuthStatus.loggedIn
           ? getStackSellListing
           : getDefaultStackSellListing);
   yield stackSellListModelFromMap(jsonEncode(response.data));
