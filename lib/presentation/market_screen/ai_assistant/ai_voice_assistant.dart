@@ -73,13 +73,15 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
 
-    _isHindi = Get.locale?.languageCode == 'hi';
+    _isHindi = true; // Default to Hindi (hi_IN) for Devanagari script output
     _initTts();
     _prefetchMarketData();
 
     // Initialize speech and start listening cleanly after initial build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initAndStartListening();
+      if (mounted) {
+        _initAndStartListening();
+      }
     });
   }
 
@@ -87,8 +89,11 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   void dispose() {
     _silenceTimer?.cancel();
     _pulseCtrl.dispose();
-    _speech.stop();
-    _tts.stop();
+    try {
+      _speech.cancel();
+      _speech.stop();
+      _tts.stop();
+    } catch (_) {}
     _textCtrl.dispose();
     super.dispose();
   }
@@ -174,7 +179,10 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
 
   Future<void> _startListening() async {
     _silenceTimer?.cancel();
-    await _speech.stop();
+    try {
+      await _speech.cancel();
+      await _speech.stop();
+    } catch (_) {}
 
     if (!mounted) return;
 
@@ -206,15 +214,20 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       return;
     }
 
-    String targetLocale = _isHindi ? 'hi_IN' : 'en_IN';
+    // Force hi_IN for Devanagari Hindi output
+    String targetLocale = 'hi_IN';
     try {
       final locales = await _speech.locales();
-      final prefix = _isHindi ? 'hi' : 'en';
-      final matched = locales.firstWhere(
-        (l) => l.localeId.startsWith(prefix),
-        orElse: () => locales.first,
-      );
-      targetLocale = matched.localeId;
+      for (final l in locales) {
+        final locId = l.localeId.toLowerCase();
+        if (_isHindi && (locId == 'hi_in' || locId == 'hi-in' || locId.startsWith('hi'))) {
+          targetLocale = l.localeId;
+          break;
+        } else if (!_isHindi && locId.startsWith('en')) {
+          targetLocale = l.localeId;
+          break;
+        }
+      }
       debugPrint('Target STT locale: $targetLocale');
     } catch (_) {}
 
@@ -246,7 +259,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
             _submitQuestion();
           } else if (words.trim().isNotEmpty) {
             _silenceTimer = Timer(const Duration(milliseconds: 1800), () {
-              if (_spokenText.trim().isNotEmpty && _step == _AssistantStep.listening) {
+              if (mounted && _spokenText.trim().isNotEmpty && _step == _AssistantStep.listening) {
                 _submitQuestion();
               }
             });
@@ -269,7 +282,9 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
 
   Future<void> _submitQuestion() async {
     _silenceTimer?.cancel();
-    await _speech.stop();
+    try {
+      await _speech.stop();
+    } catch (_) {}
     if (mounted) setState(() => _isListeningNow = false);
 
     final query = _textCtrl.text.trim().isNotEmpty
@@ -327,7 +342,9 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   }
 
   Future<void> _speakResponse(String text) async {
-    await _tts.stop();
+    try {
+      await _tts.stop();
+    } catch (_) {}
     // Clean markdown formatting for clean speech synthesis
     final cleanText = text
         .replaceAll(RegExp(r'\*+'), '')
@@ -397,12 +414,16 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
         if (_step == _AssistantStep.response) ...[
           IconButton(
             onPressed: () {
-              _tts.stop();
-              setState(() {
-                _step = _AssistantStep.listening;
-                _spokenText = '';
-                _textCtrl.clear();
-              });
+              try {
+                _tts.stop();
+              } catch (_) {}
+              if (mounted) {
+                setState(() {
+                  _step = _AssistantStep.listening;
+                  _spokenText = '';
+                  _textCtrl.clear();
+                });
+              }
               _startListening();
             },
             icon: const Icon(Icons.arrow_back_rounded),
@@ -447,10 +468,14 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
         // Language Toggle Chip (Hindi / English)
         InkWell(
           onTap: () {
-            setState(() {
-              _isHindi = !_isHindi;
-            });
-            _tts.setLanguage(_isHindi ? 'hi-IN' : 'en-IN');
+            if (mounted) {
+              setState(() {
+                _isHindi = !_isHindi;
+              });
+            }
+            try {
+              _tts.setLanguage(_isHindi ? 'hi-IN' : 'en-IN');
+            } catch (_) {}
             _startListening();
           },
           borderRadius: BorderRadius.circular(16),
@@ -482,7 +507,9 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
         // Close
         IconButton(
           onPressed: () {
-            _tts.stop();
+            try {
+              _tts.stop();
+            } catch (_) {}
             Navigator.of(context).pop();
           },
           icon: const Icon(Icons.close_rounded),
@@ -513,18 +540,24 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
           isSpeaking: _isSpeaking,
           onToggleSpeech: () {
             if (_isSpeaking) {
-              _tts.stop();
+              try {
+                _tts.stop();
+              } catch (_) {}
             } else {
               _speakResponse(_aiResponse);
             }
           },
           onAskAgain: () {
-            _tts.stop();
-            setState(() {
-              _spokenText = '';
-              _textCtrl.clear();
-              _step = _AssistantStep.listening;
-            });
+            try {
+              _tts.stop();
+            } catch (_) {}
+            if (mounted) {
+              setState(() {
+                _spokenText = '';
+                _textCtrl.clear();
+                _step = _AssistantStep.listening;
+              });
+            }
             _startListening();
           },
         );
@@ -755,7 +788,7 @@ class _ProcessingStep extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════
-//  STEP 3 — Response Display + Auto-TTS
+//  STEP 3 — Response Display + TTS
 // ════════════════════════════════════════════════════
 
 class _ResponseStep extends StatelessWidget {
