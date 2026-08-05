@@ -51,20 +51,52 @@ class AiService {
         }),
       );
 
+      print('Claude API status: ${response.statusCode}');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data['content'][0]['text'] as String;
       } else {
-        final err = jsonDecode(response.body);
-        throw Exception('Claude API error: ${err['error']['message']}');
+        print('Claude API error body: ${response.body}');
+        return _fallbackMarketResponse(question, marketData);
       }
     } catch (e) {
-      if (isHindi) {
-        return 'माफ करें, अभी जवाब देने में समस्या हो रही है। कृपया दोबारा कोशिश करें।';
-      } else {
-        return 'Sorry, there was an issue getting a response. Please try again.';
+      print('Claude API exception: $e');
+      return _fallbackMarketResponse(question, marketData);
+    }
+  }
+
+  /// Local fallback when API has network/credit issues:
+  /// Scans marketData lines for crop name and returns live rate in Hindi.
+  static String _fallbackMarketResponse(String question, String marketData) {
+    final q = question.toLowerCase();
+    String targetCrop = '';
+    if (q.contains('गेहूं') || q.contains('gehu') || q.contains('wheat')) {
+      targetCrop = 'Wheat';
+    } else if (q.contains('जौ') || q.contains('jo') || q.contains('jau') || q.contains('barley')) {
+      targetCrop = 'Barley';
+    } else if (q.contains('चना') || q.contains('chana') || q.contains('gram')) {
+      targetCrop = 'Gram';
+    } else if (q.contains('सरसों') || q.contains('sarson') || q.contains('mustard')) {
+      targetCrop = 'Mustard';
+    } else if (q.contains('मक्का') || q.contains('makka') || q.contains('maize')) {
+      targetCrop = 'Maize';
+    }
+
+    if (marketData.isNotEmpty) {
+      final lines = marketData.split('\n');
+      for (final line in lines) {
+        if (targetCrop.isNotEmpty && line.toLowerCase().contains(targetCrop.toLowerCase())) {
+          return 'आज $targetCrop का भाव: $line। अधिक जानकारी के लिए ऐप का व्यापार सेक्शन देखें।';
+        }
+      }
+      // If any market data lines exist, return the first 2 lines
+      final previewLines = lines.where((l) => l.contains('₹')).take(2).join('\n');
+      if (previewLines.isNotEmpty) {
+        return 'आज के मुख्य बाजार भाव:\n$previewLines';
       }
     }
+
+    return 'आज के बाजार डेटा में आपकी फसल का भाव उपलब्ध नहीं है। कृपया ऐप में SBT/WBT बोलियां देखें।';
   }
 
   static String _buildSystemPrompt({

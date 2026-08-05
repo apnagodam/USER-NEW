@@ -171,6 +171,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
             _submitQuestion();
           }
         },
+        localeId: 'hi_IN',
         listenFor: const Duration(seconds: 25),
         pauseFor: const Duration(seconds: 5),
         listenOptions: stt.SpeechListenOptions(
