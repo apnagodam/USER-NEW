@@ -1,21 +1,26 @@
 import 'dart:convert';
 import 'package:apnagodam/core/constants/constants.dart';
 import 'package:http/http.dart' as http;
-import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// Fetches live market data from the Apna Godam backend
-/// and formats it as a plain text summary for Claude's context.
+/// (including WBT, SBT product list, SBT buyer/seller, and SbtLiveBidData)
+/// and formats it as a plain text summary for AI context.
 class MarketDataFetcher {
-  /// Fetches WBT (warehouse-based trading) sell/buy rates
-  /// and SBT commodity rates, then returns a human-readable summary.
+  /// Fetches all live market rates and returns a structured summary.
   static Future<String> fetchLiveMarketSummary({
     String? authToken,
   }) async {
     final buffer = StringBuffer();
 
     try {
-      // 1. Fetch WBT market rates (sell_buy_list)
+      // 1. Fetch SbtLiveBidData (POST Endpoint)
+      final liveBidData = await _fetchSbtLiveBidData();
+      if (liveBidData.isNotEmpty) {
+        buffer.writeln(liveBidData);
+        buffer.writeln();
+      }
+
+      // 2. Fetch WBT market rates (sell_buy_list)
       final wbtData = await _fetchWbt(authToken: authToken);
       if (wbtData.isNotEmpty) {
         buffer.writeln('=== WBT Market Rates (Warehouse Based Trading) ===');
@@ -23,7 +28,7 @@ class MarketDataFetcher {
         buffer.writeln();
       }
 
-      // 2. Fetch SBT commodity rates
+      // 3. Fetch SBT commodity rates
       final sbtData = await _fetchSbt();
       if (sbtData.isNotEmpty) {
         buffer.writeln('=== SBT Market Rates (Stock Based Trading) ===');
@@ -31,20 +36,71 @@ class MarketDataFetcher {
         buffer.writeln();
       }
 
-      // 3. Fetch Mandi Bhav
+      // 4. Fetch Mandi Bhav
       final mandiBhav = await _fetchMandiBhav();
       if (mandiBhav.isNotEmpty) {
         buffer.writeln('=== Mandi Bhav (Spot Rates) ===');
         buffer.writeln(mandiBhav);
       }
     } catch (e) {
-      buffer.writeln('Note: Could not fetch some market data. Partial data may be available.');
+      buffer.writeln('Note: Could not fetch some market data.');
     }
 
     final result = buffer.toString().trim();
     return result.isEmpty
         ? 'No live market data available at this time.'
         : result;
+  }
+
+  /// POST Request to SbtLiveBidData endpoint
+  static Future<String> _fetchSbtLiveBidData() async {
+    try {
+      final uri = Uri.parse('https://demoaws.apnagodam.com/sbt_api/SbtLiveBidData');
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({}),
+      ).timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == '1' || data['status'] == 1) {
+          final bidData = data['BidData'];
+          if (bidData != null && bidData is Map) {
+            final sb = StringBuffer();
+            sb.writeln('=== SbtLiveBidData (Live Bids) ===');
+
+            final buyList = bidData['buy'] as List?;
+            if (buyList != null && buyList.isNotEmpty) {
+              for (final b in buyList) {
+                final c = b['commodity'] ?? '';
+                final p = b['price'] ?? 0;
+                final district = b['districtName'] ?? '';
+                final pin = b['Pincode'] ?? '';
+                if (c.toString().isNotEmpty) {
+                  sb.writeln('फसल: $c | भाव: ₹$p | जिला: $district | पिनकोड: $pin | प्रकार: Buy');
+                }
+              }
+            }
+
+            final sellList = bidData['sell'] as List?;
+            if (sellList != null && sellList.isNotEmpty) {
+              for (final s in sellList) {
+                final c = s['commodity'] ?? '';
+                final p = s['price'] ?? 0;
+                final district = s['districtName'] ?? '';
+                final pin = s['Pincode'] ?? '';
+                if (c.toString().isNotEmpty) {
+                  sb.writeln('फसल: $c | भाव: ₹$p | जिला: $district | पिनकोड: $pin | प्रकार: Sell');
+                }
+              }
+            }
+            return sb.toString();
+          }
+        }
+      }
+    } catch (_) {}
+    return '';
   }
 
   static Future<String> _fetchWbt({String? authToken}) async {
@@ -80,7 +136,7 @@ class MarketDataFetcher {
         final bidTime = item['bid_time'] ?? '';
         if (commodity.toString().isNotEmpty) {
           sb.writeln(
-              '$commodity | Warehouse: $warehouse | Best Buy: ₹$buyerPrice/qtl | Seller: ₹$sellerPrice/qtl | Bid Time: $bidTime');
+              'फसल: $commodity | Warehouse: $warehouse | Best Buy: ₹$buyerPrice | Seller: ₹$sellerPrice | Bid Time: $bidTime');
         }
       }
     } catch (_) {}
@@ -114,7 +170,7 @@ class MarketDataFetcher {
             final date = item['date'] ?? '';
             if (commodity.toString().isNotEmpty) {
               sb.writeln(
-                  'फसल: $commodity | अंतिम भाव (LTP): ₹${ltp ?? 'N/A'} | सर्किट: ₹$lower - ₹$upper | स्थान: $district | समय: $date');
+                  'फसल: $commodity | भाव: ₹${ltp ?? 'N/A'} | सर्किट: ₹$lower - ₹$upper | स्थान: $district | समय: $date');
             }
           }
         }
@@ -138,7 +194,7 @@ class MarketDataFetcher {
             final lastPrice = item['last_trade_price'] ?? 0;
             if (commodity.toString().isNotEmpty) {
               sb.writeln(
-                  'फसल: $commodity | क्रेता भाव: ₹$buyerPrice | विक्रेता भाव: ₹$sellerPrice | अंतिम सौदा: ₹$lastPrice');
+                  'फसल: $commodity | भाव: ₹$buyerPrice | विक्रेता भाव: ₹$sellerPrice | अंतिम सौदा: ₹$lastPrice');
             }
           }
         }
@@ -174,7 +230,7 @@ class MarketDataFetcher {
         final modalPrice = item['modal_price'] ?? item['modalPrice'] ?? 0;
         if (commodity.toString().isNotEmpty) {
           sb.writeln(
-              '$commodity | Mandi: $market | Min: ₹$minPrice | Max: ₹$maxPrice | Modal: ₹$modalPrice');
+              'फसल: $commodity | Mandi: $market | भाव: ₹$modalPrice | Min: ₹$minPrice | Max: ₹$maxPrice');
         }
       }
     } catch (_) {}

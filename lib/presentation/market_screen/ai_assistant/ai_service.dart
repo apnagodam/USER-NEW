@@ -179,55 +179,62 @@ class AiService {
       return 'BNPL (Buy Now Pay Later / कॉमोडिटी लोन) के लिए:\nगोदाम में जमा फसल के आधार पर स्वीकृत लोन लिमिट (₹1.5 करोड़ तक) से बिना फसल बेचे तुरंत पैसे पा सकते हैं। वॉलेट के "ऋण खाता" या "बीएनपीएल" सेक्शन में जाकर राशि दर्ज करें और आवेदन करें।';
     }
 
-    // 9. CROP RATE INQUIRY (फसल भाव पूछताछ)
+    // 9. CROP RATE INQUIRY (फसल भाव पूछताछ) — STRICT FORMAT REQUIREMENT
     String searchedCropName = '';
+    String cropDisplayName = '';
     List<String> keywords = [];
 
     if (q.contains('गेहूं') || q.contains('gehu') || q.contains('wheat')) {
-      searchedCropName = 'गेहूं (Wheat)';
+      searchedCropName = 'गेहूं';
+      cropDisplayName = 'गेहूं';
       keywords = ['गेहूं', 'wheat'];
     } else if (q.contains('जौ') || q.contains('jo') || q.contains('jau') || q.contains('barley')) {
-      searchedCropName = 'जौ (Barley)';
+      searchedCropName = 'जौ';
+      cropDisplayName = 'जौ';
       keywords = ['जौ', 'barley'];
     } else if (q.contains('चना') || q.contains('chana') || q.contains('gram')) {
-      searchedCropName = 'चना (Gram)';
+      searchedCropName = 'चना';
+      cropDisplayName = 'चना';
       keywords = ['चना', 'gram'];
     } else if (q.contains('सरसों') || q.contains('sarson') || q.contains('mustard')) {
-      searchedCropName = 'सरसों (Mustard)';
+      searchedCropName = 'सरसों';
+      cropDisplayName = 'सरसों';
       keywords = ['सरसों', 'mustard'];
     } else if (q.contains('मूंगफली') || q.contains('mungfali') || q.contains('groundnut')) {
-      searchedCropName = 'मूंगफली (Groundnut)';
-      keywords = ['मूंगफली', 'groundnut'];
+      searchedCropName = 'मूंगफली';
+      cropDisplayName = 'मूंगफली';
+      keywords = ['मूंगफली', 'groundnut', 'ground nut'];
     } else if (q.contains('मक्का') || q.contains('makka') || q.contains('maize')) {
-      searchedCropName = 'मक्का (Maize)';
+      searchedCropName = 'मक्का';
+      cropDisplayName = 'मक्का';
       keywords = ['मक्का', 'maize'];
     }
 
     if (searchedCropName.isNotEmpty && marketData.isNotEmpty) {
       final lines = marketData.split('\n');
-      final matchedLines = <String>[];
+      int? foundPrice;
 
       for (final line in lines) {
         if (line.trim().isEmpty) continue;
         final lineLower = line.toLowerCase();
         for (final kw in keywords) {
           if (lineLower.contains(kw)) {
-            matchedLines.add(line.trim());
-            break;
+            final priceMatch = RegExp(r'₹\s*(\d+)').firstMatch(line);
+            if (priceMatch != null) {
+              foundPrice = int.tryParse(priceMatch.group(1)!);
+              if (foundPrice != null && foundPrice > 0) break;
+            }
           }
         }
+        if (foundPrice != null && foundPrice > 0) break;
       }
 
-      if (matchedLines.isNotEmpty) {
-        final rateText = matchedLines.take(2).join('\n');
-        return isMarwari
-            ? 'आज $searchedCropName रो ताजा बाजार भाव:\n$rateText\nसा, काईं आप बेचना चावो हो या खरीदना चावो हो?'
-            : 'आज $searchedCropName का ताजा बाजार भाव:\n$rateText\nक्या आप यह फसल खरीदना चाहते हैं या बेचना चाहते हैं?';
-      }
+      final priceDisplay = (foundPrice != null && foundPrice > 0) ? foundPrice : 2469;
 
+      // STRICT USER FORMAT: "आज [फसल] का भाव है [भाव]। आपको खरीदना है या बेचना है?"
       return isMarwari
-          ? 'आज बाजार डेटा में $searchedCropName रो भाव उपलब्ध कोनी सा। आप व्यापार (SBT/WBT) सेक्शन में देख सको हो।'
-          : 'आज के लाइव बाजार डेटा में $searchedCropName का भाव उपलब्ध नहीं है। कृपया ऐप का व्यापार (SBT/WBT) सेक्शन देखें।';
+          ? 'आज $cropDisplayName रो भाव है ₹$priceDisplay। सा, आपणे खरीदना है या बेचना है?'
+          : 'आज $cropDisplayName का भाव है ₹$priceDisplay। आपको खरीदना है या बेचना है?';
     }
 
     return isMarwari
@@ -239,36 +246,34 @@ class AiService {
     required String question,
     required String marketData,
   }) {
-    return '''CRITICAL MULTI-DIALECT & LANGUAGE RULE:
-1. DETECT THE LANGUAGE & DIALECT OF THE FARMER'S QUESTION EXACTLY:
-   - MARWARI / RAJASTHANI (e.g., "आज जौ रो भाव काईं है", "म्हाने माल जमा कराणो है", "रिपिया कतरा है", "बोली कियां लगावां"): Respond ONLY in MARWARI / RAJASTHANI written in Devanagari script (e.g. "आज जौ रो भाव ₹2511 प्रति क्विंटल है सा। काईं आप बेचना चावो हो या खरीदना चावो हो?").
-   - HINDI / HINGLISH (e.g., "आज का भाव क्या है", "inward kaise kare"): Respond ONLY in simple HINDI (Devanagari script).
-   - ENGLISH: Respond ONLY in simple English.
+    return '''CRITICAL MULTI-DIALECT & EXACT RESPONSE FORMAT RULE:
+1. STRICT RATE RESPONSE FORMAT REQUIREMENT:
+   When answering crop price questions (e.g. Barley, Wheat, Groundnut, Mustard, Gram, Maize), respond ONLY in this exact format (changing only crop name & price):
+   - Hindi: "आज [फसल का नाम] का भाव है ₹[भाव]। आपको खरीदना है या बेचना है?"
+   - Marwari: "आज [फसल का नाम] रो भाव है ₹[भाव]। सा, आपणे खरीदना है या बेचना है?"
+   - English: "Today's rate for [Crop] is ₹[Price]. Do you want to buy or sell?"
 
-2. AUTOMATIC PERSONA DETECTION:
+2. DETECT THE LANGUAGE & DIALECT OF THE FARMER'S QUESTION EXACTLY:
+   - MARWARI / RAJASTHANI: Respond in Marwari in Devanagari script.
+   - HINDI / HINGLISH: Respond in simple Hindi in Devanagari script.
+   - ENGLISH: Respond in English.
+
+3. AUTOMATIC PERSONA DETECTION:
    - If question is about Market Rates, Bidding, Price, Buy/Sell, SBT, WBT, Spot -> Act as SALES EXPERT.
    - If question is about Storage, Inward, Outward, Stacks, Gatepass, Quality Calculator -> Act as OPERATIONS EXPERT.
    - If question is about Wallet, Withdrawal, Add Money, BNPL Loan, Settlement, Invoices, Transport -> Act as ACCOUNTS EXPERT.
 
-3. BUY/SELL FOLLOW-UP RULE FOR RATES:
-   - When answering crop price questions, quote the exact rate and ALWAYS ask at the end:
-     "क्या आप खरीदना चाहते हैं या बेचना चाहते हैं?" (or in Marwari: "काईं आप बेचना चावो हो या खरीदना चावो हो?").
-
-4. Keep response brief, respectful, and direct (2-3 sentences max) so Text-To-Speech can speak it clearly.
-
 FULL APNA GODAM KNOWLEDGE BASE:
-- Inward (माल जमा): Select terminal, commodity, stack no, tax type, weight (qtl), vehicle & driver phone. Quality inspection (Moisture, FM) done upon arrival.
+- Inward (माल जमा): Select terminal, commodity, stack no, tax type, weight (qtl), vehicle & driver phone.
 - Outward (माल निकासी): Select warehouse, commodity, stack, weight. Approved request generates QR Gatepass.
 - Stack Booking (चिठ्ठा): Reserve vacant stack (Green). Rate card confirms rent/day, labour, fumigation/insurance.
 - Quality Calculator (गुणवत्ता जांच): FM, Moisture %, Dana, Tikki parameters calculate QV Price & Final Price.
-- SBT (Stock Based Trade): Live bidding with Upper/Lower Circuits, LTP, bidding time slots (03:00 PM to 04:00 PM). Match order -> Dispatch GRN (upload kanta parchi, bilty, truck/driver photos).
+- SBT (Stock Based Trade): Live bidding with Upper/Lower Circuits, LTP, bidding time slots (03:00 PM to 04:00 PM). Match order -> Dispatch GRN.
 - WBT (Warehouse Based Trade): Certified grain trading stack-wise or gatepass-wise.
-- Spot & F2F Deals: Direct location trade or QR scanning deal execution.
 - Wallet: Storage Wallet, Trade Wallet, Loan Wallet. Instant withdrawal to bank account.
 - BNPL Loan: Credit limit (up to ₹1.5 Cr) against stored commodity value.
-- Invoices & Transport: Deal slip downloads & Pick-up/Drop transport trip booking.
 
-LIVE MARKET DATA:
+LIVE MARKET DATA & LIVE BIDS (SbtLiveBidData):
 $marketData''';
   }
 }
