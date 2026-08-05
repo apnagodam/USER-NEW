@@ -22,9 +22,10 @@ class WbtModel {
   factory WbtModel.fromMap(Map<String, dynamic> json) => WbtModel(
         status: json["status"],
         message: json["message"],
-        data: json["data"] == null
-            ? []
-            : List<Datum>.from(json["data"]!.map((x) => Datum.fromMap(x))),
+        data: json["data"] is List
+            ? List<Datum>.from((json["data"] as List)
+                .map((x) => Datum.fromMap(x as Map<String, dynamic>)))
+            : [],
       );
 
   Map<String, dynamic> toMap() => {
@@ -126,13 +127,13 @@ class Datum {
         sellerPriceDiff: json["seller_price_diff"],
         state: json["state"],
         warehouseCode: json["warehouse_code"],
-        conversation: json["conversation"] == null
-            ? []
-            : List<Conversation>.from(
-                json["conversation"]!.map((x) => Conversation.fromMap(x))),
-        inventory: json["inventory"] == null
-            ? null
-            : Inventory.fromMap(json["inventory"]),
+        conversation: json["conversation"] is List
+            ? List<Conversation>.from((json["conversation"] as List)
+                .map((x) => Conversation.fromMap(x as Map<String, dynamic>)))
+            : [],
+        inventory: json["inventory"] is Map
+            ? Inventory.fromMap(json["inventory"] as Map<String, dynamic>)
+            : null,
       );
 
   Map<String, dynamic> toMap() => {
@@ -329,12 +330,12 @@ class Inventory {
         status: json["status"],
         createdAt: json["created_at"],
         updatedAt: json["updated_at"],
-        warehouse: json["warehouse"] == null
-            ? null
-            : Warehouse.fromMap(json["warehouse"]),
-        category: json["category"] == null
-            ? null
-            : Category.fromMap(json["category"]),
+        warehouse: json["warehouse"] is Map
+            ? Warehouse.fromMap(json["warehouse"] as Map<String, dynamic>)
+            : null,
+        category: json["category"] is Map
+            ? Category.fromMap(json["category"] as Map<String, dynamic>)
+            : null,
       );
 
   Map<String, dynamic> toMap() => {
@@ -479,9 +480,12 @@ class Category {
         lowerCircuit: json["lower_circuit"],
         upperCircuit: json["upper_circuit"],
         isFastPath: json["is_fast_path"],
-        month: json["month"] == null ? null : DateTime.parse(json["month"]),
-        expDate:
-            json["exp_date"] == null ? null : DateTime.parse(json["exp_date"]),
+        month: json["month"] == null || json["month"].toString().isEmpty
+            ? null
+            : DateTime.tryParse(json["month"].toString()),
+        expDate: json["exp_date"] == null || json["exp_date"].toString().isEmpty
+            ? null
+            : DateTime.tryParse(json["exp_date"].toString()),
         isActive: json["is_active"],
         qualityPCondition: json["quality_p_condition"],
         status: json["status"],
@@ -517,10 +521,12 @@ class Category {
         "lower_circuit": lowerCircuit,
         "upper_circuit": upperCircuit,
         "is_fast_path": isFastPath,
-        "month":
-            "${month!.year.toString().padLeft(4, '0')}-${month!.month.toString().padLeft(2, '0')}-${month!.day.toString().padLeft(2, '0')}",
-        "exp_date":
-            "${expDate!.year.toString().padLeft(4, '0')}-${expDate!.month.toString().padLeft(2, '0')}-${expDate!.day.toString().padLeft(2, '0')}",
+        "month": month == null
+            ? null
+            : "${month!.year.toString().padLeft(4, '0')}-${month!.month.toString().padLeft(2, '0')}-${month!.day.toString().padLeft(2, '0')}",
+        "exp_date": expDate == null
+            ? null
+            : "${expDate!.year.toString().padLeft(4, '0')}-${expDate!.month.toString().padLeft(2, '0')}-${expDate!.day.toString().padLeft(2, '0')}",
         "is_active": isActive,
         "quality_p_condition": qualityPCondition,
         "status": status,
@@ -657,9 +663,9 @@ class Warehouse {
         status: json["status"],
         createdAt: json["created_at"],
         updatedAt: json["updated_at"],
-        warehouseRent: json["warehouse_rent"] == null
-            ? null
-            : WarehouseRent.fromMap(json["warehouse_rent"]),
+        warehouseRent: json["warehouse_rent"] is Map
+            ? WarehouseRent.fromMap(json["warehouse_rent"] as Map<String, dynamic>)
+            : null,
       );
 
   Map<String, dynamic> toMap() => {
@@ -763,9 +769,9 @@ class WarehouseRent {
         status: json["status"],
         createdAt: json["created_at"],
         updatedAt: json["updated_at"],
-        districts: json["districts"] == null
-            ? null
-            : Districts.fromMap(json["districts"]),
+        districts: json["districts"] is Map
+            ? Districts.fromMap(json["districts"] as Map<String, dynamic>)
+            : null,
       );
 
   Map<String, dynamic> toMap() => {

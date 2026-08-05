@@ -25,10 +25,10 @@ class StackSellListModel {
       StackSellListModel(
         status: json["status"],
         message: json["message"],
-        data: json["data"] == null
-            ? []
-            : List<StackSellDatum>.from(
-                json["data"]!.map((x) => StackSellDatum.fromMap(x))),
+        data: json["data"] is List
+            ? List<StackSellDatum>.from((json["data"] as List)
+                .map((x) => StackSellDatum.fromMap(x as Map<String, dynamic>)))
+            : [],
       );
 
   Map<String, dynamic> toMap() => {
@@ -89,10 +89,10 @@ class StackSellDatum {
       quantity: json["quantity"],
       bestBuyerPrice: json["best_buyer_price"],
       buyerPrice: json["buyer_price"],
-      stackBuySellConver: json["stack_buy_sell_conver"] == null
-          ? []
-          : List<StackBuySellConver>.from(json["stack_buy_sell_conver"]!
-              .map((x) => StackBuySellConver.fromMap(x))),
+      stackBuySellConver: json["stack_buy_sell_conver"] is List
+          ? List<StackBuySellConver>.from((json["stack_buy_sell_conver"] as List)
+              .map((x) => StackBuySellConver.fromMap(x as Map<String, dynamic>)))
+          : [],
       minPrice: json["min_price"],
       maxPrice: json["max_price"],
       commodityImage: json["commodity_image"],
