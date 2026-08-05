@@ -69,15 +69,28 @@ class SbtDatum {
       this.ltp,
       this.sbtType});
 
+  static int _safeParseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.round();
+    final str = value.toString().trim();
+    if (str.isEmpty) return 0;
+    final parsedInt = int.tryParse(str);
+    if (parsedInt != null) return parsedInt;
+    final parsedDouble = double.tryParse(str);
+    if (parsedDouble != null) return parsedDouble.round();
+    return 0;
+  }
+
   factory SbtDatum.fromMap(Map<String, dynamic> json) => SbtDatum(
       productId: json['product_id'],
       districtId: json["district_id"],
       district: json["district"],
       commodityId: json["commodity_id"],
       commodity: json["commodity"],
-      upperCircuit: int.parse(json["upper_circuit"] ?? 0),
-      lowerCircuit: int.parse(json["lower_circuit"] ?? 0),
-      quantityLimit: int.parse(json["quantity_limit"] ?? 0),
+      upperCircuit: _safeParseInt(json["upper_circuit"]),
+      lowerCircuit: _safeParseInt(json["lower_circuit"]),
+      quantityLimit: _safeParseInt(json["quantity_limit"]),
       bestBuyer: json['best_buyer'],
       bestSeller: json['best_seller'],
       date: json["date"],

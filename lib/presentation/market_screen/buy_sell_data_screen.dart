@@ -993,9 +993,7 @@ class _BuyerListSBTState extends ConsumerState<BuyerListSBT> {
                                                                         .data
                                                                         ?.upperCircuit ??
                                                                     0,
-                                                                initVal: int.parse(
-                                                                  "${value.buyerData?[index].rate ?? "0"}",
-                                                                ),
+                                                                initVal: (double.tryParse("${value.buyerData?[index].rate ?? "0"}")?.round() ?? 0),
                                                                 minVal: 0,
                                                                 steps: 10,
                                                                 qtyFormProps: QtyFormProps(
@@ -1118,12 +1116,8 @@ class _BuyerListSBTState extends ConsumerState<BuyerListSBT> {
                                                             child: SizedBox(
                                                               width: Get.width,
                                                               child: InputQty(
-                                                                maxVal: int.parse(
-                                                                  "${widget.data?.quantityLimit ?? "0"}",
-                                                                ),
-                                                                initVal: int.parse(
-                                                                  "${value.buyerData?[index].qty ?? "0"}",
-                                                                ),
+                                                                maxVal: (double.tryParse("${widget.data?.quantityLimit ?? "0"}")?.round() ?? 0),
+                                                                initVal: (double.tryParse("${value.buyerData?[index].qty ?? "0"}")?.round() ?? 0),
                                                                 minVal: 0,
                                                                 steps: 10,
                                                                 qtyFormProps: QtyFormProps(
