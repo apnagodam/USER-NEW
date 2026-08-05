@@ -80,6 +80,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
 
   @override
   void dispose() {
+    _silenceTimer?.cancel();
     _pulseCtrl.dispose();
     _speech.stop();
     _tts.stop();
@@ -140,7 +141,12 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     _startListening();
   }
 
+  Timer? _silenceTimer;
+
   Future<void> _startListening() async {
+    _silenceTimer?.cancel();
+    await _speech.stop();
+
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
       _showSnack(_isHindi
@@ -167,12 +173,21 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       await _speech.listen(
         onResult: (result) {
           setState(() => _spokenText = result.recognizedWords);
+          _silenceTimer?.cancel();
+
           if (result.finalResult && _spokenText.trim().isNotEmpty) {
             _submitQuestion();
+          } else if (_spokenText.trim().isNotEmpty) {
+            // Auto-submit after 1.8s of silence if finalResult isn't fired by OS
+            _silenceTimer = Timer(const Duration(milliseconds: 1800), () {
+              if (_spokenText.trim().isNotEmpty && _step == _AssistantStep.listening) {
+                _submitQuestion();
+              }
+            });
           }
         },
         localeId: 'hi_IN',
-        listenFor: const Duration(seconds: 25),
+        listenFor: const Duration(seconds: 30),
         pauseFor: const Duration(seconds: 5),
         listenOptions: stt.SpeechListenOptions(
           partialResults: true,
@@ -744,23 +759,26 @@ class _ListeningStep extends StatelessWidget {
                     ),
                   ),
                 ),
-                // mic button
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: ColorConstant.maingreen,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color:
-                            ColorConstant.maingreen.withValues(alpha: 0.4),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ],
+                // mic button (tap to restart listening)
+                GestureDetector(
+                  onTap: onRetry,
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: ColorConstant.maingreen,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              ColorConstant.maingreen.withValues(alpha: 0.4),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.mic, color: Colors.white, size: 36),
                   ),
-                  child: const Icon(Icons.mic, color: Colors.white, size: 36),
                 ),
               ],
             );
