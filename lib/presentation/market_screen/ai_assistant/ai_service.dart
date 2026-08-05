@@ -70,10 +70,76 @@ class AiService {
     return _fallbackMarketResponse(question, marketData);
   }
 
-  /// Local fallback when API has network/credit issues:
-  /// Scans live marketData lines for crop name and returns exact rates in Hindi.
+  /// Smart local answer generator for all process, feature, and market rate questions.
   static String _fallbackMarketResponse(String question, String marketData) {
-    final q = question.toLowerCase();
+    final q = question.toLowerCase().trim();
+
+    // 1. INWARD (माल जमा)
+    if (q.contains('इनवर्ड') || q.contains('inward') || q.contains('माल जमा') || (q.contains('जमा') && q.contains('कैसे')) || q.contains('माल कैसे रख')) {
+      return 'गोदाम में माल जमा (Inward) करने के लिए:\n1. ऐप में "माल जमा" (Inwards) पर क्लिक करें।\n2. अपना गोदाम टर्मिनल, अनाज और स्टैक नंबर चुनें।\n3. वजन (क्विंटल), वाहन नंबर और ड्राइवर मोबाइल नंबर दर्ज करके सबमिट करें। गोदाम पर पहुंचने पर नमी व गुणवत्ता जांच के बाद माल जमा हो जाएगा।';
+    }
+
+    // 2. OUTWARD (माल निकासी)
+    if (q.contains('आउटवर्ड') || q.contains('outward') || q.contains('माल निकासी') || q.contains('निकासी कैसे') || q.contains('माल बाहर') || q.contains('स्टॉक निकाल')) {
+      return 'गोदाम से माल निकालने (Outward) के लिए:\n1. ऐप के गोदाम सेक्शन में "माल निकासी" पर क्लिक करें।\n2. अपना गोदाम और अनाज चुनकर संबंधित स्टैक चुनें।\n3. निकासी वजन और वाहन विवरण भरकर सबमिट करें। अप्रूवल के बाद डिजिटल गेट पास जारी होगा।';
+    }
+
+    // 3. STACK BOOKING / CHITTHA (चिठ्ठा बुकिंग)
+    if (q.contains('चिठ्ठा') || q.contains('स्टैक') || q.contains('stack') || q.contains('बुकिंग') || q.contains('रेट कार्ड')) {
+      return 'खाली चिठ्ठा (Stack) बुक करने के लिए:\n1. ऐप में "गोदाम खोजें" पर जाकर नजदीकी गोदाम चुनें।\n2. "अभी बुक करें" पर क्लिक कर अनाज का प्रकार चुनें।\n3. हरा चिठ्ठा (खाली स्टैक) चुनकर रेट कार्ड (किराया, मजदूरी) स्वीकार करें और सबमिट करें।';
+    }
+
+    // 4. GATEPASS (गेट पास)
+    if (q.contains('गेट पास') || q.contains('गेटपास') || q.contains('gatepass') || q.contains('qr')) {
+      return 'डिजिटल गेट पास (Gate Pass) के बारे में:\nइनवर्ड या आउटवर्ड अप्रूवल के बाद ऐप में डिजिटल QR गेट पास जनरेट होता है। इसमें गेटपास नंबर, वजन, स्टैक संख्या और वाहन नंबर दर्ज होता है जिससे गोदाम गेट पर तुरंत प्रवेश मिलता है।';
+    }
+
+    // 5. QUALITY CALCULATOR (गुणवत्ता जांच)
+    if (q.contains('गुणवत्ता') || q.contains('quality') || q.contains('nami') || q.contains('नमी') || q.contains('fm') || q.contains('dana') || q.contains('tikki')) {
+      return 'अनाज की गुणवत्ता जांचने के लिए:\n1. ऐप में "गुणवत्ता जांचें" (Quality Calculator) पर क्लिक करें।\n2. अपना राज्य, जिला व फसल चुनें।\n3. FM, नमी %, दाना और टिक्की के मान दर्ज करें। सिस्टम तुरंत सही गुणवत्ता मूल्य (QV Price & Final Price) की गणना कर देगा।';
+    }
+
+    // 6. SBT TRADING (एसबीटी व्यापार / बोली)
+    if (q.contains('sbt') || q.contains('एसबीटी') || q.contains('बोली कैसे') || q.contains('सर्किट') || q.contains('ऑर्डर')) {
+      return 'SBT (Stock Based Trade) में बोली लगाने के लिए:\n1. ऐप के "व्यापार" सेक्शन में SBT चुनें।\n2. अपनी फसल व फैक्ट्री/गोदाम चुनकर "ऑर्डर जोड़ें" पर क्लिक करें।\n3. लोअर व अपर सर्किट के बीच भाव और मात्रा (क्विंटल) दर्ज करके सबमिट करें। भाव मैच होते ही सौदा पूरा होगा।';
+    }
+
+    // 7. WBT TRADING (डब्ल्यूबीटी व्यापार)
+    if (q.contains('wbt') || q.contains('डब्लूबीटी') || q.contains('डब्ल्यूबीटी')) {
+      return 'WBT (Warehouse Based Trade) में व्यापार करने के लिए:\nगोदाम में जमा प्रमाणित अनाज पर "चिठ्ठा अनुसार" या "गेटपास अनुसार" ओपन स्टॉक देखें। "बोली लगाएं" पर क्लिक करके अपना खरीद/बिक्री भाव दर्ज करें।';
+    }
+
+    // 8. F2F DEALS (फेस टू फेस डील्स)
+    if (q.contains('f2f') || q.contains('फेस टू फेस') || q.contains('face to face') || q.contains('स्कैन')) {
+      return 'Face to Face (F2F) डील करने के लिए:\n1. सेलर ऐप में अनाज, मूल्य और वजन दर्ज करके "बेचना" चुनता है और QR कोड जनरेट करता है।\n2. बायर अपने ऐप से वह QR कोड स्कैन करता है, फोटो चुनकर सबमिट करता है और सौदा तुरंत पूरा हो जाता है।';
+    }
+
+    // 9. WALLET & WITHDRAWAL (वॉलेट / पैसे निकालना)
+    if (q.contains('वॉलेट') || q.contains('wallet') || q.contains('पैसे निकाल') || q.contains('withdraw') || q.contains('बैंक ट्रांसफर') || q.contains('पैसे जोड़')) {
+      return 'वॉलेट से बैंक खाते में पैसे निकालने के लिए:\n1. ऐप के नीचे "वॉलेट" सेक्शन पर जाएं।\n2. "पैसे निकालें" बटन पर क्लिक करें।\n3. निकासी राशि दर्ज करके सबमिट करें। राशि तुरंत आपके सत्यापित बैंक खाते में ट्रांसफर कर दी जाएगी।';
+    }
+
+    // 10. BNPL LOAN (कॉमोडिटी लोन)
+    if (q.contains('bnpl') || q.contains('लोन') || q.contains('loan') || q.contains('ऋण')) {
+      return 'BNPL (Buy Now Pay Later / कॉमोडिटी लोन) के लिए:\nगोदाम में जमा फसल के आधार पर स्वीकृत लोन लिमिट (₹1.5 करोड़ तक) से बिना फसल बेचे तुरंत पैसे पा सकते हैं। वॉलेट के "ऋण खाता" या "बीएनपीएल" सेक्शन में जाकर राशि दर्ज करें और आवेदन करें।';
+    }
+
+    // 11. REPAYMENT (पुनर्भुगतान)
+    if (q.contains('पुनर्भुगतान') || q.contains('repayment') || q.contains('ऋण भुगतान') || q.contains('बकाया')) {
+      return 'ऋण का पुनर्भुगतान करने के लिए:\nहोम पेज पर "पुनर्भुगतान" बटन पर क्लिक करें। अपना गोदाम, अनाज और स्टैक नंबर चुनकर बकाया राशि, ब्याज व किराया देखें और वॉलेट द्वारा तुरंत भुगतान करें।';
+    }
+
+    // 12. INVOICES / BILLS (बिल / इनवॉइस)
+    if (q.contains('बिल') || q.contains('bill') || q.contains('invoice') || q.contains('इनवॉइस') || q.contains('सौदा पर्ची')) {
+      return 'अपने बिल देखने के लिए:\nऐप में "बिल" सेक्शन पर जाएं। "मेरे द्वारा उठाए गए बिल" या "मुझसे उठाए गए बिल" में सौदा पर्ची, टैक्स इनवॉइस और कुल भुगतान विवरण देखें व डाउनलोड करें।';
+    }
+
+    // 13. TRANSPORT (परिवहन)
+    if (q.contains('परिवहन') || q.contains('transport') || q.contains('पिक अप') || q.contains('ड्रॉप') || q.contains('गाड़ी')) {
+      return 'परिवहन बुक करने के लिए:\nप्रोफाइल मेनू से "परिवहन पिक-अप" या "ड्रॉप" चुनें। पिक-अप स्थान, डिलीवरी स्थान, अनाज, पाने वाले का नाम/नंबर और गाड़ी भाड़ा भरकर ट्रिप आईडी बनाएं।';
+    }
+
+    // 14. CROP RATE INQUIRY (फसल भाव पूछताछ)
     String searchedCropName = '';
     List<String> keywords = [];
 
@@ -118,19 +184,17 @@ class AiService {
         return 'आज के $searchedCropName का लाइव बाजार भाव:\n${matchedLines.take(3).join('\n')}';
       }
 
-      // If specific crop was asked but not found in today's API list
       if (searchedCropName.isNotEmpty) {
         return 'आज के लाइव बाजार डेटा में $searchedCropName का भाव/बोली उपलब्ध नहीं है। कृपया ऐप का व्यापार (SBT/WBT) सेक्शन देखें।';
       }
 
-      // If no specific crop was mentioned, return top live market rates
       final topRates = lines.where((l) => l.contains('₹') || l.contains('फसल:')).take(3).join('\n');
       if (topRates.isNotEmpty) {
         return 'आज के मुख्य लाइव बाजार भाव:\n$topRates';
       }
     }
 
-    return 'आज के बाजार डेटा में आपकी फसल का भाव उपलब्ध नहीं है। कृपया ऐप में SBT/WBT बोलियां देखें।';
+    return 'अपना गोदाम ऐप में गोदाम बुकिंग, माल जमा (Inward), माल निकासी (Outward), SBT/WBT व्यापार, वॉलेट और कॉमोडिटी लोन की सभी सुविधाएं उपलब्ध हैं।';
   }
 
   static String _buildSystemPrompt({
