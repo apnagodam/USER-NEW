@@ -206,14 +206,16 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       return;
     }
 
-    String targetLocale = 'hi_IN';
+    String targetLocale = _isHindi ? 'hi_IN' : 'en_IN';
     try {
       final locales = await _speech.locales();
-      final hi = locales.firstWhere(
-        (l) => l.localeId.startsWith('hi'),
+      final prefix = _isHindi ? 'hi' : 'en';
+      final matched = locales.firstWhere(
+        (l) => l.localeId.startsWith(prefix),
         orElse: () => locales.first,
       );
-      targetLocale = hi.localeId;
+      targetLocale = matched.localeId;
+      debugPrint('Target STT locale: $targetLocale');
     } catch (_) {}
 
     if (!mounted) return;
@@ -422,6 +424,41 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
             ],
           ),
         ),
+        // Language Toggle Chip (Hindi / English)
+        InkWell(
+          onTap: () {
+            setState(() {
+              _isHindi = !_isHindi;
+            });
+            _tts.setLanguage(_isHindi ? 'hi-IN' : 'en-IN');
+            _startListening();
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: ColorConstant.maingreen.withValues(alpha: 0.5)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.language, size: 16, color: ColorConstant.maingreen),
+                const SizedBox(width: 4),
+                Text(
+                  _isHindi ? 'हिंदी' : 'English',
+                  style: GoogleFonts.poppins(
+                    fontSize: Adaptive.sp(12),
+                    fontWeight: FontWeight.bold,
+                    color: ColorConstant.maingreen,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
         // Close
         IconButton(
           onPressed: () {
