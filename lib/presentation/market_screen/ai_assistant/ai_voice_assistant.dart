@@ -9,6 +9,7 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/helper.dart';
 import 'package:apnagodam/core/utils/image_constant.dart';
 import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'ai_service.dart';
@@ -876,6 +877,32 @@ class _ResponseStep extends StatelessWidget {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        // Direct Call IVR / Helpline Button
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => CallLaunch('tel:+917733901154'),
+            icon: const Icon(Icons.phone_in_talk_rounded, color: Colors.white),
+            label: Text(
+              isHindi ? '📞 IVR हेल्पलाइन (7733901154)' : '📞 Call IVR Support (7733901154)',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: Adaptive.sp(14),
+                color: Colors.white,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange.shade800,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 3,
+            ),
+          ),
         ),
         const SizedBox(height: 8),
       ],
