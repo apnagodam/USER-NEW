@@ -1,8 +1,4 @@
 import 'dart:async';
-import 'package:apnagodam/core/utils/color_constant.dart';
-import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
-import 'package:apnagodam/presentation/market_screen/ai_assistant/ai_service.dart';
-import 'package:apnagodam/presentation/market_screen/ai_assistant/market_data_fetcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -12,19 +8,23 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
+import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/image_constant.dart';
+import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
+import 'ai_service.dart';
+import 'market_data_fetcher.dart';
+
 // ---------- UI state enum ----------
 enum _AssistantStep {
-  mainOptions, // Step 1: Bhav Jane, Operations, Sales, Accounts
-  buySellSelection, // Step 1.5: If Bhav Jane selected -> Buy or Sell
-  listening, // Step 2: Direct mic open
-  processing, // Step 3: Claude API processing
-  response, // Step 4: Display + TTS answer
+  listening, // Step 1: Direct mic open immediately
+  processing, // Step 2: AI processing
+  response, // Step 3: Display + Auto-TTS
 }
 
 // ---------- public entry point ----------
 
 /// Shows the AI Voice Assistant bottom sheet.
-/// Call this from the floating action button.
+/// Call this directly from the floating action button.
 void showAiVoiceAssistant(BuildContext context, WidgetRef ref) {
   showModalBottomSheet(
     context: context,
@@ -47,9 +47,7 @@ class _AiAssistantSheet extends StatefulWidget {
 class _AiAssistantSheetState extends State<_AiAssistantSheet>
     with TickerProviderStateMixin {
   // ── state ──
-  _AssistantStep _step = _AssistantStep.mainOptions;
-  AiModel _selectedModel = AiModel.sales;
-  String _intent = 'sell'; // 'buy' | 'sell' | 'general'
+  _AssistantStep _step = _AssistantStep.listening;
   String _spokenText = '';
   String _aiResponse = '';
   String _marketData = '';
@@ -60,6 +58,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   final FlutterTts _tts = FlutterTts();
   bool _speechAvailable = false;
   bool _isSpeaking = false;
+  Timer? _silenceTimer;
 
   // ── animation ──
   late AnimationController _pulseCtrl;
@@ -76,6 +75,11 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     _initSpeech();
     _initTts();
     _prefetchMarketData();
+
+    // Directly open mic on sheet display
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startListening();
+    });
   }
 
   @override
@@ -99,10 +103,29 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   }
 
   Future<void> _initTts() async {
-    await _tts.setLanguage(_isHindi ? 'hi-IN' : 'en-IN');
-    await _tts.setSpeechRate(0.45);
-    await _tts.setVolume(1.0);
-    await _tts.setPitch(1.0);
+    await _tts.setLanguage('hi-IN');
+    await _tts.setSpeechRate(0.46); // clear, bold speed
+    await _tts.setVolume(1.0); // max volume
+    await _tts.setPitch(1.15); // female/bold pitch
+
+    try {
+      final voices = await _tts.getVoices;
+      if (voices != null && voices is List) {
+        for (final voice in voices) {
+          final name = voice['name'].toString().toLowerCase();
+          final lang = voice['locale'].toString().toLowerCase();
+          if ((lang.contains('hi') || lang.contains('in')) &&
+              (name.contains('female') ||
+                  name.contains('woman') ||
+                  name.contains('hi-in-x-hie-local') ||
+                  name.contains('hi-in-x-hid-local'))) {
+            await _tts.setVoice({"name": voice['name'], "locale": voice['locale']});
+            break;
+          }
+        }
+      }
+    } catch (_) {}
+
     _tts.setStartHandler(() => setState(() => _isSpeaking = true));
     _tts.setCompletionHandler(() => setState(() => _isSpeaking = false));
     _tts.setCancelHandler(() => setState(() => _isSpeaking = false));
@@ -114,34 +137,6 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       authToken: token,
     );
   }
-
-  // ── flow navigation ──
-
-  void _onBhavJaneSelected() {
-    setState(() {
-      _selectedModel = AiModel.sales;
-      _step = _AssistantStep.buySellSelection;
-    });
-  }
-
-  void _onDirectModelSelected(AiModel model) {
-    setState(() {
-      _selectedModel = model;
-      _intent = 'general';
-      _step = _AssistantStep.listening;
-    });
-    _startListening();
-  }
-
-  void _onBuySellSelected(String intent) {
-    setState(() {
-      _intent = intent;
-      _step = _AssistantStep.listening;
-    });
-    _startListening();
-  }
-
-  Timer? _silenceTimer;
 
   Future<void> _startListening() async {
     _silenceTimer?.cancel();
@@ -178,21 +173,21 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
           if (result.finalResult && _spokenText.trim().isNotEmpty) {
             _submitQuestion();
           } else if (_spokenText.trim().isNotEmpty) {
-            // Auto-submit after 1.8s of silence if finalResult isn't fired by OS
-            _silenceTimer = Timer(const Duration(milliseconds: 1800), () {
+            // Auto-submit after 2.0s of silence (no button tap required!)
+            _silenceTimer = Timer(const Duration(milliseconds: 2000), () {
               if (_spokenText.trim().isNotEmpty && _step == _AssistantStep.listening) {
                 _submitQuestion();
               }
             });
           }
         },
-        localeId: 'hi_IN',
-        listenFor: const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 5),
         listenOptions: stt.SpeechListenOptions(
           partialResults: true,
           cancelOnError: false,
           listenMode: stt.ListenMode.dictation,
+          localeId: 'hi_IN',
+          listenFor: const Duration(seconds: 30),
+          pauseFor: const Duration(seconds: 5),
         ),
       );
     } catch (e) {
@@ -201,6 +196,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   }
 
   Future<void> _submitQuestion() async {
+    _silenceTimer?.cancel();
     await _speech.stop();
     if (_spokenText.trim().isEmpty) {
       setState(() => _step = _AssistantStep.listening);
@@ -217,121 +213,122 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     }
 
     final response = await AiService.askClaude(
-      question: _spokenText,
-      model: _selectedModel,
-      intent: _intent,
+      question: _spokenText.trim(),
       marketData: _marketData,
       isHindi: _isHindi,
     );
 
+    if (!mounted) return;
     setState(() {
       _aiResponse = response;
       _step = _AssistantStep.response;
     });
 
-    // Auto-speak response
-    await _speak(response);
+    // Auto-speak response in loud, bold female voice
+    _speakResponse(response);
   }
 
-  Future<void> _speak(String text) async {
-    if (_isSpeaking) {
-      await _tts.stop();
-    } else {
-      await _tts.speak(text);
-    }
-  }
+  Future<void> _speakResponse(String text) async {
+    await _tts.stop();
+    // Clean markdown formatting for clean speech synthesis
+    final cleanText = text
+        .replaceAll(RegExp(r'\*+'), '')
+        .replaceAll(RegExp(r'#+'), '')
+        .replaceAll(RegExp(r'\(|\)'), '')
+        .trim();
 
-  void _resetToStart() {
-    _tts.stop();
-    setState(() {
-      _step = _AssistantStep.mainOptions;
-      _spokenText = '';
-      _aiResponse = '';
-    });
+    await _tts.speak(cleanText);
   }
 
   void _showSnack(String msg) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: ColorConstant.maingreen,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
-  // ── build ──
+  // ── UI build ──
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 24,
-            offset: const Offset(0, -4),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: EdgeInsets.only(
+        top: 16,
+        left: 20,
+        right: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle bar
+          Container(
+            width: 44,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Top Bar
+          _buildTopBar(),
+          const SizedBox(height: 16),
+          // Step views with AnimatedSwitcher
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _buildCurrentStep(),
           ),
         ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 12,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // drag handle
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // header
-              _buildHeader(),
-              const SizedBox(height: 20),
-              // step content
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 350),
-                transitionBuilder: (child, anim) =>
-                    FadeTransition(opacity: anim, child: child),
-                child: _buildCurrentStep(),
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildTopBar() {
     return Row(
       children: [
-        // Back button if not on main options
-        if (_step != _AssistantStep.mainOptions)
+        // Back icon if in response state
+        if (_step == _AssistantStep.response) ...[
           IconButton(
             onPressed: () {
+              _tts.stop();
               setState(() {
-                _step = _AssistantStep.mainOptions;
-                _speech.stop();
+                _step = _AssistantStep.listening;
+                _spokenText = '';
               });
+              _startListening();
             },
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+            icon: const Icon(Icons.arrow_back_rounded),
             color: ColorConstant.maingreen,
           ),
+          const SizedBox(width: 4),
+        ],
+        // Assistant Logo & Title
+        Image.asset(
+          ImageConstant.mainlogopng,
+          width: 32,
+          height: 32,
+          errorBuilder: (_, __, ___) => Icon(
+            Icons.eco,
+            color: ColorConstant.maingreen,
+            size: 32,
+          ),
+        ),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _isHindi ? '🌾 भाव पूछें' : '🌾 Ask Rates',
+                'भाव पूछें',
                 style: GoogleFonts.poppins(
                   fontSize: Adaptive.sp(18),
                   fontWeight: FontWeight.bold,
@@ -350,7 +347,10 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
         ),
         // Close
         IconButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            _tts.stop();
+            Navigator.of(context).pop();
+          },
           icon: const Icon(Icons.close_rounded),
           color: Colors.grey.shade500,
         ),
@@ -360,348 +360,42 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
 
   Widget _buildCurrentStep() {
     switch (_step) {
-      case _AssistantStep.mainOptions:
-        return _MainOptionsStep(
-          isHindi: _isHindi,
-          onBhavJane: _onBhavJaneSelected,
-          onDirectModel: _onDirectModelSelected,
-        );
-      case _AssistantStep.buySellSelection:
-        return _BuySellSelectionStep(
-          isHindi: _isHindi,
-          onBuySellSelected: _onBuySellSelected,
-        );
       case _AssistantStep.listening:
         return _ListeningStep(
           isHindi: _isHindi,
           spokenText: _spokenText,
           pulseCtrl: _pulseCtrl,
           onRetry: _startListening,
-          onSubmit: _spokenText.isNotEmpty ? _submitQuestion : null,
         );
       case _AssistantStep.processing:
         return _ProcessingStep(isHindi: _isHindi);
       case _AssistantStep.response:
         return _ResponseStep(
           isHindi: _isHindi,
-          question: _spokenText,
           response: _aiResponse,
           isSpeaking: _isSpeaking,
-          onSpeak: () => _speak(_aiResponse),
-          onAskAgain: _resetToStart,
+          onToggleSpeech: () {
+            if (_isSpeaking) {
+              _tts.stop();
+            } else {
+              _speakResponse(_aiResponse);
+            }
+          },
+          onAskAgain: () {
+            _tts.stop();
+            setState(() {
+              _spokenText = '';
+              _step = _AssistantStep.listening;
+            });
+            _startListening();
+          },
         );
     }
   }
 }
 
 // ════════════════════════════════════════════════════
-//  STEP 1 — Main Options
-// ════════════════════════════════════════════════════
-
-class _MainOptionsStep extends StatelessWidget {
-  final bool isHindi;
-  final VoidCallback onBhavJane;
-  final void Function(AiModel) onDirectModel;
-
-  const _MainOptionsStep({
-    required this.isHindi,
-    required this.onBhavJane,
-    required this.onDirectModel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      key: const ValueKey('mainOptions'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          isHindi ? 'आप क्या सहायता चाहते हैं?' : 'How can we help you?',
-          style: GoogleFonts.poppins(
-            fontSize: Adaptive.sp(15),
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 14),
-        // Option 1: Bhav Jane (Featured)
-        _OptionCard(
-          icon: '🏷️',
-          titleHi: 'भाव जानें',
-          titleEn: 'Know Rates',
-          descHi: 'आज का भाव जानें (खरीद / बिक्री)',
-          descEn: 'Check today\'s rates (Buy / Sell)',
-          color: const Color(0xFFD84315),
-          isFeatured: true,
-          isHindi: isHindi,
-          onTap: onBhavJane,
-        ),
-        const SizedBox(height: 12),
-        Divider(color: Colors.grey.shade200, height: 1),
-        const SizedBox(height: 12),
-        // Direct department options
-        _OptionCard(
-          icon: '🏭',
-          titleHi: 'ऑपरेशन',
-          titleEn: 'Operations',
-          descHi: 'गोदाम, स्टॉक, इनवर्ड-आउटवर्ड',
-          descEn: 'Warehouse, stock, inward-outward',
-          color: const Color(0xFF1565C0),
-          isHindi: isHindi,
-          onTap: () => onDirectModel(AiModel.operations),
-        ),
-        const SizedBox(height: 10),
-        _OptionCard(
-          icon: '📈',
-          titleHi: 'सेल्स',
-          titleEn: 'Sales',
-          descHi: 'व्यापार, बोली, खरीद-बिक्री मदद',
-          descEn: 'Trade, bidding, buy & sell help',
-          color: const Color(0xFF2E7D32),
-          isHindi: isHindi,
-          onTap: () => onDirectModel(AiModel.sales),
-        ),
-        const SizedBox(height: 10),
-        _OptionCard(
-          icon: '💰',
-          titleHi: 'अकाउंट्स',
-          titleEn: 'Accounts',
-          descHi: 'वॉलेट, भुगतान, सेटलमेंट',
-          descEn: 'Wallet, payments, settlements',
-          color: const Color(0xFFE65100),
-          isHindi: isHindi,
-          onTap: () => onDirectModel(AiModel.accounts),
-        ),
-      ],
-    );
-  }
-}
-
-class _OptionCard extends StatelessWidget {
-  final String icon;
-  final String titleHi;
-  final String titleEn;
-  final String descHi;
-  final String descEn;
-  final Color color;
-  final bool isFeatured;
-  final bool isHindi;
-  final VoidCallback onTap;
-
-  const _OptionCard({
-    required this.icon,
-    required this.titleHi,
-    required this.titleEn,
-    required this.descHi,
-    required this.descEn,
-    required this.color,
-    this.isFeatured = false,
-    required this.isHindi,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: isFeatured ? 16 : 14,
-          ),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: isFeatured ? color : color.withValues(alpha: 0.3),
-              width: isFeatured ? 2.0 : 1.0,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            color: isFeatured
-                ? color.withValues(alpha: 0.1)
-                : color.withValues(alpha: 0.05),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: isFeatured ? 0.2 : 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(icon, style: const TextStyle(fontSize: 24)),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          isHindi ? titleHi : titleEn,
-                          style: GoogleFonts.poppins(
-                            fontSize: Adaptive.sp(15),
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                          ),
-                        ),
-                        if (isFeatured) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: color,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              isHindi ? 'मुख्य' : 'Popular',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    Text(
-                      isHindi ? descHi : descEn,
-                      style: TextStyle(
-                        fontSize: Adaptive.sp(12),
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: color.withValues(alpha: 0.7),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════
-//  STEP 1.5 — Buy or Sell (Only when Bhav Jane tapped)
-// ════════════════════════════════════════════════════
-
-class _BuySellSelectionStep extends StatelessWidget {
-  final bool isHindi;
-  final void Function(String) onBuySellSelected;
-
-  const _BuySellSelectionStep({
-    required this.isHindi,
-    required this.onBuySellSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      key: const ValueKey('buySell'),
-      children: [
-        Text(
-          isHindi ? 'आप क्या दर जानना चाहते हैं?' : 'Which rate do you want to ask?',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(
-            fontSize: Adaptive.sp(15),
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: _BuySellButton(
-                icon: '🛒',
-                labelHi: 'खरीदना है',
-                labelEn: 'Want to Buy',
-                color: const Color(0xFF1565C0),
-                isHindi: isHindi,
-                onTap: () => onBuySellSelected('buy'),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _BuySellButton(
-                icon: '📦',
-                labelHi: 'बेचना है',
-                labelEn: 'Want to Sell',
-                color: const Color(0xFF2E7D32),
-                isHindi: isHindi,
-                onTap: () => onBuySellSelected('sell'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-      ],
-    );
-  }
-}
-
-class _BuySellButton extends StatelessWidget {
-  final String icon;
-  final String labelHi;
-  final String labelEn;
-  final Color color;
-  final bool isHindi;
-  final VoidCallback onTap;
-
-  const _BuySellButton({
-    required this.icon,
-    required this.labelHi,
-    required this.labelEn,
-    required this.color,
-    required this.isHindi,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 22),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 36)),
-            const SizedBox(height: 8),
-            Text(
-              isHindi ? labelHi : labelEn,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: Adaptive.sp(14),
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════
-//  STEP 2 — Listening (Voice Input)
+//  STEP 1 — Listening (Direct Mic Open)
 // ════════════════════════════════════════════════════
 
 class _ListeningStep extends StatelessWidget {
@@ -709,14 +403,12 @@ class _ListeningStep extends StatelessWidget {
   final String spokenText;
   final AnimationController pulseCtrl;
   final VoidCallback onRetry;
-  final VoidCallback? onSubmit;
 
   const _ListeningStep({
     required this.isHindi,
     required this.spokenText,
     required this.pulseCtrl,
     required this.onRetry,
-    this.onSubmit,
   });
 
   @override
@@ -786,11 +478,21 @@ class _ListeningStep extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          isHindi ? '🎙️ बोलिए या सवाल चुनें...' : '🎙️ Speak or tap a question...',
+          isHindi ? '🎙️ बोलिए...' : '🎙️ Speak now...',
           style: GoogleFonts.poppins(
             fontSize: Adaptive.sp(16),
             fontWeight: FontWeight.w600,
             color: ColorConstant.maingreen,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          isHindi
+              ? 'बोलने के 2 सेकंड बाद उत्तर अपने आप आ जाएगा'
+              : 'Answer will automatically appear 2 sec after speaking',
+          style: TextStyle(
+            fontSize: Adaptive.sp(12),
+            color: Colors.grey.shade500,
           ),
         ),
         const SizedBox(height: 16),
@@ -845,106 +547,62 @@ class _ListeningStep extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            OutlinedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(isHindi ? 'फिर से' : 'Retry'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: ColorConstant.maingreen,
-                side: BorderSide(color: ColorConstant.maingreen),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            if (onSubmit != null) ...[
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: onSubmit,
-                icon: const Icon(Icons.send_rounded),
-                label: Text(isHindi ? 'भेजें' : 'Submit'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorConstant.maingreen,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
       ],
     );
   }
 }
 
 // ════════════════════════════════════════════════════
-//  STEP 3 — Processing
+//  STEP 2 — Processing State
 // ════════════════════════════════════════════════════
 
 class _ProcessingStep extends StatelessWidget {
   final bool isHindi;
+
   const _ProcessingStep({required this.isHindi});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Column(
       key: const ValueKey('processing'),
-      padding: const EdgeInsets.symmetric(vertical: 32),
-      child: Column(
-        children: [
-          CircularProgressIndicator(
+      children: [
+        const SizedBox(height: 24),
+        CircularProgressIndicator(
+          color: ColorConstant.maingreen,
+          strokeWidth: 3,
+        ),
+        const SizedBox(height: 20),
+        Text(
+          isHindi ? 'उत्तर तैयार हो रहा है...' : 'Processing answer...',
+          style: GoogleFonts.poppins(
+            fontSize: Adaptive.sp(15),
+            fontWeight: FontWeight.w600,
             color: ColorConstant.maingreen,
-            strokeWidth: 3,
           ),
-          const SizedBox(height: 20),
-          Text(
-            isHindi
-                ? '⏳ AI जवाब तैयार कर रहा है...'
-                : '⏳ AI is preparing your answer...',
-            style: GoogleFonts.poppins(
-              fontSize: Adaptive.sp(14),
-              color: Colors.grey.shade700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            isHindi ? 'बाजार डेटा देख रहे हैं' : 'Checking live market data',
-            style: TextStyle(
-              fontSize: Adaptive.sp(12),
-              color: Colors.grey.shade400,
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 }
 
 // ════════════════════════════════════════════════════
-//  STEP 4 — AI Response
+//  STEP 3 — Response Display + Auto-TTS
 // ════════════════════════════════════════════════════
 
 class _ResponseStep extends StatelessWidget {
   final bool isHindi;
-  final String question;
   final String response;
   final bool isSpeaking;
-  final VoidCallback onSpeak;
+  final VoidCallback onToggleSpeech;
   final VoidCallback onAskAgain;
 
   const _ResponseStep({
     required this.isHindi,
-    required this.question,
     required this.response,
     required this.isSpeaking,
-    required this.onSpeak,
+    required this.onToggleSpeech,
     required this.onAskAgain,
   });
 
@@ -952,99 +610,49 @@ class _ResponseStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       key: const ValueKey('response'),
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Question bubble
-        if (question.isNotEmpty) ...[
-          Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.75),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: ColorConstant.maingreen,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(4),
-                ),
-              ),
-              child: Text(
-                '"$question"',
-                style: GoogleFonts.poppins(
-                  fontSize: Adaptive.sp(13),
-                  color: Colors.white,
-                  fontStyle: FontStyle.italic,
-                ),
+        // AI Response Card
+        Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxHeight: 280),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.green.shade50.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.green.shade200),
+          ),
+          child: SingleChildScrollView(
+            child: Text(
+              response,
+              style: GoogleFonts.poppins(
+                fontSize: Adaptive.sp(14),
+                color: Colors.black87,
+                height: 1.5,
               ),
             ),
           ),
-          const SizedBox(height: 12),
-        ],
-        // AI response bubble
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Center(
-                child: Text('🤖', style: TextStyle(fontSize: Adaptive.sp(16))),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5F5),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(4),
-                    topRight: Radius.circular(16),
-                    bottomLeft: Radius.circular(16),
-                    bottomRight: Radius.circular(16),
-                  ),
-                ),
-                child: Text(
-                  response,
-                  style: GoogleFonts.poppins(
-                    fontSize: Adaptive.sp(14),
-                    color: Colors.black87,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
-        const SizedBox(height: 20),
-        // Action buttons
+        const SizedBox(height: 16),
+        // Controls: Listen / Speak Again
         Row(
           children: [
-            // Speak / Stop
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: onSpeak,
+                onPressed: onToggleSpeech,
                 icon: Icon(
-                  isSpeaking ? Icons.stop_circle_rounded : Icons.volume_up_rounded,
+                  isSpeaking
+                      ? Icons.volume_off_rounded
+                      : Icons.volume_up_rounded,
                 ),
                 label: Text(
                   isSpeaking
-                      ? (isHindi ? 'रोकें' : 'Stop')
+                      ? (isHindi ? 'रुकें' : 'Stop')
                       : (isHindi ? 'सुनें' : 'Listen'),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: ColorConstant.maingreen,
                   side: BorderSide(color: ColorConstant.maingreen),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1052,15 +660,15 @@ class _ResponseStep extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // Ask again
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: onAskAgain,
                 icon: const Icon(Icons.mic_rounded),
-                label: Text(isHindi ? 'और पूछें' : 'Ask More'),
+                label: Text(isHindi ? 'और पूछें' : 'Ask Again'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorConstant.maingreen,
                   foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1069,7 +677,7 @@ class _ResponseStep extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
       ],
     );
   }
