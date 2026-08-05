@@ -4,34 +4,22 @@ import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'package:apnagodam/core/utils/color_constant.dart';
 import 'package:apnagodam/core/utils/image_constant.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
-import 'package:apnagodam/presentation/BusinessProfile/BusinessProfile.dart';
-import 'package:apnagodam/presentation/BusinessProfile/BusinessProfileListing.dart';
 import 'package:apnagodam/presentation/Feedback/Feedbackscreen.dart';
-import 'package:apnagodam/presentation/GstProfile/GstListingScreen.dart';
-import 'package:apnagodam/presentation/GstProfile/GstProfileScreen.dart';
-import 'package:apnagodam/presentation/MandiTaxProfile/MandiTaxListingScreen.dart';
-import 'package:apnagodam/presentation/MandiTaxProfile/MandiTaxProfileScreen.dart';
-import 'package:apnagodam/presentation/PurchaseOrder/PurchaseOrderScreen.dart';
-import 'package:apnagodam/presentation/PurchaseOrder/PurchaseOrdersListScreen.dart';
-import 'package:apnagodam/presentation/TripId/TripIdScreen.dart';
-import 'package:apnagodam/presentation/TripId/TripRequests/TripRequestScreen.dart';
+import 'package:apnagodam/presentation/home_screen/kyc.dart';
 import 'package:apnagodam/presentation/home_screen/service/home_screen_service.dart';
 import 'package:apnagodam/presentation/home_screen/ui/QualityCalculationScreen.dart';
-import 'package:apnagodam/presentation/kyc.dart';
 import 'package:apnagodam/presentation/language/language.dart';
 import 'package:apnagodam/presentation/profile_screen/profile_screen.dart';
 import 'package:apnagodam/presentation/repayment_screen/repayment_screen.dart';
 import 'package:apnagodam/presentation/singup_screen/termandcon_webview.dart';
 import 'package:apnagodam/presentation/wallet_tabbar_screen/wallet_screen.dart';
 import 'package:apnagodam/presentation/warehouse_Tab/warehouse_tabbar.dart';
-import 'package:apnagodam/widgets/enums.dart';
 import 'package:apnagodam/widgets/widgets.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:elevarm_ui/elevarm_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
@@ -42,6 +30,7 @@ class AppDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoggedIn =
         ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn;
+    final isHindi = Get.locale?.languageCode == 'hi';
 
     return Drawer(
       shape: const RoundedRectangleBorder(side: BorderSide.none),
@@ -288,7 +277,7 @@ class AppDrawer extends ConsumerWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          AppLocalizations.of(context)!.termCondition,
+                          isHindi ? 'नियम और शर्तें' : 'Terms & Conditions',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: Adaptive.sp(16),
@@ -314,7 +303,7 @@ class AppDrawer extends ConsumerWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          AppLocalizations.of(context)!.msgFeedback,
+                          isHindi ? 'प्रतिक्रिया' : 'Feedback',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: Adaptive.sp(16),
@@ -333,7 +322,7 @@ class AppDrawer extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
                   title: Text(
-                    AppLocalizations.of(context)!.logout,
+                    isHindi ? 'लॉग आउट' : 'Logout',
                     style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,

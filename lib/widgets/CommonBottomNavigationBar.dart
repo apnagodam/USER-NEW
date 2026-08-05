@@ -1,6 +1,4 @@
 import 'dart:ui';
-import 'package:apnagodam/auth_provider/AuthProvider.dart';
-import 'package:apnagodam/core/providers/ThemeController.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -117,7 +115,7 @@ class CommonBottomNavigationBar extends ConsumerWidget {
                   ),
                   // Tab 4: Invoices / Challan
                   _rippleItem(
-                    AppLocalizations.of(context)!.invoices,
+                    isHindi ? 'चालान' : 'Invoices',
                     Icons.receipt_long_outlined,
                     4,
                     ref,
