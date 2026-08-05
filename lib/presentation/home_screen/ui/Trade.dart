@@ -185,10 +185,10 @@ class _TradeState extends ConsumerState<Trade> with SingleTickerProviderStateMix
           children: [
             // White Pill Container for Apna Godam Logo
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+               shape: BoxShape.circle,
                 border: Border.all(color: Colors.amber.shade300, width: 1.2),
                 boxShadow: [
                   BoxShadow(
@@ -211,7 +211,7 @@ class _TradeState extends ConsumerState<Trade> with SingleTickerProviderStateMix
             ),
             const SizedBox(width: 10),
             Text(
-              isHindi ? 'होम पेज' : 'Home Page',
+              isHindi ?'व्यापार' : 'Trade',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
                 fontSize: 17,
