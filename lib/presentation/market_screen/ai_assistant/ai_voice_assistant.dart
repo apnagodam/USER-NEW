@@ -193,14 +193,16 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       _speechAvailable = await _speech.initialize(
         onError: (e) {
           debugPrint('Speech error: $e');
-          setState(() => _isListeningNow = false);
+          if (mounted) setState(() => _isListeningNow = false);
         },
         onStatus: (s) {
           debugPrint('Speech status: $s');
-          if (s == 'listening') {
-            setState(() => _isListeningNow = true);
-          } else if (s == 'notListening' || s == 'done') {
-            setState(() => _isListeningNow = false);
+          if (mounted) {
+            if (s == 'listening') {
+              setState(() => _isListeningNow = true);
+            } else if (s == 'notListening' || s == 'done') {
+              setState(() => _isListeningNow = false);
+            }
           }
         },
       );
@@ -213,6 +215,17 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       return;
     }
 
+    String targetLocale = 'hi_IN';
+    try {
+      final locales = await _speech.locales();
+      final hi = locales.firstWhere(
+        (l) => l.localeId.startsWith('hi'),
+        orElse: () => locales.first,
+      );
+      targetLocale = hi.localeId;
+      debugPrint('Target STT locale: $targetLocale');
+    } catch (_) {}
+
     setState(() {
       _spokenText = '';
       _textCtrl.clear();
@@ -223,7 +236,8 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       await _speech.listen(
         onResult: (result) {
           final words = result.recognizedWords;
-          if (words.isNotEmpty) {
+          debugPrint('STT Recognized: "$words"');
+          if (mounted) {
             setState(() {
               _spokenText = words;
               _textCtrl.text = words;
@@ -231,32 +245,31 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                 TextPosition(offset: words.length),
               );
             });
-            _silenceTimer?.cancel();
+          }
+          _silenceTimer?.cancel();
 
-            if (result.finalResult && words.trim().isNotEmpty) {
-              _submitQuestion();
-            } else if (words.trim().isNotEmpty) {
-              // Auto-submit after 1.8s of silence (no button tap required!)
-              _silenceTimer = Timer(const Duration(milliseconds: 1800), () {
-                if (_spokenText.trim().isNotEmpty && _step == _AssistantStep.listening) {
-                  _submitQuestion();
-                }
-              });
-            }
+          if (result.finalResult && words.trim().isNotEmpty) {
+            _submitQuestion();
+          } else if (words.trim().isNotEmpty) {
+            _silenceTimer = Timer(const Duration(milliseconds: 1800), () {
+              if (_spokenText.trim().isNotEmpty && _step == _AssistantStep.listening) {
+                _submitQuestion();
+              }
+            });
           }
         },
         listenOptions: stt.SpeechListenOptions(
           partialResults: true,
           cancelOnError: false,
           listenMode: stt.ListenMode.dictation,
-          localeId: 'hi_IN',
-          listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 4),
         ),
+        localeId: targetLocale,
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 5),
       );
     } catch (e) {
       debugPrint('Speech listen exception: $e');
-      setState(() => _isListeningNow = false);
+      if (mounted) setState(() => _isListeningNow = false);
     }
   }
 
