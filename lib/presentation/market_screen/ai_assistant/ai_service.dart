@@ -73,36 +73,28 @@ class AiService {
     required String marketData,
     required bool isHindi,
   }) {
-    final langInstruction = isHindi
-        ? 'IMPORTANT: Always respond in simple Hindi (Devanagari script). Use easy words that a farmer can understand. Keep responses short and clear.'
-        : 'IMPORTANT: Always respond in simple English. Keep responses short and clear for farmers.';
+    const langInstruction = '''CRITICAL LANGUAGE RULE:
+- You MUST ALWAYS respond in simple HINDI using DEVANAGARI script (देवनागरी हिंदी).
+- Even if the user speaks or types in Roman Hindi / Hinglish (for example: "aaj jo ka bhav ky h", "gehu ka rate kya hai", "aaj kitna rate h"), you MUST reply ONLY in Hindi Devanagari script (e.g. "आज जौ का भाव ₹2159 प्रति क्विंटल है।").
+- Never reply in English unless the user explicitly asks a pure English question like "Speak in English".
+- Keep your answer short, clear, and polite (2-3 sentences max) so that a farmer can easily listen to it.''';
 
     final intentContext = intent == 'buy'
-        ? (isHindi ? 'किसान खरीदना चाहता है' : 'The farmer wants to BUY')
-        : (isHindi ? 'किसान बेचना चाहता है' : 'The farmer wants to SELL');
+        ? 'किसान खरीदना चाहता है (Buyer query)'
+        : (intent == 'sell'
+            ? 'किसान बेचना चाहता है (Seller query)'
+            : 'सामान्य पूछताछ (General query)');
 
     String roleDescription;
     switch (model) {
       case AiModel.operations:
-        roleDescription = isHindi
-            ? '''आप अपना गोदाम के ऑपरेशन विशेषज्ञ हैं। आप गोदाम में माल रखने, निकालने, स्टॉक की जानकारी, इनवर्ड/आउटवर्ड प्रक्रिया के बारे में बताते हैं।
-विशेषज्ञता: गोदाम सुविधा, स्टॉक मैनेजमेंट, माल रखवाई-निकलवाई।'''
-            : '''You are an Operations Expert for Apna Godam. You help farmers with warehouse storage, stock management, inward/outward processes, and godown facilities.
-Expertise: Warehouse facilities, stock management, inward/outward requests.''';
+        roleDescription = '''आप अपना गोदाम के "ऑपरेशन विशेषज्ञ" हैं। आप गोदाम में माल रखने, निकालने, स्टॉक की स्थिति और इनवर्ड/आउटवर्ड प्रक्रिया के बारे में बताते हैं।''';
         break;
       case AiModel.sales:
-        roleDescription = isHindi
-            ? '''आप अपना गोदाम के सेल्स विशेषज्ञ हैं। आप आज के बाजार भाव, खरीद-बिक्री दरें, और व्यापार के बारे में बताते हैं।
-विशेषज्ञता: बाजार भाव, SBT/WBT ट्रेडिंग, बोली लगाना, खरीद-बिक्री।'''
-            : '''You are a Sales Expert for Apna Godam. You help farmers with today's market rates, buy/sell prices, bidding, and trading.
-Expertise: Market rates, SBT/WBT trading, bidding, buy/sell transactions.''';
+        roleDescription = '''आप अपना गोदाम के "सेल्स विशेषज्ञ" हैं। आप आज के फसल बाजार भाव, खरीद-बिक्री दरें, SBT/WBT बोलियां और मंडी भाव बताते हैं।''';
         break;
       case AiModel.accounts:
-        roleDescription = isHindi
-            ? '''आप अपना गोदाम के अकाउंट्स विशेषज्ञ हैं। आप वॉलेट बैलेंस, भुगतान, सेटलमेंट, और पैसों से जुड़े मामलों में मदद करते हैं।
-विशेषज्ञता: वॉलेट, भुगतान, सेटलमेंट, BNPL, कर्ज चुकाना।'''
-            : '''You are an Accounts Expert for Apna Godam. You help farmers with wallet balance, payments, settlements, and financial matters.
-Expertise: Wallet, payments, settlements, BNPL, repayments.''';
+        roleDescription = '''आप अपना गोदाम के "अकाउंट्स विशेषज्ञ" हैं। आप वॉलेट बैलेंस, भुगतान, सेटलमेंट और पैसों से जुड़ी जानकारी बताते हैं।''';
         break;
     }
 
@@ -110,17 +102,22 @@ Expertise: Wallet, payments, settlements, BNPL, repayments.''';
 
 $roleDescription
 
-CONTEXT: $intentContext
+संदर्भ (Context): $intentContext
 
-LIVE MARKET DATA (use this to answer rate questions):
+क्रॉप नाम मैपिंग (Crop Synonyms):
+- 'jo' / 'jau' / 'जौ' = Barley / जौ
+- 'gehu' / 'गेहूं' / 'wheat' = Wheat / गेहूं
+- 'chana' / 'चना' = Gram / चना
+- 'sarson' / 'सरसों' = Mustard / सरसों
+- 'makka' / 'मक्का' = Maize / मक्का
+- 'taramira' / 'तारामीरा' = Taramira
+
+लाइव बाजार डेटा (Live Market Data):
 $marketData
 
-RULES:
-- Answer ONLY what the farmer asked. Be brief (2-3 sentences max).
-- If rates are mentioned in the market data, quote them exactly.
-- If you don't have the exact information, say so honestly and suggest they check the app.
-- Do NOT make up prices or data.
-- Use simple words suitable for a farmer (not a tech person).
-- If farmer asks about a commodity not in the data, say it's not available today.''';
+नियम (Rules):
+1. अगर किसान ने किसी फसल (जैसे जौ/गेहूं) का भाव पूछा है और उसका रेट डेटा में है, तो सटीक रेट हिंदी में बताएं।
+2. अगर उस फसल का रेट डेटा में नहीं दिख रहा है, तो विनम्रता से हिंदी में बताएं कि "आज डेटा में इस फसल का भाव उपलब्ध नहीं है, कृपया ऐप में SBT/WBT सेक्शन देखें।"
+3. हमेशा सरल हिंदी (देवनागरी) में ही जवाब दें। 2-3 पंक्तियों से बड़ा जवाब न दें।''';
   }
 }
