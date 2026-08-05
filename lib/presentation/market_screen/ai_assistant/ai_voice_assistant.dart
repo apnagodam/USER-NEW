@@ -56,8 +56,10 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   // ── packages ──
   final stt.SpeechToText _speech = stt.SpeechToText();
   final FlutterTts _tts = FlutterTts();
+  final TextEditingController _textCtrl = TextEditingController();
   bool _speechAvailable = false;
   bool _isSpeaking = false;
+  bool _isListeningNow = false;
   Timer? _silenceTimer;
 
   // ── animation ──
@@ -72,13 +74,12 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     )..repeat(reverse: true);
 
     _isHindi = Get.locale?.languageCode == 'hi';
-    _initSpeech();
     _initTts();
     _prefetchMarketData();
 
-    // Directly open mic on sheet display
+    // Initialize speech and start listening cleanly after initial build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startListening();
+      _initAndStartListening();
     });
   }
 
@@ -88,19 +89,11 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     _pulseCtrl.dispose();
     _speech.stop();
     _tts.stop();
+    _textCtrl.dispose();
     super.dispose();
   }
 
   // ── init methods ──
-
-  Future<void> _initSpeech() async {
-    final status = await Permission.microphone.request();
-    if (status.isGranted) {
-      _speechAvailable = await _speech.initialize(
-        onError: (e) => debugPrint('Speech error: $e'),
-      );
-    }
-  }
 
   Future<void> _initTts() async {
     await _tts.setLanguage('hi-IN');
@@ -138,10 +131,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     );
   }
 
-  Future<void> _startListening() async {
-    _silenceTimer?.cancel();
-    await _speech.stop();
-
+  Future<void> _initAndStartListening() async {
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
       _showSnack(_isHindi
@@ -152,7 +142,42 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
 
     if (!_speechAvailable) {
       _speechAvailable = await _speech.initialize(
-        onError: (e) => debugPrint('Speech error: $e'),
+        onError: (e) {
+          debugPrint('Speech error: $e');
+          setState(() => _isListeningNow = false);
+        },
+        onStatus: (s) {
+          debugPrint('Speech status: $s');
+          if (s == 'listening') {
+            setState(() => _isListeningNow = true);
+          } else if (s == 'notListening' || s == 'done') {
+            setState(() => _isListeningNow = false);
+          }
+        },
+      );
+    }
+
+    _startListening();
+  }
+
+  Future<void> _startListening() async {
+    _silenceTimer?.cancel();
+    await _speech.stop();
+
+    if (!_speechAvailable) {
+      _speechAvailable = await _speech.initialize(
+        onError: (e) {
+          debugPrint('Speech error: $e');
+          setState(() => _isListeningNow = false);
+        },
+        onStatus: (s) {
+          debugPrint('Speech status: $s');
+          if (s == 'listening') {
+            setState(() => _isListeningNow = true);
+          } else if (s == 'notListening' || s == 'done') {
+            setState(() => _isListeningNow = false);
+          }
+        },
       );
     }
 
@@ -163,22 +188,36 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       return;
     }
 
-    setState(() => _spokenText = '');
+    setState(() {
+      _spokenText = '';
+      _textCtrl.clear();
+      _isListeningNow = true;
+    });
+
     try {
       await _speech.listen(
         onResult: (result) {
-          setState(() => _spokenText = result.recognizedWords);
-          _silenceTimer?.cancel();
-
-          if (result.finalResult && _spokenText.trim().isNotEmpty) {
-            _submitQuestion();
-          } else if (_spokenText.trim().isNotEmpty) {
-            // Auto-submit after 2.0s of silence (no button tap required!)
-            _silenceTimer = Timer(const Duration(milliseconds: 2000), () {
-              if (_spokenText.trim().isNotEmpty && _step == _AssistantStep.listening) {
-                _submitQuestion();
-              }
+          final words = result.recognizedWords;
+          if (words.isNotEmpty) {
+            setState(() {
+              _spokenText = words;
+              _textCtrl.text = words;
+              _textCtrl.selection = TextSelection.fromPosition(
+                TextPosition(offset: words.length),
+              );
             });
+            _silenceTimer?.cancel();
+
+            if (result.finalResult && words.trim().isNotEmpty) {
+              _submitQuestion();
+            } else if (words.trim().isNotEmpty) {
+              // Auto-submit after 1.8s of silence (no button tap required!)
+              _silenceTimer = Timer(const Duration(milliseconds: 1800), () {
+                if (_spokenText.trim().isNotEmpty && _step == _AssistantStep.listening) {
+                  _submitQuestion();
+                }
+              });
+            }
           }
         },
         listenOptions: stt.SpeechListenOptions(
@@ -187,18 +226,25 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
           listenMode: stt.ListenMode.dictation,
           localeId: 'hi_IN',
           listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 5),
+          pauseFor: const Duration(seconds: 4),
         ),
       );
     } catch (e) {
-      debugPrint('Speech listen error: $e');
+      debugPrint('Speech listen exception: $e');
+      setState(() => _isListeningNow = false);
     }
   }
 
   Future<void> _submitQuestion() async {
     _silenceTimer?.cancel();
     await _speech.stop();
-    if (_spokenText.trim().isEmpty) {
+    setState(() => _isListeningNow = false);
+
+    final query = _textCtrl.text.trim().isNotEmpty
+        ? _textCtrl.text.trim()
+        : _spokenText.trim();
+
+    if (query.isEmpty) {
       setState(() => _step = _AssistantStep.listening);
       return;
     }
@@ -213,7 +259,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     }
 
     final response = await AiService.askClaude(
-      question: _spokenText.trim(),
+      question: query,
       marketData: _marketData,
       isHindi: _isHindi,
     );
@@ -303,6 +349,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
               setState(() {
                 _step = _AssistantStep.listening;
                 _spokenText = '';
+                _textCtrl.clear();
               });
               _startListening();
             },
@@ -364,8 +411,11 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
         return _ListeningStep(
           isHindi: _isHindi,
           spokenText: _spokenText,
+          textCtrl: _textCtrl,
+          isListeningNow: _isListeningNow,
           pulseCtrl: _pulseCtrl,
-          onRetry: _startListening,
+          onTapMic: _startListening,
+          onSubmit: _submitQuestion,
         );
       case _AssistantStep.processing:
         return _ProcessingStep(isHindi: _isHindi);
@@ -385,6 +435,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
             _tts.stop();
             setState(() {
               _spokenText = '';
+              _textCtrl.clear();
               _step = _AssistantStep.listening;
             });
             _startListening();
@@ -401,14 +452,20 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
 class _ListeningStep extends StatelessWidget {
   final bool isHindi;
   final String spokenText;
+  final TextEditingController textCtrl;
+  final bool isListeningNow;
   final AnimationController pulseCtrl;
-  final VoidCallback onRetry;
+  final VoidCallback onTapMic;
+  final VoidCallback onSubmit;
 
   const _ListeningStep({
     required this.isHindi,
     required this.spokenText,
+    required this.textCtrl,
+    required this.isListeningNow,
     required this.pulseCtrl,
-    required this.onRetry,
+    required this.onTapMic,
+    required this.onSubmit,
   });
 
   @override
@@ -421,68 +478,80 @@ class _ListeningStep extends StatelessWidget {
         AnimatedBuilder(
           animation: pulseCtrl,
           builder: (context, child) {
-            final scale = 1.0 + pulseCtrl.value * 0.35;
+            final scale = isListeningNow ? (1.0 + pulseCtrl.value * 0.35) : 1.0;
             return Stack(
               alignment: Alignment.center,
               children: [
-                // outer ripple
-                Transform.scale(
-                  scale: scale,
-                  child: Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: ColorConstant.maingreen
-                          .withValues(alpha: (1 - pulseCtrl.value) * 0.25),
+                if (isListeningNow) ...[
+                  // outer ripple
+                  Transform.scale(
+                    scale: scale,
+                    child: Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: ColorConstant.maingreen
+                            .withValues(alpha: (1 - pulseCtrl.value) * 0.25),
+                      ),
                     ),
                   ),
-                ),
-                // mid ripple
-                Transform.scale(
-                  scale: 1.0 + pulseCtrl.value * 0.18,
-                  child: Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: ColorConstant.maingreen
-                          .withValues(alpha: (1 - pulseCtrl.value) * 0.15),
+                  // mid ripple
+                  Transform.scale(
+                    scale: 1.0 + pulseCtrl.value * 0.18,
+                    child: Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: ColorConstant.maingreen
+                            .withValues(alpha: (1 - pulseCtrl.value) * 0.15),
+                      ),
                     ),
                   ),
-                ),
-                // mic button (tap to restart listening)
+                ],
+                // mic button (tap to start/restart listening)
                 GestureDetector(
-                  onTap: onRetry,
+                  onTap: onTapMic,
                   child: Container(
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: ColorConstant.maingreen,
+                      color: isListeningNow
+                          ? ColorConstant.maingreen
+                          : Colors.orange.shade700,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color:
-                              ColorConstant.maingreen.withValues(alpha: 0.4),
+                          color: (isListeningNow
+                                  ? ColorConstant.maingreen
+                                  : Colors.orange)
+                              .withValues(alpha: 0.4),
                           blurRadius: 12,
                           spreadRadius: 2,
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.mic, color: Colors.white, size: 36),
+                    child: Icon(
+                      isListeningNow ? Icons.mic : Icons.mic_none_rounded,
+                      color: Colors.white,
+                      size: 36,
+                    ),
                   ),
                 ),
               ],
             );
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Text(
-          isHindi ? '🎙️ बोलिए...' : '🎙️ Speak now...',
+          isListeningNow
+              ? (isHindi ? '🎙️ बोलिए...' : '🎙️ Speak now...')
+              : (isHindi ? '👆 माइक दबाएं या टाइप करें' : '👆 Tap mic to speak or type'),
           style: GoogleFonts.poppins(
-            fontSize: Adaptive.sp(16),
+            fontSize: Adaptive.sp(15),
             fontWeight: FontWeight.w600,
-            color: ColorConstant.maingreen,
+            color: isListeningNow ? ColorConstant.maingreen : Colors.orange.shade800,
           ),
         ),
         const SizedBox(height: 4),
@@ -491,23 +560,23 @@ class _ListeningStep extends StatelessWidget {
               ? 'बोलने के 2 सेकंड बाद उत्तर अपने आप आ जाएगा'
               : 'Answer will automatically appear 2 sec after speaking',
           style: TextStyle(
-            fontSize: Adaptive.sp(12),
+            fontSize: Adaptive.sp(11),
             color: Colors.grey.shade500,
           ),
         ),
         const SizedBox(height: 16),
-        // Live transcription container (always visible)
+        // Interactive live transcription / text input box
         Container(
           width: double.infinity,
-          constraints: const BoxConstraints(minHeight: 60),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          constraints: const BoxConstraints(minHeight: 56),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           decoration: BoxDecoration(
-            color: spokenText.isNotEmpty
+            color: textCtrl.text.isNotEmpty
                 ? Colors.green.shade50
                 : Colors.grey.shade100,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: spokenText.isNotEmpty
+              color: textCtrl.text.isNotEmpty
                   ? ColorConstant.maingreen
                   : Colors.grey.shade300,
               width: 1.5,
@@ -516,38 +585,49 @@ class _ListeningStep extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                spokenText.isNotEmpty ? Icons.record_voice_over : Icons.mic_none_rounded,
-                color: spokenText.isNotEmpty
+                textCtrl.text.isNotEmpty
+                    ? Icons.record_voice_over
+                    : Icons.keyboard_alt_outlined,
+                color: textCtrl.text.isNotEmpty
                     ? ColorConstant.maingreen
                     : Colors.grey.shade400,
                 size: 22,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  spokenText.isNotEmpty
-                      ? spokenText
-                      : (isHindi
-                          ? 'आप जो बोल रहे हैं वह यहाँ दिखेगा...'
-                          : 'What you speak will appear here...'),
+                child: TextField(
+                  controller: textCtrl,
                   style: GoogleFonts.poppins(
                     fontSize: Adaptive.sp(14),
-                    fontWeight: spokenText.isNotEmpty
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                    color: spokenText.isNotEmpty
-                        ? Colors.black87
-                        : Colors.grey.shade500,
-                    fontStyle: spokenText.isNotEmpty
-                        ? FontStyle.normal
-                        : FontStyle.italic,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
                   ),
+                  decoration: InputDecoration(
+                    hintText: isHindi
+                        ? 'यहाँ बोलें या टाइप करें...'
+                        : 'Speak or type here...',
+                    hintStyle: GoogleFonts.poppins(
+                      fontSize: Adaptive.sp(13),
+                      color: Colors.grey.shade500,
+                      fontStyle: FontStyle.italic,
+                    ),
+                    border: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    isDense: true,
+                  ),
+                  onSubmitted: (_) => onSubmit(),
                 ),
+              ),
+              IconButton(
+                onPressed: onSubmit,
+                icon: const Icon(Icons.send_rounded),
+                color: ColorConstant.maingreen,
               ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
       ],
     );
   }
