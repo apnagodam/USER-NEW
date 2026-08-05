@@ -290,10 +290,26 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       );
     }
 
+    // Auto-detect if query is English or Hindi/Marwari
+    final queryLower = query.toLowerCase();
+    final isEnglishQuery = RegExp(r'[a-zA-Z]').hasMatch(query) &&
+        (queryLower.contains('what') ||
+            queryLower.contains('how') ||
+            queryLower.contains('price') ||
+            queryLower.contains('rate') ||
+            queryLower.contains('buy') ||
+            queryLower.contains('sell') ||
+            queryLower.contains('wheat') ||
+            queryLower.contains('barley') ||
+            queryLower.contains('inward') ||
+            queryLower.contains('outward') ||
+            queryLower.contains('wallet') ||
+            queryLower.contains('loan'));
+
     final response = await AiService.askClaude(
       question: query,
       marketData: _marketData,
-      isHindi: _isHindi,
+      isHindi: !isEnglishQuery,
     );
 
     if (!mounted) return;
@@ -302,7 +318,11 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       _step = _AssistantStep.response;
     });
 
-    // Auto-speak response in loud, bold female voice
+    // Auto-set TTS voice language matching the detected spoken query
+    try {
+      await _tts.setLanguage(isEnglishQuery ? 'en-IN' : 'hi-IN');
+    } catch (_) {}
+
     _speakResponse(response);
   }
 
