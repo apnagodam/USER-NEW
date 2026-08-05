@@ -359,15 +359,10 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       case _AssistantStep.listening:
         return _ListeningStep(
           isHindi: _isHindi,
-          model: _selectedModel,
           spokenText: _spokenText,
           pulseCtrl: _pulseCtrl,
           onRetry: _startListening,
           onSubmit: _spokenText.isNotEmpty ? _submitQuestion : null,
-          onSelectQuickQuestion: (question) {
-            setState(() => _spokenText = question);
-            _submitQuestion();
-          },
         );
       case _AssistantStep.processing:
         return _ProcessingStep(isHindi: _isHindi);
@@ -696,45 +691,18 @@ class _BuySellButton extends StatelessWidget {
 
 class _ListeningStep extends StatelessWidget {
   final bool isHindi;
-  final AiModel model;
   final String spokenText;
   final AnimationController pulseCtrl;
   final VoidCallback onRetry;
   final VoidCallback? onSubmit;
-  final void Function(String) onSelectQuickQuestion;
 
   const _ListeningStep({
     required this.isHindi,
-    required this.model,
     required this.spokenText,
     required this.pulseCtrl,
     required this.onRetry,
     this.onSubmit,
-    required this.onSelectQuickQuestion,
   });
-
-  List<String> get _quickQuestions {
-    switch (model) {
-      case AiModel.operations:
-        return [
-          'गोदाम में माल इनवर्ड (Inward) कैसे कराएं?',
-          'गोदाम से स्टॉक आउटवर्ड कैसे निकालें?',
-          'डिजिटल गेट पास कैसे प्राप्त करें?',
-        ];
-      case AiModel.sales:
-        return [
-          'आज जौ का भाव क्या है?',
-          'SBT में बोली कैसे लगाएं?',
-          'मूंगफली और गेहूं का क्या भाव है?',
-        ];
-      case AiModel.accounts:
-        return [
-          'वॉलेट में पैसे कैसे जोड़ें या निकालें?',
-          'सेटलमेंट का पैसा कब तक मिलेगा?',
-          'BNPL लोन लिमिट कैसे देखें?',
-        ];
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -859,43 +827,7 @@ class _ListeningStep extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 14),
-        // Predefined Quick Suggestion Chips
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            isHindi ? '💡 मुख्य सवाल (तुरंत पूछें):' : '💡 Quick Questions:',
-            style: GoogleFonts.poppins(
-              fontSize: Adaptive.sp(12),
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _quickQuestions.map((q) {
-            return ActionChip(
-              avatar: const Icon(Icons.bolt_rounded, size: 16, color: Color(0xFFE65100)),
-              label: Text(
-                q,
-                style: GoogleFonts.poppins(
-                  fontSize: Adaptive.sp(12),
-                  color: Colors.black87,
-                ),
-              ),
-              backgroundColor: Colors.orange.shade50,
-              side: BorderSide(color: Colors.orange.shade200),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              onPressed: () => onSelectQuickQuestion(q),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
