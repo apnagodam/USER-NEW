@@ -20,19 +20,19 @@ class MarketDataFetcher {
         buffer.writeln();
       }
 
-      // 2. Fetch WBT market rates (sell_buy_list)
-      final wbtData = await _fetchWbt(authToken: authToken);
-      if (wbtData.isNotEmpty) {
-        buffer.writeln('=== WBT Market Rates (Warehouse Based Trading) ===');
-        buffer.writeln(wbtData);
-        buffer.writeln();
-      }
-
-      // 3. Fetch SBT commodity rates
+      // 2. Fetch SBT commodity rates (sbt_product_list)
       final sbtData = await _fetchSbt();
       if (sbtData.isNotEmpty) {
         buffer.writeln('=== SBT Market Rates (Stock Based Trading) ===');
         buffer.writeln(sbtData);
+        buffer.writeln();
+      }
+
+      // 3. Fetch WBT market rates (sell_buy_list)
+      final wbtData = await _fetchWbt(authToken: authToken);
+      if (wbtData.isNotEmpty) {
+        buffer.writeln('=== WBT Market Rates (Warehouse Based Trading) ===');
+        buffer.writeln(wbtData);
         buffer.writeln();
       }
 
@@ -164,13 +164,28 @@ class MarketDataFetcher {
           for (final item in items) {
             final commodity = item['commodity'] ?? item['commodity_name'] ?? '';
             final ltp = item['ltp'];
+            final bestBuyer = item['best_buyer'];
+            final bestSeller = item['best_seller'];
             final upper = item['upper_circuit'] ?? '';
             final lower = item['lower_circuit'] ?? '';
             final district = item['district'] ?? '';
             final date = item['date'] ?? '';
+
+            // Pick valid price from ltp, best_buyer, best_seller, or upper_circuit
+            num? price;
+            if (ltp != null && (ltp is num ? ltp > 0 : (double.tryParse(ltp.toString()) ?? 0) > 0)) {
+              price = ltp is num ? ltp : double.tryParse(ltp.toString());
+            } else if (bestBuyer != null && (bestBuyer is num ? bestBuyer > 0 : (double.tryParse(bestBuyer.toString()) ?? 0) > 0)) {
+              price = bestBuyer is num ? bestBuyer : double.tryParse(bestBuyer.toString());
+            } else if (bestSeller != null && (bestSeller is num ? bestSeller > 0 : (double.tryParse(bestSeller.toString()) ?? 0) > 0)) {
+              price = bestSeller is num ? bestSeller : double.tryParse(bestSeller.toString());
+            } else if (upper != null && upper.toString().isNotEmpty && (double.tryParse(upper.toString()) ?? 0) > 0) {
+              price = double.tryParse(upper.toString());
+            }
+
             if (commodity.toString().isNotEmpty) {
               sb.writeln(
-                  'फसल: $commodity | भाव: ₹${ltp ?? 'N/A'} | सर्किट: ₹$lower - ₹$upper | स्थान: $district | समय: $date');
+                  'फसल: $commodity | भाव: ₹${price ?? 'N/A'} | Best Buy: ₹$bestBuyer | Best Sell: ₹$bestSeller | सर्किट: ₹$lower - ₹$upper | स्थान: $district | समय: $date');
             }
           }
         }

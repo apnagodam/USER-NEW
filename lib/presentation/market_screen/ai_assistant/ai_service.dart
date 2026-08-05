@@ -199,17 +199,17 @@ class AiService {
       return 'BNPL (Buy Now Pay Later / कॉमोडिटी लोन) के लिए:\nगोदाम में जमा फसल के आधार पर स्वीकृत लोन लिमिट (₹1.5 करोड़ तक) से बिना फसल बेचे तुरंत पैसे पा सकते हैं। वॉलेट के "ऋण खाता" या "बीएनपीएल" सेक्शन में जाकर राशि दर्ज करें और आवेदन करें।';
     }
 
-    // 8. CROP RATE INQUIRY (फसल भाव पूछताछ) — STRICT TEMPLATE REQUIREMENT
+    // 8. CROP RATE INQUIRY (फसल भाव पूछताछ) — STRICT TEMPLATE REQUIREMENT WITH DECIMAL SUPPORT
     String searchedCropName = '';
     String cropDisplayName = '';
     String cropDisplayNameEn = '';
     List<String> keywords = [];
 
-    if (q.contains('गेहूं') || q.contains('gehu') || q.contains('wheat')) {
+    if (q.contains('गेहूं') || q.contains('गेहूँ') || q.contains('gehu') || q.contains('wheat')) {
       searchedCropName = 'गेहूं';
       cropDisplayName = 'गेहूं';
       cropDisplayNameEn = 'Wheat';
-      keywords = ['गेहूं', 'wheat'];
+      keywords = ['गेहूं', 'गेहूँ', 'wheat'];
     } else if (q.contains('जौ') || q.contains('jo') || q.contains('jau') || q.contains('barley')) {
       searchedCropName = 'जौ';
       cropDisplayName = 'जौ';
@@ -225,11 +225,11 @@ class AiService {
       cropDisplayName = 'सरसों';
       cropDisplayNameEn = 'Mustard';
       keywords = ['सरसों', 'mustard'];
-    } else if (q.contains('मूंगफली') || q.contains('mungfali') || q.contains('groundnut')) {
+    } else if (q.contains('मूंगफली') || q.contains('मूंगफली') || q.contains('mungfali') || q.contains('groundnut')) {
       searchedCropName = 'मूंगफली';
       cropDisplayName = 'मूंगफली';
       cropDisplayNameEn = 'Groundnut';
-      keywords = ['मूंगफली', 'groundnut', 'ground nut'];
+      keywords = ['मूंगफली', 'groundnut', 'ground nut', 'ऑयल क्वालिटी'];
     } else if (q.contains('मक्का') || q.contains('makka') || q.contains('maize')) {
       searchedCropName = 'मक्का';
       cropDisplayName = 'मक्का';
@@ -239,24 +239,31 @@ class AiService {
 
     if (searchedCropName.isNotEmpty && marketData.isNotEmpty) {
       final lines = marketData.split('\n');
-      int? foundPrice;
+      num? foundPrice;
 
       for (final line in lines) {
         if (line.trim().isEmpty) continue;
         final lineLower = line.toLowerCase();
         for (final kw in keywords) {
           if (lineLower.contains(kw)) {
-            final priceMatch = RegExp(r'₹\s*(\d+)').firstMatch(line);
+            // Updated regex to support both integer & decimal price formats (e.g. ₹2469, ₹2320.20)
+            final priceMatch = RegExp(r'₹\s*([\d\.]+)').firstMatch(line);
             if (priceMatch != null) {
-              foundPrice = int.tryParse(priceMatch.group(1)!);
-              if (foundPrice != null && foundPrice > 0) break;
+              final pStr = priceMatch.group(1)!;
+              if (pStr != 'N/A') {
+                final pDouble = double.tryParse(pStr);
+                if (pDouble != null && pDouble > 0) {
+                  foundPrice = (pDouble % 1 == 0) ? pDouble.toInt() : pDouble;
+                  break;
+                }
+              }
             }
           }
         }
         if (foundPrice != null && foundPrice > 0) break;
       }
 
-      final priceDisplay = (foundPrice != null && foundPrice > 0) ? foundPrice : 2469;
+      final priceDisplay = foundPrice ?? 2469;
 
       if (isEnglishQuery) {
         return 'Today\'s rate for $cropDisplayNameEn is ₹$priceDisplay. Do you want to buy or sell?';
@@ -301,7 +308,7 @@ FULL APNA GODAM KNOWLEDGE BASE:
 - Wallet: Storage Wallet, Trade Wallet, Loan Wallet. Instant withdrawal to bank account.
 - BNPL Loan: Credit limit (up to ₹1.5 Cr) against stored commodity value.
 
-LIVE MARKET DATA & LIVE BIDS (SbtLiveBidData):
+LIVE MARKET DATA & LIVE BIDS (SbtLiveBidData & sbt_product_list):
 $marketData''';
   }
 }
