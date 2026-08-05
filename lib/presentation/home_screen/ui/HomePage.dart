@@ -1112,25 +1112,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                   ),
                 ),
         ],
-      ),
-                //         style: TextStyle(
-                //             fontWeight: FontWeight.w500,
-                //             fontSize: Adaptive.sp(16)),
-                //       ),
-                //       Text(
-                //         "1.5.4",
-                //         style: TextStyle(
-                //             fontWeight: FontWeight.w500,
-                //             fontSize: Adaptive.sp(16)),
-                //       ),
-                //     ],
-                //   ),
-                // )
-              ],
-            ),
-          ),
-        ),
-      ),
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
