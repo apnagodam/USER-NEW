@@ -1,4 +1,5 @@
 import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/helper.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
 import 'package:apnagodam/extensions/extensions.dart';
 import 'package:apnagodam/presentation/dashboard/model/sbt_commodity_model.dart';
@@ -569,9 +570,7 @@ class SellerList extends ConsumerWidget {
                                                                                           );
                                                                                           Get.back();
                                                                                         } else {
-                                                                                          context.errorToast(
-                                                                                            value['message'],
-                                                                                          );
+                                                                                          showErrorAlertDialog(context, value['message']);
                                                                                         }
                                                                                       },
                                                                                     )
@@ -654,18 +653,7 @@ class SellerList extends ConsumerWidget {
                                                           getSbtCommodityProvider,
                                                         );
                                                       } else {
-                                                        Get.rawSnackbar(
-                                                          message:
-                                                              value['message']
-                                                                  .toString(),
-                                                          duration:
-                                                              const Duration(
-                                                                seconds: 10,
-                                                              ),
-                                                          backgroundColor:
-                                                              ColorConstant
-                                                                  .red500,
-                                                        );
+                                                        showErrorAlertDialog(context, value['message']);
                                                       }
                                                     })
                                                     .onError((e, s) {});

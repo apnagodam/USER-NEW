@@ -1,4 +1,5 @@
 import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/helper.dart';
 import 'package:apnagodam/core/utils/no_data_found_widget.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
 import 'package:apnagodam/extensions/extensions.dart';
@@ -1327,16 +1328,7 @@ class _BuyerListSBTState extends ConsumerState<BuyerListSBT> {
                                                                                     ColorConstant.maingreen,
                                                                               );
                                                                             } else {
-                                                                              Get.rawSnackbar(
-                                                                                message:
-                                                                                    "${value['message']}",
-                                                                                duration: Duration(
-                                                                                  seconds:
-                                                                                      2,
-                                                                                ),
-                                                                                backgroundColor:
-                                                                                    ColorConstant.red500,
-                                                                              );
+                                                                              showErrorAlertDialog(context, value['message']);
                                                                             }
                                                                           })
                                                                           .onError(
@@ -1410,17 +1402,7 @@ class _BuyerListSBTState extends ConsumerState<BuyerListSBT> {
                                                           getSbtCommodityProvider,
                                                         );
                                                       } else {
-                                                        Get.rawSnackbar(
-                                                          message:
-                                                              value['message']
-                                                                  .toString(),
-                                                          duration: Duration(
-                                                            seconds: 2,
-                                                          ),
-                                                          backgroundColor:
-                                                              ColorConstant
-                                                                  .red500,
-                                                        );
+                                                        showErrorAlertDialog(context, value['message']);
                                                       }
                                                     });
                                               },

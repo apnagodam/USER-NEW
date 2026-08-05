@@ -1,6 +1,5 @@
 plugins {
     id "com.android.application"
-    id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
     id "com.google.gms.google-services"
     id "com.google.firebase.crashlytics"
@@ -43,6 +42,11 @@ android {
         versionName flutterVersionName
     }
 
+    aaptOptions {
+        cruncherEnabled = false
+        noCompress 'ttf', 'tflite', 'svg', 'png', 'css', 'js', 'html', 'frag', 't-rex'
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -59,6 +63,16 @@ android {
             keyPassword 'apnagodam'
             storeFile file('D:/ApnagodamUser-optimisations/keystoe_file.jks')
             storePassword 'apnagodam'
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+        debug {
+            keyAlias 'apnagodam'
+            keyPassword 'apnagodam'
+            storeFile file('D:/ApnagodamUser-optimisations/keystoe_file.jks')
+            storePassword 'apnagodam'
+            v1SigningEnabled true
+            v2SigningEnabled true
         }
     }
 
@@ -69,6 +83,7 @@ android {
             shrinkResources false
         }
         debug {
+            signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
         }

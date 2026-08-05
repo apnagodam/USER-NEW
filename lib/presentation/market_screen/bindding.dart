@@ -271,83 +271,78 @@ class _BiddingState extends ConsumerState<Bidding> {
                                             SizedBox(
                                               height: 10,
                                             ),
-                                            Padding(
-                                              padding: Pad(all: 10),
-                                              child: SizedBox(
-                                                width: Get.width,
-                                                child: InputQty(
-                                                    maxVal: 25000,
-                                                    initVal: 0.0,
-                                                    minVal: 0.0,
-                                                    steps: 10,
-                                                    qtyFormProps: QtyFormProps(
-                                                        keyboardType: TextInputType
-                                                            .numberWithOptions(
-                                                                decimal:
-                                                                    false)),
-                                                    onQtyChanged: (val) {
-                                                      yourpricecontroller.text =
-                                                          double.tryParse(
-                                                                  '${val ?? 0.0}')
-                                                              .toString();
-                                                      print(val);
-                                                    },
-                                                    decoration:
-                                                        QtyDecorationProps(
-                                                            border: OutlineInputBorder(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5),
-                                                                borderSide: BorderSide(
-                                                                    color: ColorConstant
-                                                                        .maingreen)),
-                                                            qtyStyle: QtyStyle
-                                                                .classic,
-                                                            minusBtn: Container(
-                                                              decoration: BoxDecoration(
-                                                                  color: ColorConstant
-                                                                      .maingreen,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              5)),
-                                                              padding:
-                                                                  Pad(all: 10),
-                                                              child: Text('-10',
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize:
-                                                                          Adaptive.sp(
-                                                                              18))),
-                                                            ),
-                                                            plusBtn: Container(
-                                                              decoration: BoxDecoration(
-                                                                  color: ColorConstant
-                                                                      .maingreen,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              5)),
-                                                              padding:
-                                                                  Pad(all: 10),
-                                                              child: Text('+10',
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize:
-                                                                          Adaptive.sp(
-                                                                              18))),
-                                                            ))),
-                                              ),
-                                            ),
+                                             Padding(
+                                               padding: Pad(all: 10),
+                                               child: Container(
+                                                 decoration: BoxDecoration(
+                                                   border: Border.all(color: ColorConstant.maingreen),
+                                                   borderRadius: BorderRadius.circular(5),
+                                                 ),
+                                                 child: Row(
+                                                   children: [
+                                                     InkWell(
+                                                       onTap: () {
+                                                         double current = double.tryParse(yourpricecontroller.text) ?? 0;
+                                                         if (current >= 10) {
+                                                           yourpricecontroller.text = (current - 10).toStringAsFixed(0);
+                                                         } else {
+                                                           yourpricecontroller.text = "";
+                                                         }
+                                                       },
+                                                       child: Container(
+                                                         decoration: BoxDecoration(
+                                                           color: ColorConstant.maingreen,
+                                                           borderRadius: BorderRadius.circular(5),
+                                                         ),
+                                                         padding: Pad(all: 10),
+                                                         child: Text('-10',
+                                                             style: TextStyle(
+                                                                 fontWeight: FontWeight.bold,
+                                                                 color: Colors.white,
+                                                                 fontSize: Adaptive.sp(18))),
+                                                       ),
+                                                     ),
+                                                     Expanded(
+                                                       child: TextField(
+                                                         controller: yourpricecontroller,
+                                                         keyboardType: TextInputType.number,
+                                                         textAlign: TextAlign.center,
+                                                         style: TextStyle(
+                                                             fontSize: Adaptive.sp(18),
+                                                             fontWeight: FontWeight.bold),
+                                                         decoration: InputDecoration(
+                                                           hintText: "0",
+                                                           hintStyle: TextStyle(
+                                                               color: Colors.grey.shade400,
+                                                               fontSize: Adaptive.sp(18),
+                                                               fontWeight: FontWeight.normal),
+                                                           border: InputBorder.none,
+                                                           contentPadding: EdgeInsets.zero,
+                                                         ),
+                                                       ),
+                                                     ),
+                                                     InkWell(
+                                                       onTap: () {
+                                                         double current = double.tryParse(yourpricecontroller.text) ?? 0;
+                                                         yourpricecontroller.text = (current + 10).toStringAsFixed(0);
+                                                       },
+                                                       child: Container(
+                                                         decoration: BoxDecoration(
+                                                           color: ColorConstant.maingreen,
+                                                           borderRadius: BorderRadius.circular(5),
+                                                         ),
+                                                         padding: Pad(all: 10),
+                                                         child: Text('+10',
+                                                             style: TextStyle(
+                                                                 fontWeight: FontWeight.bold,
+                                                                 color: Colors.white,
+                                                                 fontSize: Adaptive.sp(18))),
+                                                       ),
+                                                     ),
+                                                   ],
+                                                 ),
+                                               ),
+                                             ),
                                             // CommonTextField(
                                             //   controller: yourpricecontroller,
                                             //   textInputAction:
@@ -405,116 +400,177 @@ class _BiddingState extends ConsumerState<Bidding> {
                                                           .text,
                                                     ).future)
                                                         .then((value) {
-                                                      if (value.status == "1") {
-                                                        ref.invalidate(
-                                                            getBiddingDataProvider(
-                                                                inventoryId:
-                                                                    widget.id,
-                                                                status: widget
-                                                                    .status));
-                                                        ref.invalidate(
-                                                            getMandiBhavProvider);
-                                                        Get.back();
-                                                        Get.rawSnackbar(
-                                                          message:
-                                                              value.message,
-                                                          duration:
-                                                              const Duration(
-                                                                  seconds: 2),
-                                                          backgroundColor:
-                                                              ColorConstant
-                                                                  .maingreen,
-                                                        );
-                                                      } else if (value.status ==
-                                                          "0") {
-                                                        Get.back();
-                                                        Get.rawSnackbar(
-                                                          message:
-                                                              value.message,
-                                                          duration:
-                                                              const Duration(
-                                                                  seconds: 2),
-                                                          backgroundColor:
-                                                              ColorConstant
-                                                                  .red500,
-                                                        );
-                                                      } else {
-                                                        Get.rawSnackbar(
-                                                          message:
-                                                              value.message,
-                                                          duration:
-                                                              const Duration(
-                                                                  seconds: 2),
-                                                          backgroundColor:
-                                                              ColorConstant
-                                                                  .red500,
-                                                        );
-                                                      }
-                                                    }).onError((e, s) {
-                                                      errorBottomSheet(
-                                                          context, "$e");
-                                                    });
-
-                                                    Get.back();
-
-                                                    // .whenComplete(() =>  Get.back());
-                                                  } else {
-                                                    await ref
-                                                        .watch(addBidProvider(
-                                                      inventoryId: data
-                                                          .inventoryInfo?.id
-                                                          .toString(),
-                                                      price: yourpricecontroller
-                                                          .text,
-                                                    ).future)
-                                                        .then((value) {
-                                                      if (value['status'] ==
-                                                          "1") {
-                                                        ref.invalidate(
-                                                            getBiddingDataProvider);
-                                                        ref.invalidate(
-                                                            getMandiBhavProvider);
-                                                        Fluttertoast.showToast(
-                                                            msg:
-                                                                value['message']
-                                                                    .toString(),
-                                                            toastLength: Toast
-                                                                .LENGTH_LONG,
-                                                            backgroundColor:
-                                                                ColorConstant
-                                                                    .maingreen);
-                                                      } else if (value[
-                                                              'status'] ==
-                                                          "0") {
-                                                        Fluttertoast.showToast(
-                                                            msg:
-                                                                value['message']
-                                                                    .toString(),
-                                                            toastLength: Toast
-                                                                .LENGTH_LONG,
-                                                            backgroundColor:
-                                                                ColorConstant
-                                                                    .red500);
-                                                      } else {
-                                                        Fluttertoast.showToast(
-                                                            msg:
-                                                                value['message']
-                                                                    .toString(),
-                                                            toastLength: Toast
-                                                                .LENGTH_LONG,
-                                                            backgroundColor:
-                                                                ColorConstant
-                                                                    .red500);
-                                                      }
-                                                    }).onError((e, s) {
-                                                      errorBottomSheet(
-                                                          context, "$e");
-                                                    });
-
-                                                    Get.back(
-                                                        closeOverlays: true);
-
-                                                    // .whenComplete(() =>  Get.back());
+                                                       if (value.status == "1") {
+                                                         bool isHindi = Get.locale?.languageCode == 'hi' || Localizations.localeOf(context).languageCode == 'hi';
+                                                         String apiMsg = (value.message ?? "").toString();
+                                                         bool isDealCompleted = apiMsg.toLowerCase().contains("deal successfully completed") || apiMsg.toLowerCase().contains("congratulations");
+                                                         if (isDealCompleted) {
+                                                           Get.back(); // Close sheet FIRST
+                                                           String displayMsg = apiMsg;
+                                                           if (isHindi) {
+                                                             displayMsg = "बधाई हो! सौदा सफलतापूर्वक पूरा हुआ।";
+                                                           }
+                                                           Get.defaultDialog(
+                                                             barrierDismissible: false,
+                                                             title: "",
+                                                             titleStyle: const TextStyle(fontSize: 0),
+                                                             content: Column(
+                                                               children: [
+                                                                 Icon(Icons.check_circle, color: ColorConstant.maingreen, size: 60),
+                                                                 const SizedBox(height: 10),
+                                                                 Text(
+                                                                   displayMsg,
+                                                                   textAlign: TextAlign.center,
+                                                                   style: TextStyle(
+                                                                     fontSize: Adaptive.sp(16),
+                                                                     fontWeight: FontWeight.bold,
+                                                                   ),
+                                                                 ),
+                                                               ],
+                                                             ),
+                                                             confirm: ElevatedButton(
+                                                               style: AppStyle.buttonStyle,
+                                                               onPressed: () {
+                                                                 Get.back(); // Close dialog
+                                                                 Get.back(); // Go back to list screen
+                                                                 ref.invalidate(getBiddingDataProvider(inventoryId: widget.id, status: widget.status));
+                                                                 ref.invalidate(getMandiBhavProvider);
+                                                               },
+                                                               child: Text(
+                                                                 "OK",
+                                                                 style: TextStyle(color: Colors.white, fontSize: Adaptive.sp(16)),
+                                                               ),
+                                                             ),
+                                                           );
+                                                         } else {
+                                                           Get.back(); // Close sheet
+                                                           ref.invalidate(getBiddingDataProvider(inventoryId: widget.id, status: widget.status));
+                                                           ref.invalidate(getMandiBhavProvider);
+                                                           String displayMsg = apiMsg;
+                                                           if (isHindi && (apiMsg == "Your Bid Successfully Submitted." || apiMsg.isEmpty)) {
+                                                             displayMsg = "आपकी बोली सफलतापूर्वक जमा हो गई है।";
+                                                           }
+                                                           Fluttertoast.showToast(msg: displayMsg, toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.maingreen);
+                                                         }
+                                                       } else if (value.status ==
+                                                           "0") {
+                                                         Get.back();
+                                                         Get.rawSnackbar(
+                                                           message:
+                                                               value.message,
+                                                           duration:
+                                                               const Duration(
+                                                                   seconds: 2),
+                                                           backgroundColor:
+                                                               ColorConstant
+                                                                   .red500,
+                                                         );
+                                                       } else {
+                                                         Get.rawSnackbar(
+                                                           message:
+                                                               value.message,
+                                                           duration:
+                                                               const Duration(
+                                                                   seconds: 2),
+                                                           backgroundColor:
+                                                               ColorConstant
+                                                                   .red500,
+                                                         );
+                                                       }
+                                                     }).onError((e, s) {
+                                                       errorBottomSheet(
+                                                           context, "$e");
+                                                     });
+                                                   } else {
+                                                     await ref
+                                                         .watch(addBidProvider(
+                                                       inventoryId: data
+                                                           .inventoryInfo?.id
+                                                           .toString(),
+                                                       price: yourpricecontroller
+                                                           .text,
+                                                     ).future)
+                                                         .then((value) {
+                                                       if (value['status'] ==
+                                                           "1") {
+                                                         bool isHindi = Get.locale?.languageCode == 'hi' || Localizations.localeOf(context).languageCode == 'hi';
+                                                         String apiMsg = (value['message'] ?? "").toString();
+                                                         bool isDealCompleted = apiMsg.toLowerCase().contains("deal successfully completed") || apiMsg.toLowerCase().contains("congratulations");
+                                                         if (isDealCompleted) {
+                                                           Get.back(); // Close sheet FIRST
+                                                           String displayMsg = apiMsg;
+                                                           if (isHindi) {
+                                                             displayMsg = "बधाई हो! सौदा सफलतापूर्वक पूरा हुआ।";
+                                                           }
+                                                           Get.defaultDialog(
+                                                             barrierDismissible: false,
+                                                             title: "",
+                                                             titleStyle: const TextStyle(fontSize: 0),
+                                                             content: Column(
+                                                               children: [
+                                                                 Icon(Icons.check_circle, color: ColorConstant.maingreen, size: 60),
+                                                                 const SizedBox(height: 10),
+                                                                 Text(
+                                                                   displayMsg,
+                                                                   textAlign: TextAlign.center,
+                                                                   style: TextStyle(
+                                                                     fontSize: Adaptive.sp(16),
+                                                                     fontWeight: FontWeight.bold,
+                                                                   ),
+                                                                 ),
+                                                               ],
+                                                             ),
+                                                             confirm: ElevatedButton(
+                                                               style: AppStyle.buttonStyle,
+                                                               onPressed: () {
+                                                                 Get.back(); // Close dialog
+                                                                 Get.back(); // Go back to list screen
+                                                                 ref.invalidate(getBiddingDataProvider(inventoryId: widget.id, status: widget.status));
+                                                                 ref.invalidate(getMandiBhavProvider);
+                                                               },
+                                                               child: Text(
+                                                                 "OK",
+                                                                 style: TextStyle(color: Colors.white, fontSize: Adaptive.sp(16)),
+                                                               ),
+                                                             ),
+                                                           );
+                                                         } else {
+                                                           Get.back(); // Close sheet
+                                                           ref.invalidate(getBiddingDataProvider(inventoryId: widget.id, status: widget.status));
+                                                           ref.invalidate(getMandiBhavProvider);
+                                                           String displayMsg = apiMsg;
+                                                           if (isHindi && (apiMsg == "Your Bid Successfully Submitted." || apiMsg.isEmpty)) {
+                                                             displayMsg = "आपकी बोली सफलतापूर्वक जमा हो गई है।";
+                                                           }
+                                                           Fluttertoast.showToast(msg: displayMsg, toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.maingreen);
+                                                         }
+                                                       } else if (value[
+                                                               'status'] ==
+                                                           "0") {
+                                                         Fluttertoast.showToast(
+                                                             msg:
+                                                                 value['message']
+                                                                     .toString(),
+                                                             toastLength: Toast
+                                                                 .LENGTH_LONG,
+                                                             backgroundColor:
+                                                                 ColorConstant
+                                                                     .red500);
+                                                       } else {
+                                                         Fluttertoast.showToast(
+                                                             msg:
+                                                                 value['message']
+                                                                     .toString(),
+                                                             toastLength: Toast
+                                                                 .LENGTH_LONG,
+                                                             backgroundColor:
+                                                                 ColorConstant
+                                                                     .red500);
+                                                       }
+                                                     }).onError((e, s) {
+                                                       errorBottomSheet(
+                                                           context, "$e");
+                                                     });
                                                   }
                                                 } else {
                                                   Get.rawSnackbar(
@@ -974,77 +1030,118 @@ class _BiddingState extends ConsumerState<Bidding> {
                                                                       //   isRequired: true,
                                                                       // ),
                                                                       SizedBox(
-                                                                        height:
-                                                                            10,
-                                                                      ),
-
-                                                                      Column(
-                                                                        crossAxisAlignment:
-                                                                            CrossAxisAlignment.start,
-                                                                        children: [
-                                                                          Text(
-                                                                            AppLocalizations.of(context)!.msgTermAnd,
-                                                                            style:
-                                                                                AppStyle.lblonlinemandibiglistdetail.copyWith(fontSize: Adaptive.sp(16)),
-                                                                          ),
-                                                                          Text(
-                                                                            AppLocalizations.of(context)!.tCOne,
-                                                                            style:
-                                                                                AppStyle.lblonlinemandibiglistdetail.copyWith(fontSize: Adaptive.sp(16)),
-                                                                          ),
-                                                                          Text(
-                                                                            AppLocalizations.of(context)!.tCTwo,
-                                                                            style:
-                                                                                AppStyle.lblonlinemandibiglistdetail.copyWith(fontSize: Adaptive.sp(16)),
-                                                                          ),
-                                                                          Text(
-                                                                            AppLocalizations.of(context)!.tCThree,
-                                                                            style:
-                                                                                AppStyle.lblonlinemandibiglistdetail.copyWith(fontSize: Adaptive.sp(16)),
-                                                                          ),
-                                                                          Text(
-                                                                            AppLocalizations.of(context)!.tCFour,
-                                                                            style:
-                                                                                AppStyle.lblonlinemandibiglistdetail.copyWith(fontSize: Adaptive.sp(16)),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      SizedBox(
-                                                                        height:
-                                                                            15,
-                                                                      ),
-                                                                      InkWell(
-                                                                        onTap:
-                                                                            () async {
-                                                                          if (yourpricecontroller.text.isNotEmpty &&
-                                                                              yourpricecontroller.text != "0.0") {
-                                                                            await ref
-                                                                                .watch(addBidProvider(
-                                                                              inventoryId: data.inventoryInfo?.id.toString(),
-                                                                              price: yourpricecontroller.text,
-                                                                            ).future)
-                                                                                .then((value) {
-                                                                              if (value['status'] == "1") {
-                                                                                ref.invalidate(getBiddingDataProvider);
-                                                                                ref.invalidate(getMandiBhavProvider);
-                                                                                Fluttertoast.showToast(msg: value['message'].toString(), toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.maingreen);
-                                                                              } else if (value['status'] == "0") {
-                                                                                Fluttertoast.showToast(msg: value['message'].toString(), toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.red500);
-                                                                              } else {
-                                                                                Fluttertoast.showToast(msg: value['message'].toString(), toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.red500);
-                                                                              }
-                                                                            }).onError((e, s) {
-                                                                              errorBottomSheet(context, "$e");
-                                                                            });
-
-                                                                            Get.back(closeOverlays: true);
-                                                                          } else {
-                                                                            Get.rawSnackbar(
-                                                                                message: AppLocalizations.of(context)!.bidError,
-                                                                                duration: const Duration(seconds: 2),
-                                                                                backgroundColor: ColorConstant.red500);
-                                                                          }
-                                                                        },
+                                                                         height: 10,
+                                                                       ),
+                                                                       Consumer(
+                                                                         builder: (context, ref, child) => ref
+                                                                             .watch(wbtTermsProvider(
+                                                                                 invId: "${data.inventoryInfo?.id ?? widget.id}"))
+                                                                             .when(
+                                                                                 data: (termsData) => Column(
+                                                                                       crossAxisAlignment:
+                                                                                           CrossAxisAlignment.start,
+                                                                                       children: [
+                                                                                         Text(
+                                                                                           AppLocalizations.of(context)!
+                                                                                               .msgTermAnd,
+                                                                                           style: AppStyle
+                                                                                               .lblonlinemandibiglistdetail
+                                                                                               .copyWith(
+                                                                                                   fontSize:
+                                                                                                       Adaptive.sp(16)),
+                                                                                         ),
+                                                                                         SizedBox(height: 5),
+                                                                                         HtmlWidget(
+                                                                                           termsData['data'] ?? "",
+                                                                                           textStyle: TextStyle(fontSize: Adaptive.sp(14)),
+                                                                                         ),
+                                                                                       ],
+                                                                                     ),
+                                                                                 error: (e, s) => SizedBox(),
+                                                                                 loading: () => SizedBox()),
+                                                                       ),
+                                                                       SizedBox(
+                                                                         height:
+                                                                             15,
+                                                                       ),
+                                                                       InkWell(
+                                                                         onTap:
+                                                                             () async {
+                                                                           if (yourpricecontroller.text.isNotEmpty &&
+                                                                               yourpricecontroller.text != "0.0") {
+                                                                             await ref
+                                                                                 .watch(addBidProvider(
+                                                                               inventoryId: data.inventoryInfo?.id.toString(),
+                                                                               price: yourpricecontroller.text,
+                                                                             ).future)
+                                                                                 .then((value) {
+                                                                                if (value['status'] == "1") {
+                                                                                  bool isHindi = Get.locale?.languageCode == 'hi' || Localizations.localeOf(context).languageCode == 'hi';
+                                                                                  String apiMsg = (value['message'] ?? "").toString();
+                                                                                  bool isDealCompleted = apiMsg.toLowerCase().contains("deal successfully completed") || apiMsg.toLowerCase().contains("congratulations");
+                                                                                  if (isDealCompleted) {
+                                                                                    Get.back(); // Close sheet FIRST
+                                                                                    String displayMsg = apiMsg;
+                                                                                    if (isHindi) {
+                                                                                      displayMsg = "बधाई हो! सौदा सफलतापूर्वक पूरा हुआ।";
+                                                                                    }
+                                                                                    Get.defaultDialog(
+                                                                                      barrierDismissible: false,
+                                                                                      title: "",
+                                                                                      titleStyle: const TextStyle(fontSize: 0),
+                                                                                      content: Column(
+                                                                                        children: [
+                                                                                          Icon(Icons.check_circle, color: ColorConstant.maingreen, size: 60),
+                                                                                          const SizedBox(height: 10),
+                                                                                          Text(
+                                                                                            displayMsg,
+                                                                                            textAlign: TextAlign.center,
+                                                                                            style: TextStyle(
+                                                                                              fontSize: Adaptive.sp(16),
+                                                                                              fontWeight: FontWeight.bold,
+                                                                                            ),
+                                                                                          ),
+                                                                                        ],
+                                                                                      ),
+                                                                                      confirm: ElevatedButton(
+                                                                                        style: AppStyle.buttonStyle,
+                                                                                        onPressed: () {
+                                                                                          Get.back(); // Close dialog
+                                                                                          Get.back(); // Go back to list screen
+                                                                                          ref.invalidate(getBiddingDataProvider(inventoryId: widget.id, status: widget.status));
+                                                                                          ref.invalidate(getMandiBhavProvider);
+                                                                                        },
+                                                                                        child: Text(
+                                                                                          "OK",
+                                                                                          style: TextStyle(color: Colors.white, fontSize: Adaptive.sp(16)),
+                                                                                        ),
+                                                                                      ),
+                                                                                    );
+                                                                                  } else {
+                                                                                    Get.back(); // Close sheet
+                                                                                    ref.invalidate(getBiddingDataProvider(inventoryId: widget.id, status: widget.status));
+                                                                                    ref.invalidate(getMandiBhavProvider);
+                                                                                    String displayMsg = apiMsg;
+                                                                                    if (isHindi && (apiMsg == "Your Bid Successfully Submitted." || apiMsg.isEmpty)) {
+                                                                                      displayMsg = "आपकी बोली सफलतापूर्वक जमा हो गई है।";
+                                                                                    }
+                                                                                    Fluttertoast.showToast(msg: displayMsg, toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.maingreen);
+                                                                                  }
+                                                                                } else if (value['status'] == "0") {
+                                                                                 Fluttertoast.showToast(msg: value['message'].toString(), toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.red500);
+                                                                               } else {
+                                                                                 Fluttertoast.showToast(msg: value['message'].toString(), toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.red500);
+                                                                               }
+                                                                             }).onError((e, s) {
+                                                                               errorBottomSheet(context, "$e");
+                                                                             });
+                                                                           } else {
+                                                                             Get.rawSnackbar(
+                                                                                 message: AppLocalizations.of(context)!.bidError,
+                                                                                 duration: const Duration(seconds: 2),
+                                                                                 backgroundColor: ColorConstant.red500);
+                                                                           }
+                                                                         },
                                                                         child:
                                                                             Container(
                                                                           width:

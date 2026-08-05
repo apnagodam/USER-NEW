@@ -304,10 +304,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       mobileNumber: mobilenumberController.text,
                                     ),
                                   );
-                                  Fluttertoast.showToast(
-                                    msg: response.message.toString(),
-                                    toastLength: Toast.LENGTH_LONG,
-                                  );
                                 }
                               });
                         }

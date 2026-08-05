@@ -24,9 +24,7 @@ class Diointerceptor extends InterceptorsWrapper {
 
   void _safeStopAllLoaders() {
     try {
-      if (getx.Get.isDialogOpen ?? false) {
-        ProgressDialogUtils.hideProgressDialog();
-      }
+      ProgressDialogUtils.hideProgressDialog();
     } catch (_) {}
   }
 
@@ -107,7 +105,10 @@ class Diointerceptor extends InterceptorsWrapper {
     !options.path.contains('user_api/apna_u_sell_buy_list') &&
     !options.path.contains('user_api/apna_u_stack_buy_sell_list') &&
     !options.path.contains('user_api/mark-delivery') &&
-    !options.path.contains('user_api/match-order-list')) {
+    !options.path.contains('user_api/match-order-list') &&
+    !options.path.contains('sbt_trade_save') &&
+    !options.path.contains('check_user_wallet') &&
+    !options.path.contains('sbt_api')) {
   _loaderCount++;
   if (_loaderCount == 1) {
     if (options.method.toLowerCase() == 'post') {
@@ -127,19 +128,26 @@ class Diointerceptor extends InterceptorsWrapper {
     final data = response.data;
     final status = data['status'].toString();
 
-    if (status == '3' ||
-        data['message'].toString().toLowerCase().contains('user not found')) {
+    if (status == '3') {
       ref.watch(authProvider.notifier).logout();
     }
     if (!ref.watch(sharedUtilityProvider).isBusinessProfileActive()) {
     } else if (!ref.watch(sharedUtilityProvider).isBusinessProfileActive()) {}
    if (status == '0') {
-  if (data['message'].toString() != "OTP Expired !" &&
+  final msg = data['message']?.toString() ?? data['Message']?.toString() ?? "";
+  if (msg != "OTP Expired !" &&
+      !msg.toLowerCase().contains("user not found") &&
+      !msg.toLowerCase().contains("no user found") &&
       !response.requestOptions.path.contains('get_user_profile') &&
       !response.requestOptions.path.contains('get_user_gst_profile') &&
-      !response.requestOptions.path.contains('get_user_mandi_tax_profile')) {
+      !response.requestOptions.path.contains('get_user_mandi_tax_profile') &&
+      !response.requestOptions.path.contains('sbt_trade_save') &&
+      !response.requestOptions.path.contains('check_user_wallet') &&
+      !response.requestOptions.path.contains('sbt_api') &&
+      !response.requestOptions.path.contains('v1_apna_send_otp') &&
+      !response.requestOptions.path.contains('send_otp')) {
     _showProfileErrorDialog(
-      data['message'] ?? data['Message'] ?? "Unknown error",
+      msg.isNotEmpty ? msg : "Unknown error",
     );
   }
 }

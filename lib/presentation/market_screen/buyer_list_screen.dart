@@ -1,6 +1,7 @@
 // ignore_for_file: unnecessary_string_interpolations
 
 import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/helper.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
 import 'package:apnagodam/extensions/extensions.dart';
 import 'package:apnagodam/presentation/dashboard/model/sbt_commodity_model.dart';
@@ -547,11 +548,7 @@ class BuyerList extends ConsumerWidget {
               backgroundColor: ColorConstant.maingreen,
             );
           } else {
-            Get.rawSnackbar(
-              message: "${value['message']}",
-              duration: Duration(seconds: 10),
-              backgroundColor: ColorConstant.red500,
-            );
+            showErrorAlertDialog(context, value['message']);
           }
         })
         .onError((e, s) {});
@@ -626,17 +623,7 @@ class BuyerList extends ConsumerWidget {
                                                         getSbtCommodityProvider,
                                                       );
                                                     } else {
-                                                      Get.rawSnackbar(
-                                                        message:
-                                                            value['message']
-                                                                .toString(),
-                                                        duration: Duration(
-                                                          seconds: 10,
-                                                        ),
-                                                        backgroundColor:
-                                                            ColorConstant
-                                                                .red500,
-                                                      );
+                                                      showErrorAlertDialog(context, value['message']);
                                                     }
                                                   });
                                             },

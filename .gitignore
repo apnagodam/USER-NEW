@@ -84,3 +84,6 @@ app.*.map.json
 # Firebase related
 google-services.json
 GoogleService-Info.plist
+
+# API Keys - do not commit
+lib/core/config/app_config.dart

@@ -162,13 +162,14 @@ Future<void> showImageSourceFilePickerDialog(
               onTap: () async {
                 Navigator.of(context, rootNavigator: false)
                     .pop(); // Close the dialog
-
-                FilePickerResult? result = await FilePicker.platform.pickFiles(
-                  type: FileType.custom,
-                  allowedExtensions: ['jpg', 'jpeg', 'pdf', 'png'],
-                );
-                if (result != null) {
-                  onImagePicked(XFile(result.files.single.path!));
+                try {
+                  final XFile? image =
+                      await picker.pickImage(source: ImageSource.gallery);
+                  if (image != null) {
+                    onImagePicked(image);
+                  }
+                } catch (e) {
+                  print("Error picking image from gallery: $e");
                 }
               },
             ),

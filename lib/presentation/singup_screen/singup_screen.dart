@@ -269,20 +269,23 @@ class _SingupScreenState extends ConsumerState<SingupScreen> {
   await Future.delayed(const Duration(milliseconds: 300));
 
   // ✅ Step 5: Then send OTP
-  final response = await ref.read(
-    sendOtpV1Provider(number: signUpMobilenumberController.text).future,
-  );
-      if (response.status.toString() == "1") {
-        Fluttertoast.showToast(
-          msg: response.message.toString(),
-          toastLength: Toast.LENGTH_LONG,
-        );
-        Get.to(RegisterOtpScreen(
-          phoneNumber: signUpMobilenumberController.text,
-          otpType: 'register',
-          userName: signUpNameController.text,
-        ));
-      }
+  try {
+    final response = await ref.read(
+      sendOtpV1Provider(number: signUpMobilenumberController.text).future,
+    );
+    if (response.status.toString() == "1") {
+      Fluttertoast.showToast(
+        msg: response.message.toString(),
+        toastLength: Toast.LENGTH_LONG,
+      );
+    }
+  } catch (_) {}
+
+  Get.to(RegisterOtpScreen(
+    phoneNumber: signUpMobilenumberController.text,
+    otpType: 'register',
+    userName: signUpNameController.text,
+  ));
     } else {
       // ✅ Only show error when status != 1
       Fluttertoast.showToast(

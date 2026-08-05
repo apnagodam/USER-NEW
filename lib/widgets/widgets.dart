@@ -538,15 +538,16 @@ class FilePickerWidget extends ConsumerWidget {
     return ref.watch(refImage) == null
         ? ElevarmInputFileCard(
           onTap: () async {
-            FilePickerResult? result = await FilePicker.platform.pickFiles(
-              type: FileType.custom,
-              allowedExtensions: ['jpg', 'jpeg', 'pdf', 'png'],
-            );
-            if (result != null) {
-              ref.watch(refImage.notifier).state = File(
-                result.files.single.path!,
+            try {
+              final XFile? image = await ImagePicker().pickImage(
+                source: ImageSource.gallery,
               );
-              onImageSelection(File(result.files.single.path!));
+              if (image != null) {
+                ref.watch(refImage.notifier).state = File(image.path);
+                onImageSelection(File(image.path));
+              }
+            } catch (e) {
+              print("Error picking image from gallery: $e");
             }
           },
           clickToUploadLabel: title,

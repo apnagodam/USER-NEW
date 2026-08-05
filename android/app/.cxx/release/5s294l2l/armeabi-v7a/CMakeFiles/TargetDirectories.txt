@@ -1,0 +1,2 @@
+D:/PiyushProjects/USER-NEW/android/app/.cxx/release/5s294l2l/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/PiyushProjects/USER-NEW/android/app/.cxx/release/5s294l2l/armeabi-v7a/CMakeFiles/rebuild_cache.dir

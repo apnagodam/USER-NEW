@@ -281,7 +281,12 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
       //           ),
       //   ],
       // ),
-      body: DefaultTabController(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _initializeStockData();
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        child: DefaultTabController(
         length: 3,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -456,6 +461,7 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

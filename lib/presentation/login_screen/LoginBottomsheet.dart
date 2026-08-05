@@ -133,10 +133,6 @@ class _LoginBottomSheetState extends ConsumerState<LoginBottomSheet> {
                                   mobileNumber: mobilenumberController.text,
                                 ),
                               );
-                              Fluttertoast.showToast(
-                                msg: response.message.toString(),
-                                toastLength: Toast.LENGTH_LONG,
-                              );
                             }
                           });
                     }

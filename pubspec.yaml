@@ -128,6 +128,8 @@ dependencies:
   firebase_analytics: ^12.0.0
   otp_autofill: ^4.1.0
   watermark_unique: ^1.0.8
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.0.2
 
 dependency_overrides:
   elevarm_ui:

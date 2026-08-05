@@ -128,16 +128,24 @@ class _WbtscreenState extends ConsumerState<Wbtscreen> {
                 child: TabBarView(
                   children: [
                     StackSellScreen(),
-                    ref.watch(getMandiBhavProvider).when(
-                          data: (data) {
-                            return (data.data ?? []).isEmpty
-                                ? SizedBox(
-                                    child: noStockData(),
-                                    height: Get.height / 2,
-                                  )
-                                : ListView.builder(
-                                    shrinkWrap: true,
-                                    itemCount: data.data?.length ?? 0,
+                    RefreshIndicator(
+                      color: ColorConstant.maingreen,
+                      onRefresh: () async {
+                        return ref.invalidate(getMandiBhavProvider);
+                      },
+                      child: ref.watch(getMandiBhavProvider).when(
+                            data: (data) {
+                              return (data.data ?? []).isEmpty
+                                  ? SingleChildScrollView(
+                                      physics: AlwaysScrollableScrollPhysics(),
+                                      child: SizedBox(
+                                        child: noStockData(),
+                                        height: Get.height / 2,
+                                      ),
+                                    )
+                                  : ListView.builder(
+                                      shrinkWrap: true,
+                                      itemCount: data.data?.length ?? 0,
                                     itemBuilder: (
                                       BuildContext context,
                                       int index,
@@ -476,6 +484,7 @@ class _WbtscreenState extends ConsumerState<Wbtscreen> {
                           ),
                           loading: () => _gatepassLoader(),
                         ),
+                    ),
                   ],
                 ),
               ),
@@ -747,54 +756,51 @@ class StackSellScreen extends ConsumerWidget {
 
                                         // NetworkImage("${IMAGE_BASE_URL}category/${cont.wbtMarket!.data![index].image.toString()}", )
                                         SizedBox(width: 5),
-                                        Container(
-                                          child: Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text.rich(
-                                                  TextSpan(
-                                                    text:
-                                                        "${list.data?[index].commodityName}",
-                                                  ),
-                                                  style: TextStyle(
-                                                    color:
-                                                        ColorConstant.maingreen,
-                                                    fontFamily: 'Roboto',
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: Adaptive.sp(17),
-                                                  ),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text.rich(
+                                                TextSpan(
+                                                  text:
+                                                      "${list.data?[index].commodityName}",
                                                 ),
-                                                Text.rich(
-                                                  TextSpan(
-                                                    text:
-                                                        " ${list.data?[index].warehouseName}",
-                                                    style: AppStyle
-                                                        .lblonbordingp
-                                                        .copyWith(
-                                                      fontSize: Adaptive.sp(
-                                                        16,
-                                                      ),
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                      color: Colors.black,
+                                                style: TextStyle(
+                                                  color:
+                                                      ColorConstant.maingreen,
+                                                  fontFamily: 'Roboto',
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: Adaptive.sp(17),
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              Text.rich(
+                                                TextSpan(
+                                                  text:
+                                                      " ${list.data?[index].warehouseName}",
+                                                  style: AppStyle
+                                                      .lblonbordingp
+                                                      .copyWith(
+                                                    fontSize: Adaptive.sp(
+                                                      16,
                                                     ),
+                                                    fontWeight:
+                                                        FontWeight.w700,
+                                                    color: Colors.black,
                                                   ),
                                                 ),
-                                                SizedBox(height: 5),
-                                                Row(
-                                                  children: [
-                                                    HtmlWidget(
-                                                      " ${list.data?[index].bidTime}",
-                                                    ),
-                                                    SizedBox(width: 10),
-                                                  ],
-                                                ),
-                                                if (isSeller)
-                                                  Align(
-                                                    alignment:
-                                                        Alignment.centerRight,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              SizedBox(height: 5),
+                                              HtmlWidget(
+                                                " ${list.data?[index].bidTime}",
+                                              ),
+                                              if (isSeller)
+                                                Align(
+                                                  alignment:
+                                                      Alignment.centerRight,
                                                     child: IntrinsicWidth(
                                                       child: Container(
                                                         padding: Pad(
@@ -876,10 +882,9 @@ class StackSellScreen extends ConsumerWidget {
                                               ],
                                             ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
                                   Container(
                                     width: Get.width,
                                     padding: EdgeInsets.all(5),
@@ -890,62 +895,74 @@ class StackSellScreen extends ConsumerWidget {
                                         bottomLeft: Radius.circular(8),
                                       ),
                                     ),
-                                    child: RowSuper(
-                                      fill: true,
+                                    child: Row(
                                       children: [
-                                        Text.rich(
-                                          TextSpan(
-                                            text: 'Best Buyer: ',
-                                            style: TextStyle(
-                                              fontSize: Adaptive.sp(14),
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            children: [
-                                              TextSpan(
-                                                text:
-                                                    "${list.data?[index].bestBuyerPrice ?? "0"}",
-                                              ),
-                                            ],
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        if (!isSeller)
-                                          Text.rich(
+                                        Expanded(
+                                          child: Text.rich(
                                             TextSpan(
-                                              text: isSeller
-                                                  ? 'My Price(seller): '
-                                                  : 'My Price: ',
+                                              text: 'Best Buyer: ',
                                               style: TextStyle(
-                                                fontSize: Adaptive.sp(14),
+                                                fontSize: Adaptive.sp(12),
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                               children: [
                                                 TextSpan(
-                                                  text:
-                                                      "${isSeller ? (list.data?[index].sellerPrice ?? 0) : list.data?[index].buyerPrice ?? 0}",
+                                                  text: "${list.data?[index].bestBuyerPrice ?? "0"}",
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.normal,
+                                                  ),
                                                 ),
                                               ],
                                             ),
                                             textAlign: TextAlign.center,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        Text.rich(
-                                          TextSpan(
-                                            text: 'Seller: ',
-                                            style: TextStyle(
-                                              fontSize: Adaptive.sp(14),
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            children: [
+                                        ),
+                                        if (!isSeller)
+                                          Expanded(
+                                            child: Text.rich(
                                               TextSpan(
-                                                text:
-                                                    "${list.data?[index].sellerPrice}",
+                                                text: 'My Price: ',
+                                                style: TextStyle(
+                                                  fontSize: Adaptive.sp(12),
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                children: [
+                                                  TextSpan(
+                                                    text: "${isSeller ? (list.data?[index].sellerPrice ?? 0) : list.data?[index].buyerPrice ?? 0}",
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.normal,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
+                                              textAlign: TextAlign.center,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
-                                          textAlign: TextAlign.center,
+                                        Expanded(
+                                          child: Text.rich(
+                                            TextSpan(
+                                              text: 'Seller: ',
+                                              style: TextStyle(
+                                                fontSize: Adaptive.sp(12),
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              children: [
+                                                TextSpan(
+                                                  text: "${list.data?[index].sellerPrice}",
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.normal,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                       ],
                                     ),

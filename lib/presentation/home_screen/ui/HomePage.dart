@@ -1142,12 +1142,21 @@ class _HomepageState extends ConsumerState<Homepage> {
                           elevation: 3,
                           child: ref.watch(userDetailsProvider).when(
                                 data: (userData) {
-                                  final user = ref
-                                      .watch(sharedUtilityProvider)
-                                      .getUser();
-                                  final isKycComplete = ref
-                                      .watch(sharedUtilityProvider)
-                                      .isKycComplete();
+                                  // Use API response directly so profile shows
+                                  // instantly on first install/login without
+                                  // waiting for SharedPreferences to be populated
+                                  final user = userData.userDetails ??
+                                      ref
+                                          .watch(sharedUtilityProvider)
+                                          .getUser();
+                                  final isKycComplete =
+                                      userData.userDetails?.verifiedAccount
+                                              .toString() ==
+                                          "2"
+                                      ? true
+                                      : ref
+                                          .watch(sharedUtilityProvider)
+                                          .isKycComplete();
 
                                   return Padding(
                                     padding: EdgeInsets.all(12),
@@ -2261,8 +2270,18 @@ class _HomepageState extends ConsumerState<Homepage> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(homeDataProvider);
+            ref.invalidate(allBookingsProvider);
+            ref.invalidate(warehouseBookingsProvider);
+            ref.invalidate(userDetailsProvider);
+            ref.invalidate(matchedOrdersProvider);
+            await Future.delayed(const Duration(milliseconds: 600));
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2683,6 +2702,7 @@ class _HomepageState extends ConsumerState<Homepage> {
           ),
         ),
       ),
+    ),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

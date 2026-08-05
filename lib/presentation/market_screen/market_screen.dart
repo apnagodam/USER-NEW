@@ -2,11 +2,15 @@ import 'package:apnagodam/core/utils/color_constant.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
 import 'package:apnagodam/presentation/market_screen/SBT/Sbtscreen.dart';
 import 'package:apnagodam/presentation/market_screen/WBT/WbtScreen.dart';
+import 'package:apnagodam/presentation/market_screen/ai_assistant/ai_voice_assistant.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
+
+import 'SBT/Sbtscreen.dart';
 
 var sbtCurrencyFormat =
     NumberFormat.currency(locale: 'HI', symbol: '\u{20B9}', decimalDigits: 0);
@@ -50,6 +54,19 @@ class _MarketState extends ConsumerState<Market> {
           AppLocalizations.of(context)!.msgMarket,
         ),
         centerTitle: true,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => showAiVoiceAssistant(context, ref),
+        backgroundColor: ColorConstant.maingreen,
+        icon: const Icon(Icons.mic_rounded, color: Colors.white),
+        label: Text(
+          Get.locale?.languageCode == 'hi' ? 'भाव पूछें' : 'Ask Rates',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        elevation: 6,
       ),
       body: SafeArea(
         child: DefaultTabController(
