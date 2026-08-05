@@ -14,11 +14,11 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 // ---------- UI state enum ----------
 enum _AssistantStep {
-  modelSelection,
-  intentSelection,
-  listening,
-  processing,
-  response,
+  mainOptions, // Step 1: Bhav Jane, Operations, Sales, Accounts
+  buySellSelection, // Step 1.5: If Bhav Jane selected -> Buy or Sell
+  listening, // Step 2: Direct mic open
+  processing, // Step 3: Claude API processing
+  response, // Step 4: Display + TTS answer
 }
 
 // ---------- public entry point ----------
@@ -47,9 +47,9 @@ class _AiAssistantSheet extends StatefulWidget {
 class _AiAssistantSheetState extends State<_AiAssistantSheet>
     with TickerProviderStateMixin {
   // ── state ──
-  _AssistantStep _step = _AssistantStep.modelSelection;
-  AiModel? _selectedModel;
-  String _intent = 'sell'; // 'buy' | 'sell'
+  _AssistantStep _step = _AssistantStep.mainOptions;
+  AiModel _selectedModel = AiModel.sales;
+  String _intent = 'sell'; // 'buy' | 'sell' | 'general'
   String _spokenText = '';
   String _aiResponse = '';
   String _marketData = '';
@@ -114,16 +114,25 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     );
   }
 
-  // ── step navigation ──
+  // ── flow navigation ──
 
-  void _onModelSelected(AiModel model) {
+  void _onBhavJaneSelected() {
     setState(() {
-      _selectedModel = model;
-      _step = _AssistantStep.intentSelection;
+      _selectedModel = AiModel.sales;
+      _step = _AssistantStep.buySellSelection;
     });
   }
 
-  void _onIntentSelected(String intent) {
+  void _onDirectModelSelected(AiModel model) {
+    setState(() {
+      _selectedModel = model;
+      _intent = 'general';
+      _step = _AssistantStep.listening;
+    });
+    _startListening();
+  }
+
+  void _onBuySellSelected(String intent) {
     setState(() {
       _intent = intent;
       _step = _AssistantStep.listening;
@@ -171,7 +180,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
 
     final response = await AiService.askClaude(
       question: _spokenText,
-      model: _selectedModel!,
+      model: _selectedModel,
       intent: _intent,
       marketData: _marketData,
       isHindi: _isHindi,
@@ -182,7 +191,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       _step = _AssistantStep.response;
     });
 
-    // Auto-speak the response
+    // Auto-speak response
     await _speak(response);
   }
 
@@ -197,8 +206,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   void _resetToStart() {
     _tts.stop();
     setState(() {
-      _step = _AssistantStep.modelSelection;
-      _selectedModel = null;
+      _step = _AssistantStep.mainOptions;
       _spokenText = '';
       _aiResponse = '';
     });
@@ -268,14 +276,12 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   Widget _buildHeader() {
     return Row(
       children: [
-        // Back button (except on first step)
-        if (_step != _AssistantStep.modelSelection)
+        // Back button if not on main options
+        if (_step != _AssistantStep.mainOptions)
           IconButton(
             onPressed: () {
               setState(() {
-                _step = _step == _AssistantStep.intentSelection
-                    ? _AssistantStep.modelSelection
-                    : _AssistantStep.intentSelection;
+                _step = _AssistantStep.mainOptions;
                 _speech.stop();
               });
             },
@@ -295,9 +301,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                 ),
               ),
               Text(
-                _isHindi
-                    ? 'अपना गोदाम AI सहायक'
-                    : 'Apna Godam AI Assistant',
+                _isHindi ? 'अपना गोदाम AI सहायक' : 'Apna Godam AI Assistant',
                 style: TextStyle(
                   fontSize: Adaptive.sp(12),
                   color: Colors.grey.shade500,
@@ -318,16 +322,16 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
 
   Widget _buildCurrentStep() {
     switch (_step) {
-      case _AssistantStep.modelSelection:
-        return _ModelSelectionStep(
+      case _AssistantStep.mainOptions:
+        return _MainOptionsStep(
           isHindi: _isHindi,
-          onModelSelected: _onModelSelected,
+          onBhavJane: _onBhavJaneSelected,
+          onDirectModel: _onDirectModelSelected,
         );
-      case _AssistantStep.intentSelection:
-        return _IntentSelectionStep(
+      case _AssistantStep.buySellSelection:
+        return _BuySellSelectionStep(
           isHindi: _isHindi,
-          model: _selectedModel!,
-          onIntentSelected: _onIntentSelected,
+          onBuySellSelected: _onBuySellSelected,
         );
       case _AssistantStep.listening:
         return _ListeningStep(
@@ -353,26 +357,28 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
 }
 
 // ════════════════════════════════════════════════════
-//  STEP 1 — Model Selection
+//  STEP 1 — Main Options
 // ════════════════════════════════════════════════════
 
-class _ModelSelectionStep extends StatelessWidget {
+class _MainOptionsStep extends StatelessWidget {
   final bool isHindi;
-  final void Function(AiModel) onModelSelected;
+  final VoidCallback onBhavJane;
+  final void Function(AiModel) onDirectModel;
 
-  const _ModelSelectionStep({
+  const _MainOptionsStep({
     required this.isHindi,
-    required this.onModelSelected,
+    required this.onBhavJane,
+    required this.onDirectModel,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      key: const ValueKey('model'),
+      key: const ValueKey('mainOptions'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isHindi ? 'विभाग चुनें:' : 'Select Department:',
+          isHindi ? 'आप क्या सहायता चाहते हैं?' : 'How can we help you?',
           style: GoogleFonts.poppins(
             fontSize: Adaptive.sp(15),
             fontWeight: FontWeight.w600,
@@ -380,7 +386,23 @@ class _ModelSelectionStep extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        _ModelCard(
+        // Option 1: Bhav Jane (Featured)
+        _OptionCard(
+          icon: '🏷️',
+          titleHi: 'भाव जानें',
+          titleEn: 'Know Rates',
+          descHi: 'आज का भाव जानें (खरीद / बिक्री)',
+          descEn: 'Check today\'s rates (Buy / Sell)',
+          color: const Color(0xFFD84315),
+          isFeatured: true,
+          isHindi: isHindi,
+          onTap: onBhavJane,
+        ),
+        const SizedBox(height: 12),
+        Divider(color: Colors.grey.shade200, height: 1),
+        const SizedBox(height: 12),
+        // Direct department options
+        _OptionCard(
           icon: '🏭',
           titleHi: 'ऑपरेशन',
           titleEn: 'Operations',
@@ -388,21 +410,21 @@ class _ModelSelectionStep extends StatelessWidget {
           descEn: 'Warehouse, stock, inward-outward',
           color: const Color(0xFF1565C0),
           isHindi: isHindi,
-          onTap: () => onModelSelected(AiModel.operations),
+          onTap: () => onDirectModel(AiModel.operations),
         ),
         const SizedBox(height: 10),
-        _ModelCard(
+        _OptionCard(
           icon: '📈',
           titleHi: 'सेल्स',
           titleEn: 'Sales',
-          descHi: 'बाजार भाव, खरीद-बिक्री दरें',
-          descEn: 'Market rates, buy & sell prices',
+          descHi: 'व्यापार, बोली, खरीद-बिक्री मदद',
+          descEn: 'Trade, bidding, buy & sell help',
           color: const Color(0xFF2E7D32),
           isHindi: isHindi,
-          onTap: () => onModelSelected(AiModel.sales),
+          onTap: () => onDirectModel(AiModel.sales),
         ),
         const SizedBox(height: 10),
-        _ModelCard(
+        _OptionCard(
           icon: '💰',
           titleHi: 'अकाउंट्स',
           titleEn: 'Accounts',
@@ -410,30 +432,32 @@ class _ModelSelectionStep extends StatelessWidget {
           descEn: 'Wallet, payments, settlements',
           color: const Color(0xFFE65100),
           isHindi: isHindi,
-          onTap: () => onModelSelected(AiModel.accounts),
+          onTap: () => onDirectModel(AiModel.accounts),
         ),
       ],
     );
   }
 }
 
-class _ModelCard extends StatelessWidget {
+class _OptionCard extends StatelessWidget {
   final String icon;
   final String titleHi;
   final String titleEn;
   final String descHi;
   final String descEn;
   final Color color;
+  final bool isFeatured;
   final bool isHindi;
   final VoidCallback onTap;
 
-  const _ModelCard({
+  const _OptionCard({
     required this.icon,
     required this.titleHi,
     required this.titleEn,
     required this.descHi,
     required this.descEn,
     required this.color,
+    this.isFeatured = false,
     required this.isHindi,
     required this.onTap,
   });
@@ -446,11 +470,19 @@ class _ModelCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: isFeatured ? 16 : 14,
+          ),
           decoration: BoxDecoration(
-            border: Border.all(color: color.withValues(alpha: 0.3)),
+            border: Border.all(
+              color: isFeatured ? color : color.withValues(alpha: 0.3),
+              width: isFeatured ? 2.0 : 1.0,
+            ),
             borderRadius: BorderRadius.circular(16),
-            color: color.withValues(alpha: 0.05),
+            color: isFeatured
+                ? color.withValues(alpha: 0.1)
+                : color.withValues(alpha: 0.05),
           ),
           child: Row(
             children: [
@@ -458,11 +490,11 @@ class _ModelCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
+                  color: color.withValues(alpha: isFeatured ? 0.2 : 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: Text(icon, style: const TextStyle(fontSize: 22)),
+                  child: Text(icon, style: const TextStyle(fontSize: 24)),
                 ),
               ),
               const SizedBox(width: 14),
@@ -470,13 +502,36 @@ class _ModelCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      isHindi ? titleHi : titleEn,
-                      style: GoogleFonts.poppins(
-                        fontSize: Adaptive.sp(15),
-                        fontWeight: FontWeight.w600,
-                        color: color,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          isHindi ? titleHi : titleEn,
+                          style: GoogleFonts.poppins(
+                            fontSize: Adaptive.sp(15),
+                            fontWeight: FontWeight.bold,
+                            color: color,
+                          ),
+                        ),
+                        if (isFeatured) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              isHindi ? 'मुख्य' : 'Popular',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     Text(
                       isHindi ? descHi : descEn,
@@ -490,7 +545,7 @@ class _ModelCard extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: color.withValues(alpha: 0.6),
+                color: color.withValues(alpha: 0.7),
               ),
             ],
           ),
@@ -501,42 +556,25 @@ class _ModelCard extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════
-//  STEP 2 — Intent Selection (Buy / Sell)
+//  STEP 1.5 — Buy or Sell (Only when Bhav Jane tapped)
 // ════════════════════════════════════════════════════
 
-class _IntentSelectionStep extends StatelessWidget {
+class _BuySellSelectionStep extends StatelessWidget {
   final bool isHindi;
-  final AiModel model;
-  final void Function(String) onIntentSelected;
+  final void Function(String) onBuySellSelected;
 
-  const _IntentSelectionStep({
+  const _BuySellSelectionStep({
     required this.isHindi,
-    required this.model,
-    required this.onIntentSelected,
+    required this.onBuySellSelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    String modelName;
-    switch (model) {
-      case AiModel.operations:
-        modelName = isHindi ? 'ऑपरेशन' : 'Operations';
-        break;
-      case AiModel.sales:
-        modelName = isHindi ? 'सेल्स' : 'Sales';
-        break;
-      case AiModel.accounts:
-        modelName = isHindi ? 'अकाउंट्स' : 'Accounts';
-        break;
-    }
-
     return Column(
-      key: const ValueKey('intent'),
+      key: const ValueKey('buySell'),
       children: [
         Text(
-          isHindi
-              ? '$modelName विभाग चुना\nआप क्या करना चाहते हैं?'
-              : '$modelName selected\nWhat would you like to do?',
+          isHindi ? 'आप क्या दर जानना चाहते हैं?' : 'Which rate do you want to ask?',
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(
             fontSize: Adaptive.sp(15),
@@ -548,24 +586,24 @@ class _IntentSelectionStep extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _IntentButton(
+              child: _BuySellButton(
                 icon: '🛒',
                 labelHi: 'खरीदना है',
-                labelEn: 'I want to Buy',
+                labelEn: 'Want to Buy',
                 color: const Color(0xFF1565C0),
                 isHindi: isHindi,
-                onTap: () => onIntentSelected('buy'),
+                onTap: () => onBuySellSelected('buy'),
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: _IntentButton(
+              child: _BuySellButton(
                 icon: '📦',
                 labelHi: 'बेचना है',
-                labelEn: 'I want to Sell',
+                labelEn: 'Want to Sell',
                 color: const Color(0xFF2E7D32),
                 isHindi: isHindi,
-                onTap: () => onIntentSelected('sell'),
+                onTap: () => onBuySellSelected('sell'),
               ),
             ),
           ],
@@ -576,7 +614,7 @@ class _IntentSelectionStep extends StatelessWidget {
   }
 }
 
-class _IntentButton extends StatelessWidget {
+class _BuySellButton extends StatelessWidget {
   final String icon;
   final String labelHi;
   final String labelEn;
@@ -584,7 +622,7 @@ class _IntentButton extends StatelessWidget {
   final bool isHindi;
   final VoidCallback onTap;
 
-  const _IntentButton({
+  const _BuySellButton({
     required this.icon,
     required this.labelHi,
     required this.labelEn,
@@ -598,7 +636,7 @@ class _IntentButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(vertical: 22),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.08),
           border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
@@ -625,7 +663,7 @@ class _IntentButton extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════
-//  STEP 3 — Listening (Voice Input)
+//  STEP 2 — Listening (Voice Input)
 // ════════════════════════════════════════════════════
 
 class _ListeningStep extends StatelessWidget {
@@ -784,7 +822,7 @@ class _ListeningStep extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════
-//  STEP 4 — Processing
+//  STEP 3 — Processing
 // ════════════════════════════════════════════════════
 
 class _ProcessingStep extends StatelessWidget {
@@ -827,7 +865,7 @@ class _ProcessingStep extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════
-//  STEP 5 — AI Response
+//  STEP 4 — AI Response
 // ════════════════════════════════════════════════════
 
 class _ResponseStep extends StatelessWidget {
