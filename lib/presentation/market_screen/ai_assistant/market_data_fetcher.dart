@@ -87,35 +87,64 @@ class MarketDataFetcher {
     return sb.toString();
   }
 
-  static Future<String> _fetchSbt() async {
+  static Future<String> _fetchSbt({String? authToken}) async {
+    final sb = StringBuffer();
+    // 1. Fetch sbt_product_list
+    try {
+      final uri = Uri.parse(SBT_COMMODITY_LIST);
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+        if (authToken != null && authToken.isNotEmpty)
+          'Authorization': 'Bearer $authToken',
+      };
+      final response = await http
+          .get(uri, headers: headers)
+          .timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final items = data['data'] as List?;
+        if (items != null && items.isNotEmpty) {
+          sb.writeln('--- SBT Product List ---');
+          for (final item in items) {
+            final commodity = item['commodity'] ?? item['commodity_name'] ?? '';
+            final ltp = item['ltp'];
+            final upper = item['upper_circuit'] ?? '';
+            final lower = item['lower_circuit'] ?? '';
+            final district = item['district'] ?? '';
+            final date = item['date'] ?? '';
+            if (commodity.toString().isNotEmpty) {
+              sb.writeln(
+                  'फसल: $commodity | अंतिम भाव (LTP): ₹${ltp ?? 'N/A'} | सर्किट: ₹$lower - ₹$upper | स्थान: $district | समय: $date');
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 2. Fetch sbt_trade_list
     try {
       final uri = Uri.parse(SBT_BUYER_SELLER);
       final response =
           await http.get(uri).timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return _parseSbtData(data);
-      }
-    } catch (_) {}
-    return '';
-  }
-
-  static String _parseSbtData(dynamic data) {
-    final sb = StringBuffer();
-    try {
-      final items = data['data'] as List?;
-      if (items == null || items.isEmpty) return '';
-      for (final item in items.take(15)) {
-        final commodity = item['commodity_name'] ?? item['product_name'] ?? '';
-        final buyerPrice = item['buyer_price'] ?? item['best_buyer_price'] ?? 0;
-        final sellerPrice = item['seller_price'] ?? 0;
-        final lastPrice = item['last_trade_price'] ?? 0;
-        if (commodity.toString().isNotEmpty) {
-          sb.writeln(
-              '$commodity | SBT Buy: ₹$buyerPrice/qtl | SBT Sell: ₹$sellerPrice/qtl | Last Trade: ₹$lastPrice/qtl');
+        final items = data['data'] as List?;
+        if (items != null && items.isNotEmpty) {
+          sb.writeln('--- SBT Trade List ---');
+          for (final item in items.take(15)) {
+            final commodity = item['commodity_name'] ?? item['product_name'] ?? '';
+            final buyerPrice = item['buyer_price'] ?? item['best_buyer_price'] ?? 0;
+            final sellerPrice = item['seller_price'] ?? 0;
+            final lastPrice = item['last_trade_price'] ?? 0;
+            if (commodity.toString().isNotEmpty) {
+              sb.writeln(
+                  'फसल: $commodity | क्रेता भाव: ₹$buyerPrice | विक्रेता भाव: ₹$sellerPrice | अंतिम सौदा: ₹$lastPrice');
+            }
+          }
         }
       }
     } catch (_) {}
+
     return sb.toString();
   }
 

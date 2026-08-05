@@ -11,7 +11,7 @@ enum AiModel {
 
 class AiService {
   static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
-  static const String _model = 'claude-3-haiku-20240307';
+  static const String _model = 'claude-3-5-sonnet-20241022';
 
   /// Sends a farmer's question to Claude with live market data as context.
   /// [question] - farmer's spoken question (already transcribed)
@@ -66,33 +66,50 @@ class AiService {
   }
 
   /// Local fallback when API has network/credit issues:
-  /// Scans marketData lines for crop name and returns live rate in Hindi.
+  /// Scans live marketData lines for crop name and returns exact rates in Hindi.
   static String _fallbackMarketResponse(String question, String marketData) {
     final q = question.toLowerCase();
-    String targetCrop = '';
+    List<String> keywords = [];
+
     if (q.contains('गेहूं') || q.contains('gehu') || q.contains('wheat')) {
-      targetCrop = 'Wheat';
+      keywords = ['गेहूं', 'wheat'];
     } else if (q.contains('जौ') || q.contains('jo') || q.contains('jau') || q.contains('barley')) {
-      targetCrop = 'Barley';
+      keywords = ['जौ', 'barley'];
     } else if (q.contains('चना') || q.contains('chana') || q.contains('gram')) {
-      targetCrop = 'Gram';
+      keywords = ['चना', 'gram'];
     } else if (q.contains('सरसों') || q.contains('sarson') || q.contains('mustard')) {
-      targetCrop = 'Mustard';
+      keywords = ['सरसों', 'mustard'];
+    } else if (q.contains('मूंगफली') || q.contains('mungfali') || q.contains('groundnut')) {
+      keywords = ['मूंगफली', 'groundnut'];
     } else if (q.contains('मक्का') || q.contains('makka') || q.contains('maize')) {
-      targetCrop = 'Maize';
+      keywords = ['मक्का', 'maize'];
     }
 
     if (marketData.isNotEmpty) {
       final lines = marketData.split('\n');
+      final matchedLines = <String>[];
+
       for (final line in lines) {
-        if (targetCrop.isNotEmpty && line.toLowerCase().contains(targetCrop.toLowerCase())) {
-          return 'आज $targetCrop का भाव: $line। अधिक जानकारी के लिए ऐप का व्यापार सेक्शन देखें।';
+        if (line.trim().isEmpty) continue;
+        final lineLower = line.toLowerCase();
+        if (keywords.isNotEmpty) {
+          for (final kw in keywords) {
+            if (lineLower.contains(kw)) {
+              matchedLines.add(line.trim());
+              break;
+            }
+          }
         }
       }
-      // If any market data lines exist, return the first 2 lines
-      final previewLines = lines.where((l) => l.contains('₹')).take(2).join('\n');
-      if (previewLines.isNotEmpty) {
-        return 'आज के मुख्य बाजार भाव:\n$previewLines';
+
+      if (matchedLines.isNotEmpty) {
+        return 'आज के लाइव बाजार भाव:\n${matchedLines.take(3).join('\n')}';
+      }
+
+      // If no keyword match, return top live market rates from the backend
+      final topRates = lines.where((l) => l.contains('₹') || l.contains('फसल:')).take(3).join('\n');
+      if (topRates.isNotEmpty) {
+        return 'आज के मुख्य लाइव बाजार भाव:\n$topRates';
       }
     }
 
