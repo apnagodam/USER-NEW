@@ -230,9 +230,9 @@ class _TradeState extends ConsumerState<Trade> {
                           : ref.watch(selectedTabIndex) == 1
                               ? const Wbtscreen()
                               : ref.watch(selectedTabIndex) == 2
-                                  ? const Buysellscreen(type: 1)
+                                  ? Buysellscreen(type: 1)
                                   : ref.watch(selectedTabIndex) == 3
-                                      ? const Buysellscreen(type: 2)
+                                      ? Buysellscreen(type: 2)
                                       : ref.watch(selectedTabIndex) == 4
                                           ? const Tradewalletscreen()
                                           : const Tradesbtsummary(

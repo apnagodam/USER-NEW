@@ -265,7 +265,7 @@ class AppDrawer extends ConsumerWidget {
               // Terms & Conditions
               const SizedBox(height: 10),
               InkWell(
-                onTap: () => Get.to(TermandconWebview(
+                onTap: () => Get.to(Webview(
                   url: 'https://swlpl.com/term-conditions.html',
                 )),
                 child: Padding(
@@ -293,7 +293,7 @@ class AppDrawer extends ConsumerWidget {
               // Feedback
               const SizedBox(height: 10),
               InkWell(
-                onTap: () => Get.to(Feedbackscreen()),
+                onTap: () => Get.to(const FeedbackScreen()),
                 child: Padding(
                   padding: Pad(all: 10),
                   child: Row(
