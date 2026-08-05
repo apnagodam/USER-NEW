@@ -1110,8 +1110,8 @@ class _HomepageState extends ConsumerState<Homepage> {
                       fontSize: Adaptive.sp(15),
                     ),
                   ),
-                ),
         ],
+      ),
       drawer: const AppDrawer(),
       body: SafeArea(
         child: RefreshIndicator(
