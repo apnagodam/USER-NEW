@@ -10,6 +10,7 @@ import 'package:apnagodam/widgets/widgets.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:apnagodam/presentation/market_screen/ai_assistant/ai_voice_assistant.dart';
 import 'package:get/get.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
 
@@ -51,32 +52,19 @@ class _TradeState extends ConsumerState<Trade> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // floatingActionButton: Container(
-      //   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      //   decoration: BoxDecoration(
-      //       color: Colors.white,
-      //       border: Border.all(color: ColorConstant.maingreen)),
-      //   child: Row(
-      //     mainAxisSize: MainAxisSize.min,
-      //     children: [
-      //       Text(
-      //         'AI Tool',
-      //         style: TextStyle(
-      //             fontWeight: FontWeight.bold, fontSize: Adaptive.sp(16)),
-
-      //       ),
-      //       SizedBox(
-      //         width: 10,
-      //       ),
-      //       Image.network(
-      //         'https://marketplace.canva.com/KhGUo/MAFoNRKhGUo/1/tl/canva-ai-chip-technology-icon-MAFoNRKhGUo.png',
-      //         color: ColorConstant.maingreen,
-      //         height: 24,
-      //         width: 24,
-      //       )
-      //     ],
-      //   ),
-      // ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => showAiVoiceAssistant(context, ref),
+        backgroundColor: ColorConstant.maingreen,
+        icon: const Icon(Icons.mic_rounded, color: Colors.white),
+        label: Text(
+          Get.locale?.languageCode == 'hi' ? 'भाव पूछें' : 'Ask Rates',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        elevation: 6,
+      ),
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.msgTrade),
         flexibleSpace: Container(
