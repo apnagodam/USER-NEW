@@ -141,25 +141,47 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   }
 
   Future<void> _startListening() async {
-    if (!_speechAvailable) {
+    final status = await Permission.microphone.request();
+    if (!status.isGranted) {
       _showSnack(_isHindi
-          ? 'माइक्रोफोन उपलब्ध नहीं है'
-          : 'Microphone not available');
+          ? 'माइक्रोफोन की अनुमति दें'
+          : 'Please grant microphone permission');
       return;
     }
+
+    if (!_speechAvailable) {
+      _speechAvailable = await _speech.initialize(
+        onError: (e) => debugPrint('Speech error: $e'),
+      );
+    }
+
+    if (!_speechAvailable) {
+      _showSnack(_isHindi
+          ? 'माइक्रोफोन सेवा उपलब्ध नहीं है'
+          : 'Microphone service unavailable');
+      return;
+    }
+
     setState(() => _spokenText = '');
-    await _speech.listen(
-      onResult: (result) {
-        setState(() => _spokenText = result.recognizedWords);
-        if (result.finalResult && _spokenText.isNotEmpty) {
-          _submitQuestion();
-        }
-      },
-      localeId: _isHindi ? 'hi_IN' : 'en_IN',
-      listenFor: const Duration(seconds: 20),
-      pauseFor: const Duration(seconds: 4),
-      listenOptions: stt.SpeechListenOptions(cancelOnError: true),
-    );
+    try {
+      await _speech.listen(
+        onResult: (result) {
+          setState(() => _spokenText = result.recognizedWords);
+          if (result.finalResult && _spokenText.trim().isNotEmpty) {
+            _submitQuestion();
+          }
+        },
+        listenFor: const Duration(seconds: 25),
+        pauseFor: const Duration(seconds: 5),
+        listenOptions: stt.SpeechListenOptions(
+          partialResults: true,
+          cancelOnError: false,
+          listenMode: stt.ListenMode.dictation,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Speech listen error: $e');
+    }
   }
 
   Future<void> _submitQuestion() async {
@@ -743,7 +765,7 @@ class _ListeningStep extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         Text(
           isHindi ? '🎙️ बोलिए...' : '🎙️ Speak now...',
           style: GoogleFonts.poppins(
@@ -762,27 +784,59 @@ class _ListeningStep extends StatelessWidget {
             color: Colors.grey.shade500,
           ),
         ),
-        const SizedBox(height: 20),
-        // Live transcription box
-        if (spokenText.isNotEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.shade200),
-            ),
-            child: Text(
-              '"$spokenText"',
-              style: GoogleFonts.poppins(
-                fontSize: Adaptive.sp(14),
-                color: Colors.black87,
-                fontStyle: FontStyle.italic,
-              ),
+        const SizedBox(height: 16),
+        // Live transcription container (always visible)
+        Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 60),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: spokenText.isNotEmpty
+                ? Colors.green.shade50
+                : Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: spokenText.isNotEmpty
+                  ? ColorConstant.maingreen
+                  : Colors.grey.shade300,
+              width: 1.5,
             ),
           ),
-        const SizedBox(height: 20),
+          child: Row(
+            children: [
+              Icon(
+                spokenText.isNotEmpty ? Icons.record_voice_over : Icons.mic_none_rounded,
+                color: spokenText.isNotEmpty
+                    ? ColorConstant.maingreen
+                    : Colors.grey.shade400,
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  spokenText.isNotEmpty
+                      ? spokenText
+                      : (isHindi
+                          ? 'आप जो बोल रहे हैं वह यहाँ दिखेगा...'
+                          : 'What you speak will appear here...'),
+                  style: GoogleFonts.poppins(
+                    fontSize: Adaptive.sp(14),
+                    fontWeight: spokenText.isNotEmpty
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                    color: spokenText.isNotEmpty
+                        ? Colors.black87
+                        : Colors.grey.shade500,
+                    fontStyle: spokenText.isNotEmpty
+                        ? FontStyle.normal
+                        : FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
