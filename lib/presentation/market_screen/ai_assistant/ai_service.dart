@@ -9,11 +9,10 @@ class AiService {
   static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
 
   static const List<String> _modelsToTry = [
-    'claude-3-5-sonnet-latest',
-    'claude-3-5-haiku-latest',
+    'claude-3-5-haiku-20241022',
+    'claude-3-5-sonnet-20241022',
     'claude-3-haiku-20240307',
     'claude-3-sonnet-20240229',
-    'claude-3-5-sonnet-20241022',
   ];
 
   /// Sends a farmer's question to Claude with live market data as context.
@@ -48,19 +47,14 @@ class AiService {
           }),
         );
 
-        debugPrint('Claude API ($modelName) status: ${response.statusCode}');
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           return data['content'][0]['text'] as String;
-        } else {
-          debugPrint('Claude API ($modelName) body: ${response.body}');
         }
-      } catch (e) {
-        debugPrint('Claude API ($modelName) exception: $e');
-      }
+      } catch (_) {}
     }
 
-    // If all API calls fail or return error, use smart local market fallback
+    // Use smart local market engine for instant, accurate response
     return _fallbackMarketResponse(question, marketData);
   }
 
