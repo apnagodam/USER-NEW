@@ -11,14 +11,15 @@ enum AiModel {
 
 class AiService {
   static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
-  static const String _model = 'claude-3-5-sonnet-20241022';
+  static const List<String> _modelsToTry = [
+    'claude-3-5-sonnet-latest',
+    'claude-3-5-haiku-latest',
+    'claude-3-haiku-20240307',
+    'claude-3-sonnet-20240229',
+    'claude-3-5-sonnet-20241022',
+  ];
 
   /// Sends a farmer's question to Claude with live market data as context.
-  /// [question] - farmer's spoken question (already transcribed)
-  /// [model] - which AI persona to use
-  /// [intent] - 'buy' or 'sell'
-  /// [marketData] - live data fetched from backend
-  /// [isHindi] - true if app language is Hindi
   static Future<String> askClaude({
     required String question,
     required AiModel model,
@@ -33,55 +34,66 @@ class AiService {
       isHindi: isHindi,
     );
 
-    try {
-      final response = await http.post(
-        Uri.parse(_apiUrl),
-        headers: {
-          'x-api-key': AppConfig.claudeApiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-        },
-        body: jsonEncode({
-          'model': _model,
-          'max_tokens': 512,
-          'system': systemPrompt,
-          'messages': [
-            {'role': 'user', 'content': question},
-          ],
-        }),
-      );
+    // Try available Anthropic models in sequence
+    for (final modelName in _modelsToTry) {
+      try {
+        final response = await http.post(
+          Uri.parse(_apiUrl),
+          headers: {
+            'x-api-key': AppConfig.claudeApiKey,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
+          },
+          body: jsonEncode({
+            'model': modelName,
+            'max_tokens': 512,
+            'system': systemPrompt,
+            'messages': [
+              {'role': 'user', 'content': question},
+            ],
+          }),
+        );
 
-      print('Claude API status: ${response.statusCode}');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['content'][0]['text'] as String;
-      } else {
-        print('Claude API error body: ${response.body}');
-        return _fallbackMarketResponse(question, marketData);
+        print('Claude API ($modelName) status: ${response.statusCode}');
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return data['content'][0]['text'] as String;
+        } else {
+          print('Claude API ($modelName) body: ${response.body}');
+        }
+      } catch (e) {
+        print('Claude API ($modelName) exception: $e');
       }
-    } catch (e) {
-      print('Claude API exception: $e');
-      return _fallbackMarketResponse(question, marketData);
     }
+
+    // If all API calls fail or return error, use smart local market fallback
+    return _fallbackMarketResponse(question, marketData);
   }
 
   /// Local fallback when API has network/credit issues:
   /// Scans live marketData lines for crop name and returns exact rates in Hindi.
   static String _fallbackMarketResponse(String question, String marketData) {
     final q = question.toLowerCase();
+    String searchedCropName = '';
     List<String> keywords = [];
 
     if (q.contains('गेहूं') || q.contains('gehu') || q.contains('wheat')) {
+      searchedCropName = 'गेहूं (Wheat)';
       keywords = ['गेहूं', 'wheat'];
     } else if (q.contains('जौ') || q.contains('jo') || q.contains('jau') || q.contains('barley')) {
+      searchedCropName = 'जौ (Barley)';
       keywords = ['जौ', 'barley'];
     } else if (q.contains('चना') || q.contains('chana') || q.contains('gram')) {
+      searchedCropName = 'चना (Gram)';
       keywords = ['चना', 'gram'];
     } else if (q.contains('सरसों') || q.contains('sarson') || q.contains('mustard')) {
+      searchedCropName = 'सरसों (Mustard)';
       keywords = ['सरसों', 'mustard'];
     } else if (q.contains('मूंगफली') || q.contains('mungfali') || q.contains('groundnut')) {
+      searchedCropName = 'मूंगफली (Groundnut)';
       keywords = ['मूंगफली', 'groundnut'];
     } else if (q.contains('मक्का') || q.contains('makka') || q.contains('maize')) {
+      searchedCropName = 'मक्का (Maize)';
       keywords = ['मक्का', 'maize'];
     }
 
@@ -103,10 +115,15 @@ class AiService {
       }
 
       if (matchedLines.isNotEmpty) {
-        return 'आज के लाइव बाजार भाव:\n${matchedLines.take(3).join('\n')}';
+        return 'आज के $searchedCropName का लाइव बाजार भाव:\n${matchedLines.take(3).join('\n')}';
       }
 
-      // If no keyword match, return top live market rates from the backend
+      // If specific crop was asked but not found in today's API list
+      if (searchedCropName.isNotEmpty) {
+        return 'आज के लाइव बाजार डेटा में $searchedCropName का भाव/बोली उपलब्ध नहीं है। कृपया ऐप का व्यापार (SBT/WBT) सेक्शन देखें।';
+      }
+
+      // If no specific crop was mentioned, return top live market rates
       final topRates = lines.where((l) => l.contains('₹') || l.contains('फसल:')).take(3).join('\n');
       if (topRates.isNotEmpty) {
         return 'आज के मुख्य लाइव बाजार भाव:\n$topRates';
