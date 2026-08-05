@@ -1108,9 +1108,9 @@ class _HomepageState extends ConsumerState<Homepage> {
                     style: TextStyle(
                       color: ColorConstant.maingreen,
                       fontSize: Adaptive.sp(15),
-                    ),
                   ),
-        ],
+                ),
+          )],
       ),
       drawer: const AppDrawer(),
       body: SafeArea(
