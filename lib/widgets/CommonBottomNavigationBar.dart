@@ -25,9 +25,8 @@ class CommonBottomNavigationBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final tabWidth = screenWidth / 5;
-    // Removed broken contextColors assignment
+    final isHindi = Get.locale?.languageCode == 'hi';
+
     return Stack(
       alignment: Alignment.bottomCenter,
       children: [
@@ -43,7 +42,7 @@ class CommonBottomNavigationBar extends ConsumerWidget {
                 color: isDark
                     ? Colors.black.withOpacity(0.5)
                     : ColorConstant.maingreen.withOpacity(0.85),
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: <Color>[
@@ -51,7 +50,7 @@ class CommonBottomNavigationBar extends ConsumerWidget {
                       Color(0xFF275135), // Your main green
                       Color(0xFF3E7251),
                     ]),
-                border: Border(
+                border: const Border(
                   top: BorderSide(
                     color: Colors.white,
                     width: 0.6,
@@ -82,105 +81,88 @@ class CommonBottomNavigationBar extends ConsumerWidget {
                   fontSize: Adaptive.sp(13),
                 ),
                 items: [
+                  // Tab 0: Dashboard (Formerly Home)
                   _rippleItem(
-                    AppLocalizations.of(context)!.msgHome,
-                    CupertinoIcons.home,
+                    isHindi ? 'डैशबोर्ड' : 'Dashboard',
+                    CupertinoIcons.square_grid_2x2,
                     0,
                     ref,
                     context,
                   ),
-                  _rippleItem(AppLocalizations.of(context)!.storage,
-                      ImageConstant.imgwarehouse, 1, ref, context,
-                      isImage: true),
-                  _rippleItem(AppLocalizations.of(context)!.msgTrade,
-                      ImageConstant.imgmarket, 2, ref, context,
-                      isImage: true),
-                  _rippleItem(AppLocalizations.of(context)!.wallet,
-                      Icons.currency_rupee_outlined, 3, ref, context,
-                      isImage: false),
-                  _rippleItem(AppLocalizations.of(context)!.msgInvoices,
-                      Icons.receipt_long_outlined, 4, ref, context,
-                      isImage: false),
+                  // Tab 1: Storage
+                  _rippleItem(
+                    AppLocalizations.of(context)!.storage,
+                    ImageConstant.imgwarehouse,
+                    1,
+                    ref,
+                    context,
+                    isImage: true,
+                  ),
+                  // Tab 2: Home Page (Landing Page - Formerly Trade/Commercial)
+                  _rippleItem(
+                    isHindi ? 'होम पेज' : 'Home Page',
+                    CupertinoIcons.home,
+                    2,
+                    ref,
+                    context,
+                  ),
+                  // Tab 3: Wallet
+                  _rippleItem(
+                    AppLocalizations.of(context)!.wallet,
+                    Icons.currency_rupee_outlined,
+                    3,
+                    ref,
+                    context,
+                    isImage: false,
+                  ),
+                  // Tab 4: Invoices / Challan
+                  _rippleItem(
+                    AppLocalizations.of(context)!.invoices,
+                    Icons.receipt_long_outlined,
+                    4,
+                    ref,
+                    context,
+                  ),
                 ],
               ),
             ),
           ),
         ),
-        // 🔸 Underline indicator (optional, commented out)
-        // Positioned(
-        //   bottom: 25,
-        //   left: tabWidth * currentIndex + tabWidth / 2 - 10,
-        //   child: AnimatedContainer(
-        //     duration: const Duration(milliseconds: 280),
-        //     curve: Curves.easeOut,
-        //     width: 24,
-        //     height: 3.5,
-        //     decoration: BoxDecoration(
-        //       color: Colors.amber,
-        //       borderRadius: BorderRadius.circular(6),
-        //       boxShadow: [
-        //         BoxShadow(
-        //           color: Colors.amber.withOpacity(0.4),
-        //           blurRadius: 6,
-        //           spreadRadius: 0.5,
-        //         ),
-        //       ],
-        //     ),
-        //   ),
-        // ),
       ],
     );
   }
 
-  BottomNavigationBarItem _rippleItem(String label, dynamic icon, int index,
-      WidgetRef ref, BuildContext context,
-      {bool isImage = false}) {
+  BottomNavigationBarItem _rippleItem(
+    String label,
+    dynamic icon,
+    int index,
+    WidgetRef ref,
+    BuildContext context, {
+    bool isImage = false,
+  }) {
     final isSelected = currentIndex == index;
+    final color = isSelected ? Colors.amber : Colors.white;
+
+    Widget iconWidget;
+    if (isImage) {
+      iconWidget = Image.asset(
+        icon as String,
+        width: iconSize,
+        height: iconSize,
+        color: color,
+      );
+    } else {
+      iconWidget = Icon(
+        icon as IconData,
+        size: iconSize,
+        color: color,
+      );
+    }
+
     return BottomNavigationBarItem(
-      icon: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(32),
-          onTap: () {
-            var loggedInProvider =
-                ref.watch(authProvider).value ?? AuthStatus.loggedOut;
-            ref.watch(tabIndexProvider.notifier).state = index;
-            onTap(index);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(6),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 1.0, end: isSelected ? 1.25 : 1.0),
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutBack,
-              builder: (context, scale, child) {
-                return Transform.scale(
-                  scale: scale,
-                  child: isImage
-                      ? Image.asset(
-                          icon,
-                          width: Adaptive.sp(iconSize),
-                          fit: BoxFit.fill,
-                          color: isSelected && index == 5
-                              ? ColorConstant.maingreen
-                              : isSelected
-                                  ? Colors.amber
-                                  : Colors.white,
-                        )
-                      : Icon(
-                          icon,
-                          size: Adaptive.sp(iconSize),
-                          color: isSelected
-                              ? Colors.amber
-                              : isSelected && index == 5
-                                  ? ColorConstant.maingreen
-                                  : Colors.white,
-                        ),
-                );
-              },
-            ),
-          ),
-        ),
+      icon: Padding(
+        padding: const EdgeInsets.only(bottom: 2),
+        child: iconWidget,
       ),
       label: label,
     );
