@@ -120,8 +120,33 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     } catch (_) {}
 
     _tts.setStartHandler(() => setState(() => _isSpeaking = true));
-    _tts.setCompletionHandler(() => setState(() => _isSpeaking = false));
-    _tts.setCancelHandler(() => setState(() => _isSpeaking = false));
+    _tts.setCompletionHandler(() {
+      if (mounted) {
+        setState(() => _isSpeaking = false);
+        _autoStartListeningAfterResponse();
+      }
+    });
+    _tts.setCancelHandler(() {
+      if (mounted) {
+        setState(() => _isSpeaking = false);
+      }
+    });
+  }
+
+  void _autoStartListeningAfterResponse() {
+    if (!mounted) return;
+    if (_step == _AssistantStep.response) {
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted && _step == _AssistantStep.response) {
+          setState(() {
+            _spokenText = '';
+            _textCtrl.clear();
+            _step = _AssistantStep.listening;
+          });
+          _startListening();
+        }
+      });
+    }
   }
 
   Future<void> _prefetchMarketData() async {
