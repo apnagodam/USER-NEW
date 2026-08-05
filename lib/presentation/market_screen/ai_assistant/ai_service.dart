@@ -11,7 +11,7 @@ enum AiModel {
 
 class AiService {
   static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
-  static const String _model = 'claude-3-5-haiku-20241022';
+  static const String _model = 'claude-3-haiku-20240307';
 
   /// Sends a farmer's question to Claude with live market data as context.
   /// [question] - farmer's spoken question (already transcribed)
