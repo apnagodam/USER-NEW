@@ -18,7 +18,7 @@ import 'market_data_fetcher.dart';
 enum _AssistantStep {
   listening, // Step 1: Direct mic open immediately
   processing, // Step 2: AI processing
-  response, // Step 3: Display + Auto-TTS
+  response, // Step 3: Display + TTS
 }
 
 // ---------- public entry point ----------
@@ -119,34 +119,15 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       }
     } catch (_) {}
 
-    _tts.setStartHandler(() => setState(() => _isSpeaking = true));
+    _tts.setStartHandler(() {
+      if (mounted) setState(() => _isSpeaking = true);
+    });
     _tts.setCompletionHandler(() {
-      if (mounted) {
-        setState(() => _isSpeaking = false);
-        _autoStartListeningAfterResponse();
-      }
+      if (mounted) setState(() => _isSpeaking = false);
     });
     _tts.setCancelHandler(() {
-      if (mounted) {
-        setState(() => _isSpeaking = false);
-      }
+      if (mounted) setState(() => _isSpeaking = false);
     });
-  }
-
-  void _autoStartListeningAfterResponse() {
-    if (!mounted) return;
-    if (_step == _AssistantStep.response) {
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (mounted && _step == _AssistantStep.response) {
-          setState(() {
-            _spokenText = '';
-            _textCtrl.clear();
-            _step = _AssistantStep.listening;
-          });
-          _startListening();
-        }
-      });
-    }
   }
 
   Future<void> _prefetchMarketData() async {
@@ -159,9 +140,11 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   Future<void> _initAndStartListening() async {
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
-      _showSnack(_isHindi
-          ? 'माइक्रोफोन की अनुमति दें'
-          : 'Please grant microphone permission');
+      if (mounted) {
+        _showSnack(_isHindi
+            ? 'माइक्रोफोन की अनुमति दें'
+            : 'Please grant microphone permission');
+      }
       return;
     }
 
@@ -169,25 +152,31 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       _speechAvailable = await _speech.initialize(
         onError: (e) {
           debugPrint('Speech error: $e');
-          setState(() => _isListeningNow = false);
+          if (mounted) setState(() => _isListeningNow = false);
         },
         onStatus: (s) {
           debugPrint('Speech status: $s');
-          if (s == 'listening') {
-            setState(() => _isListeningNow = true);
-          } else if (s == 'notListening' || s == 'done') {
-            setState(() => _isListeningNow = false);
+          if (mounted) {
+            if (s == 'listening') {
+              setState(() => _isListeningNow = true);
+            } else if (s == 'notListening' || s == 'done') {
+              setState(() => _isListeningNow = false);
+            }
           }
         },
       );
     }
 
-    _startListening();
+    if (mounted) {
+      _startListening();
+    }
   }
 
   Future<void> _startListening() async {
     _silenceTimer?.cancel();
     await _speech.stop();
+
+    if (!mounted) return;
 
     if (!_speechAvailable) {
       _speechAvailable = await _speech.initialize(
@@ -209,9 +198,11 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     }
 
     if (!_speechAvailable) {
-      _showSnack(_isHindi
-          ? 'माइक्रोफोन सेवा उपलब्ध नहीं है'
-          : 'Microphone service unavailable');
+      if (mounted) {
+        _showSnack(_isHindi
+            ? 'माइक्रोफोन सेवा उपलब्ध नहीं है'
+            : 'Microphone service unavailable');
+      }
       return;
     }
 
@@ -223,8 +214,9 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
         orElse: () => locales.first,
       );
       targetLocale = hi.localeId;
-      debugPrint('Target STT locale: $targetLocale');
     } catch (_) {}
+
+    if (!mounted) return;
 
     setState(() {
       _spokenText = '';
@@ -276,17 +268,17 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   Future<void> _submitQuestion() async {
     _silenceTimer?.cancel();
     await _speech.stop();
-    setState(() => _isListeningNow = false);
+    if (mounted) setState(() => _isListeningNow = false);
 
     final query = _textCtrl.text.trim().isNotEmpty
         ? _textCtrl.text.trim()
         : _spokenText.trim();
 
     if (query.isEmpty) {
-      setState(() => _step = _AssistantStep.listening);
+      if (mounted) setState(() => _step = _AssistantStep.listening);
       return;
     }
-    setState(() => _step = _AssistantStep.processing);
+    if (mounted) setState(() => _step = _AssistantStep.processing);
 
     // If market data not yet fetched, try again
     if (_marketData.isEmpty) {
@@ -782,7 +774,7 @@ class _ResponseStep extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: onAskAgain,
                 icon: const Icon(Icons.mic_rounded),
-                label: Text(isHindi ? 'और पूछें' : 'Ask Again'),
+                label: Text(isHindi ? 'फिर से पूछें' : 'Ask Again'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorConstant.maingreen,
                   foregroundColor: Colors.white,
