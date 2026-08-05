@@ -1,5 +1,6 @@
 import 'package:apnagodam/auth_provider/AuthProvider.dart';
 import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/image_constant.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
 import 'package:apnagodam/presentation/home_screen/ui/TradesbtSummary.dart';
@@ -66,13 +67,15 @@ class _TradeState extends ConsumerState<Trade> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
+            Image.asset(
+              ImageConstant.mainlogopng,
+              width: 32,
+              height: 32,
+              errorBuilder: (_, __, ___) => Image.asset(
+                'assets/images/mainlogopng.png',
+                width: 32,
+                height: 32,
               ),
-              child: const Icon(Icons.eco_rounded, color: Colors.amber, size: 20),
             ),
             const SizedBox(width: 8),
             Text(
