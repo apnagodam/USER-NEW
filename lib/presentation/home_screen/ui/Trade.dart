@@ -67,23 +67,38 @@ class _TradeState extends ConsumerState<Trade> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
-              ImageConstant.mainlogopng,
-              width: 32,
-              height: 32,
-              errorBuilder: (_, __, ___) => Image.asset(
-                'assets/images/mainlogopng.png',
-                width: 32,
-                height: 32,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Image.asset(
+                ImageConstant.mainlogopng,
+                height: 24,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  'assets/images/mainlogopng.png',
+                  height: 24,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Text(
               isHindi ? 'होम पेज' : 'Home Page',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
-                fontSize: 18,
+                fontSize: 17,
                 color: Colors.white,
+                letterSpacing: 0.3,
               ),
             ),
           ],
