@@ -87,12 +87,12 @@ class AiService {
     }
 
     // Use smart local market engine for instant, accurate response
-    return _fallbackMarketResponse(question, marketData, history: history);
+    return fallbackMarketResponse(question, marketData, history: history);
   }
 
   /// Smart local answer generator for all process, feature, and market rate questions.
   /// Handles English, Hindi (Devanagari), and Marwari/Rajasthani queries.
-  static String _fallbackMarketResponse(
+  static String fallbackMarketResponse(
     String question,
     String marketData, {
     List<Map<String, String>>? history,
@@ -211,11 +211,17 @@ class AiService {
     if (q.contains('गेट पास') ||
         q.contains('गेटपास') ||
         q.contains('gatepass') ||
+        q.contains('gate pass') ||
+        q.contains('banaun') ||
+        q.contains('banaye') ||
+        q.contains('banao') ||
         q.contains('गेट')) {
       if (isEnglishQuery) {
         return 'Digital Gate Pass is generated automatically once your Inward or Outward request is approved, displaying your QR code, stack number and vehicle details.';
       }
-      return 'डिजिटल गेट पास (Gate Pass) के बारे में:\nइनवर्ड या आउटवर्ड अप्रूवल के बाद ऐप में डिजिटल QR गेट पास जनरेट होता है। इसमें गेटपास नंबर, वजन, स्टैक संख्या और वाहन नंबर दर्ज होता है जिससे गोदाम गेट पर तुरंत प्रवेश मिलता है।';
+      return isMarwari
+          ? 'डिजिटल गेट पास (Gate Pass) बणावण वास्ते:\n1. ऐप में माल जमा (Inward) या निकासी (Outward) री रिक्वेस्ट सबमिट करो सा।\n2. अप्रूवल मिलता ही आपरो QR कोड गेट पास ऐप में बण ज्यासी। गोदाम गेट पर आ गेटपास दिखावता ही तुरंत एंट्री मिल जावेगी।'
+          : 'डिजिटल गेट पास (Gate Pass) बनाने के लिए:\n1. ऐप में इनवर्ड या आउटवर्ड रिक्वेस्ट दर्ज करें।\n2. रिक्वेस्ट अप्रूव होते ही ऐप में QR कोड गेट पास जारी हो जाएगा। इसमें गेटपास नंबर, वजन, स्टैक संख्या दर्ज होती है जिससे गोदाम पर तुरंत प्रवेश मिलता है।';
     }
 
     // 5. QUALITY CALCULATOR (गुणवत्ता जांच)

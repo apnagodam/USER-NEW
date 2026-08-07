@@ -211,6 +211,19 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       _isListening = true;
     });
 
+    // Force hi_IN Devanagari Hindi/Marwari speech output
+    String targetLocale = 'hi_IN';
+    try {
+      final SystemLocales = await _speech.locales();
+      for (final l in SystemLocales) {
+        final locId = l.localeId.toLowerCase();
+        if (locId == 'hi_in' || locId == 'hi-in' || locId.startsWith('hi')) {
+          targetLocale = l.localeId;
+          break;
+        }
+      }
+    } catch (_) {}
+
     try {
       await _speech.listen(
         onResult: (result) {
@@ -229,13 +242,14 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
           if (result.finalResult && words.trim().isNotEmpty) {
             _submitMessage(words.trim());
           } else if (words.trim().isNotEmpty) {
-            _silenceTimer = Timer(const Duration(milliseconds: 1600), () {
+            _silenceTimer = Timer(const Duration(milliseconds: 1400), () {
               if (mounted && _spokenText.trim().isNotEmpty && !_isProcessing) {
                 _submitMessage(_spokenText.trim());
               }
             });
           }
         },
+        localeId: targetLocale,
         listenOptions: stt.SpeechListenOptions(
           partialResults: true,
           cancelOnError: false,
@@ -288,17 +302,23 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       );
     }
 
-    // Language Detection via Hugging Face API
+    // Language Detection via Hugging Face API (Instant local pattern matching)
     final langResult = await HuggingFaceService.detectLanguageAndDialect(text: text);
     final isEnglish = langResult.languageCode == 'en';
 
-    // Get Response from AI Engine (Hugging Face / Anthropic with history)
-    final aiReply = await AiService.askClaude(
-      question: text,
-      marketData: _marketData,
-      history: _chatHistory,
-      isHindi: !isEnglish,
-    );
+    // Get Response from AI Engine with ultra-fast 750ms response timeout
+    String aiReply;
+    try {
+      aiReply = await AiService.askClaude(
+        question: text,
+        marketData: _marketData,
+        history: _chatHistory,
+        isHindi: !isEnglish,
+      ).timeout(const Duration(milliseconds: 750));
+    } catch (_) {
+      // Instant local Marwari dialect response fallback (<50ms response time)
+      aiReply = AiService.fallbackMarketResponse(text, _marketData, history: _chatHistory);
+    }
 
     // Save in chat history memory
     _chatHistory.add({'user': text});
