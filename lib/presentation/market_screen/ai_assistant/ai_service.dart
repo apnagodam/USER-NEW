@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../../../core/config/app_config.dart';
+import 'hugging_face_service.dart';
 
 enum AiModel { operations, sales, accounts }
 
@@ -17,13 +18,28 @@ class AiService {
     'claude-3-5-haiku-latest',
   ];
 
-  /// Sends a farmer's question to Claude with live market data as context.
-  /// Automatically handles multi-dialect and language support (Marwari, Rajasthani, Hindi, English).
+  /// Sends a farmer's question with live market data as context.
+  /// Integrates Hugging Face API for Language Detection & Marwari/Shekhawati AI inference.
   static Future<String> askClaude({
     required String question,
     required String marketData,
     bool isHindi = true,
   }) async {
+    // 1. Try Hugging Face Inference API Model for regional dialect (Marwari/Shekhawati/Hindi)
+    try {
+      final hfResult = await HuggingFaceService.queryHuggingFaceModel(
+        prompt: question,
+        contextData: marketData,
+      );
+      if (hfResult != null && hfResult.trim().isNotEmpty) {
+        return hfResult;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('HuggingFace Inference Error: $e');
+      }
+    }
+
     final systemPrompt = _buildSystemPrompt(
       question: question,
       marketData: marketData,

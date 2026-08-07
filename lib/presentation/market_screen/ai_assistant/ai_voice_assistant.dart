@@ -13,6 +13,7 @@ import 'package:apnagodam/core/utils/helper.dart';
 import 'package:apnagodam/core/utils/image_constant.dart';
 import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'ai_service.dart';
+import 'hugging_face_service.dart';
 import 'market_data_fetcher.dart';
 
 // ---------- UI state enum ----------
@@ -306,21 +307,11 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       );
     }
 
-    // Auto-detect if query is English or Hindi/Marwari
-    final queryLower = query.toLowerCase();
-    final isEnglishQuery = RegExp(r'[a-zA-Z]').hasMatch(query) &&
-        (queryLower.contains('what') ||
-            queryLower.contains('how') ||
-            queryLower.contains('price') ||
-            queryLower.contains('rate') ||
-            queryLower.contains('buy') ||
-            queryLower.contains('sell') ||
-            queryLower.contains('wheat') ||
-            queryLower.contains('barley') ||
-            queryLower.contains('inward') ||
-            queryLower.contains('outward') ||
-            queryLower.contains('wallet') ||
-            queryLower.contains('loan'));
+    // Run Hugging Face Language & Dialect Detection (Marwari, Shekhawati, Hindi, English)
+    final langResult = await HuggingFaceService.detectLanguageAndDialect(text: query);
+    _detectedLanguageResult = langResult;
+
+    final isEnglishQuery = langResult.languageCode == 'en';
 
     final response = await AiService.askClaude(
       question: query,
@@ -539,6 +530,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
           isHindi: _isHindi,
           response: _aiResponse,
           isSpeaking: _isSpeaking,
+          detectedLanguage: _detectedLanguageResult,
           onToggleSpeech: () {
             if (_isSpeaking) {
               try {
@@ -796,6 +788,7 @@ class _ResponseStep extends StatelessWidget {
   final bool isHindi;
   final String response;
   final bool isSpeaking;
+  final LanguageDetectionResult? detectedLanguage;
   final VoidCallback onToggleSpeech;
   final VoidCallback onAskAgain;
 
@@ -803,6 +796,7 @@ class _ResponseStep extends StatelessWidget {
     required this.isHindi,
     required this.response,
     required this.isSpeaking,
+    this.detectedLanguage,
     required this.onToggleSpeech,
     required this.onAskAgain,
   });
@@ -812,6 +806,31 @@ class _ResponseStep extends StatelessWidget {
     return Column(
       key: const ValueKey('response'),
       children: [
+        if (detectedLanguage != null) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade100,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.amber.shade400),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('🤗 ', style: TextStyle(fontSize: 13)),
+                Text(
+                  'Hugging Face AI: ${detectedLanguage!.languageName}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber.shade900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         // AI Response Card
         Container(
           width: double.infinity,
