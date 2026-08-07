@@ -271,11 +271,26 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     if (mounted) setState(() => _isListening = false);
   }
 
+  String _lastSubmittedText = '';
+  DateTime? _lastSubmittedTime;
+
   // ── Send Message & Get AI Reply ──
   Future<void> _submitMessage(String userText) async {
     final text = userText.trim();
     if (text.isEmpty || _isProcessing) return;
 
+    // Deduplication check: ignore duplicate text within 2.5 seconds
+    final now = DateTime.now();
+    if (_lastSubmittedText == text &&
+        _lastSubmittedTime != null &&
+        now.difference(_lastSubmittedTime!).inMilliseconds < 2500) {
+      return;
+    }
+
+    _lastSubmittedText = text;
+    _lastSubmittedTime = now;
+
+    _silenceTimer?.cancel();
     _stopListening();
     try {
       await _tts.stop();

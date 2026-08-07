@@ -291,11 +291,11 @@ class AiService {
       cropDisplayName = 'चना';
       cropDisplayNameEn = 'Gram';
       keywords = ['चना', 'gram'];
-    } else if (q.contains('सरसों') || q.contains('sarson') || q.contains('mustard')) {
+    } else if (q.contains('सरसों') || q.contains('sarson') || q.contains('mustard') || q.contains('रोजा') || q.contains('रोजी') || q.contains('roza')) {
       searchedCropName = 'सरसों';
       cropDisplayName = 'सरसों';
       cropDisplayNameEn = 'Mustard';
-      keywords = ['सरसों', 'mustard'];
+      keywords = ['सरसों', 'mustard', 'सरसो'];
     } else if (q.contains('मूंगफली') || q.contains('मूंगफली') || q.contains('mungfali') || q.contains('groundnut')) {
       searchedCropName = 'मूंगफली';
       cropDisplayName = 'मूंगफली';
