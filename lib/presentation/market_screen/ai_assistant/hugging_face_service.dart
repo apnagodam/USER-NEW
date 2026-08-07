@@ -203,7 +203,12 @@ class HuggingFaceService {
       return null;
     }
 
-    final model = modelOverride ?? AppConfig.huggingFaceModel;
+    final modelsToTry = [
+      modelOverride ?? AppConfig.huggingFaceModel,
+      'Qwen/Qwen2.5-7B-Instruct',
+      'mistralai/Mistral-7B-Instruct-v0.3',
+      'HuggingFaceH4/zephyr-7b-beta',
+    ];
 
     final systemInstruction = '''
 You are the official AI Agricultural Market & Logistics Specialist for Apna Godam (अपना गोदाम).
@@ -235,35 +240,39 @@ Provide concise, friendly, and accurate answers suitable for voice playback.
 
     messages.add({'role': 'user', 'content': prompt});
 
-    try {
-      final response = await http.post(
-        Uri.parse(_hfBaseUrl),
-        headers: {
-          'Authorization': 'Bearer $apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'model': model,
-          'messages': messages,
-          'temperature': 0.3,
-          'max_tokens': 512,
-        }),
-      );
+    for (final currentModel in modelsToTry) {
+      try {
+        final response = await http.post(
+          Uri.parse(_hfBaseUrl),
+          headers: {
+            'Authorization': 'Bearer $apiKey',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'model': currentModel,
+            'messages': messages,
+            'temperature': 0.3,
+            'max_tokens': 512,
+          }),
+        );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['choices'] != null && data['choices'].isNotEmpty) {
-          final reply = data['choices'][0]['message']['content'] as String?;
-          return reply?.trim();
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          if (data['choices'] != null && data['choices'].isNotEmpty) {
+            final reply = data['choices'][0]['message']['content'] as String?;
+            if (reply != null && reply.trim().isNotEmpty) {
+              return reply.trim();
+            }
+          }
+        } else {
+          if (kDebugMode) {
+            print('Hugging Face API ($currentModel) HTTP ${response.statusCode}: ${response.body}');
+          }
         }
-      } else {
+      } catch (e) {
         if (kDebugMode) {
-          print('Hugging Face API HTTP ${response.statusCode}: ${response.body}');
+          print('Hugging Face Query Exception ($currentModel): $e');
         }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Hugging Face Query Exception: $e');
       }
     }
     return null;
