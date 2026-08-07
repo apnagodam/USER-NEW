@@ -214,8 +214,8 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     // Force hi_IN Devanagari Hindi/Marwari speech output
     String targetLocale = 'hi_IN';
     try {
-      final SystemLocales = await _speech.locales();
-      for (final l in SystemLocales) {
+      final systemLocales = await _speech.locales();
+      for (final l in systemLocales) {
         final locId = l.localeId.toLowerCase();
         if (locId == 'hi_in' || locId == 'hi-in' || locId.startsWith('hi')) {
           targetLocale = l.localeId;
