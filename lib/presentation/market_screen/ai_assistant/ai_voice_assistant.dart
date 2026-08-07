@@ -9,23 +9,27 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import 'package:apnagodam/core/utils/color_constant.dart';
 import 'package:apnagodam/core/utils/helper.dart';
-import 'package:apnagodam/core/utils/image_constant.dart';
 import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'ai_service.dart';
 import 'hugging_face_service.dart';
 import 'market_data_fetcher.dart';
 
-// ---------- UI state enum ----------
-enum _AssistantStep {
-  listening, // Step 1: Direct mic open immediately
-  processing, // Step 2: AI processing
-  response, // Step 3: Display + TTS
+// ---------- Chat Message Model ----------
+class _ChatMessage {
+  final String text;
+  final bool isUser;
+  final DateTime timestamp;
+  final LanguageDetectionResult? language;
+
+  _ChatMessage({
+    required this.text,
+    required this.isUser,
+    required this.timestamp,
+    this.language,
+  });
 }
 
-// ---------- public entry point ----------
-
-/// Shows the AI Voice Assistant bottom sheet.
-/// Call this directly from the floating action button.
+// ---------- Entry Point ----------
 void showAiVoiceAssistant(BuildContext context, WidgetRef ref) {
   showModalBottomSheet(
     context: context,
@@ -35,8 +39,7 @@ void showAiVoiceAssistant(BuildContext context, WidgetRef ref) {
   );
 }
 
-// ---------- main sheet widget ----------
-
+// ---------- Main Sheet Widget ----------
 class _AiAssistantSheet extends StatefulWidget {
   final WidgetRef ref;
   const _AiAssistantSheet({required this.ref});
@@ -47,26 +50,27 @@ class _AiAssistantSheet extends StatefulWidget {
 
 class _AiAssistantSheetState extends State<_AiAssistantSheet>
     with TickerProviderStateMixin {
-  // ── state ──
-  _AssistantStep _step = _AssistantStep.listening;
-  String _spokenText = '';
-  String _aiResponse = '';
-  String _marketData = '';
-  bool _isHindi = true;
-  LanguageDetectionResult? _detectedLanguageResult;
+  // ── Chat State ──
+  final List<_ChatMessage> _messages = [];
   final List<Map<String, String>> _chatHistory = [];
-  bool _autoVoiceChatEnabled = true;
+  final ScrollController _scrollCtrl = ScrollController();
+  final TextEditingController _textCtrl = TextEditingController();
 
-  // ── packages ──
+  // ── Voice & Engine State ──
   final stt.SpeechToText _speech = stt.SpeechToText();
   final FlutterTts _tts = FlutterTts();
-  final TextEditingController _textCtrl = TextEditingController();
+
+  bool _isHindi = true;
   bool _speechAvailable = false;
+  bool _isListening = false;
+  bool _isProcessing = false;
   bool _isSpeaking = false;
-  bool _isListeningNow = false;
+  bool _autoVoiceChat = true;
+
+  String _spokenText = '';
+  String _marketData = '';
   Timer? _silenceTimer;
 
-  // ── animation ──
   late AnimationController _pulseCtrl;
 
   @override
@@ -74,14 +78,20 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     super.initState();
     _pulseCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
 
-    _isHindi = true; // Default to Hindi (hi_IN) for Devanagari script output
     _initTts();
     _prefetchMarketData();
 
-    // Initialize speech and start listening cleanly after initial build
+    // Welcome Greeting Message
+    _messages.add(_ChatMessage(
+      text: 'राम-राम सा! मैं अपना गोदाम AI असिस्टेंट हूँ। आप मारवाड़ी, शेखावाटी या हिंदी में कोई भी सवाल पूछ सकते हैं।',
+      isUser: false,
+      timestamp: DateTime.now(),
+    ));
+
+    // Request permissions & start mic after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _initAndStartListening();
@@ -93,101 +103,85 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   void dispose() {
     _silenceTimer?.cancel();
     _pulseCtrl.dispose();
+    _scrollCtrl.dispose();
+    _textCtrl.dispose();
     try {
       _speech.cancel();
       _speech.stop();
       _tts.stop();
     } catch (_) {}
-    _textCtrl.dispose();
     super.dispose();
   }
 
-  // ── init methods ──
-
+  // ── Init TTS ──
   Future<void> _initTts() async {
-    await _tts.setLanguage('hi-IN');
-    await _tts.setSpeechRate(0.46); // clear, bold speed
-    await _tts.setVolume(1.0); // max volume
-    await _tts.setPitch(1.15); // female/bold pitch
-
     try {
-      final voices = await _tts.getVoices;
-      if (voices != null && voices is List) {
-        for (final voice in voices) {
-          final name = voice['name'].toString().toLowerCase();
-          final lang = voice['locale'].toString().toLowerCase();
-          if ((lang.contains('hi') || lang.contains('in')) &&
-              (name.contains('female') ||
-                  name.contains('woman') ||
-                  name.contains('hi-in-x-hie-local') ||
-                  name.contains('hi-in-x-hid-local'))) {
-            await _tts.setVoice({"name": voice['name'], "locale": voice['locale']});
-            break;
+      await _tts.setLanguage('hi-IN');
+      await _tts.setSpeechRate(0.48);
+      await _tts.setVolume(1.0);
+      await _tts.setPitch(1.1);
+
+      _tts.setStartHandler(() {
+        if (mounted) setState(() => _isSpeaking = true);
+      });
+      _tts.setCompletionHandler(() {
+        if (mounted) {
+          setState(() => _isSpeaking = false);
+          if (_autoVoiceChat) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted && _autoVoiceChat && !_isListening && !_isProcessing) {
+                _startListening();
+              }
+            });
           }
         }
-      }
-    } catch (_) {}
-
-    _tts.setStartHandler(() {
-      if (mounted) setState(() => _isSpeaking = true);
-    });
-    _tts.setCompletionHandler(() {
-      if (mounted) {
-        setState(() => _isSpeaking = false);
-        if (_autoVoiceChatEnabled && _step == _AssistantStep.response) {
-          Future.delayed(const Duration(milliseconds: 600), () {
-            if (mounted && _autoVoiceChatEnabled && !_isListeningNow) {
-              setState(() {
-                _spokenText = '';
-                _textCtrl.clear();
-                _step = _AssistantStep.listening;
-              });
-              _startListening();
-            }
-          });
-        }
-      }
-    });
-    _tts.setCancelHandler(() {
-      if (mounted) setState(() => _isSpeaking = false);
-    });
+      });
+      _tts.setCancelHandler(() {
+        if (mounted) setState(() => _isSpeaking = false);
+      });
+    } catch (e) {
+      debugPrint('TTS Init Error: $e');
+    }
   }
 
   Future<void> _prefetchMarketData() async {
-    final token = widget.ref.read(sharedUtilityProvider).getToken();
-    _marketData = await MarketDataFetcher.fetchLiveMarketSummary(
-      authToken: token,
-    );
+    try {
+      final token = widget.ref.read(sharedUtilityProvider).getToken();
+      _marketData = await MarketDataFetcher.fetchLiveMarketSummary(
+        authToken: token,
+      );
+    } catch (_) {}
   }
 
+  // ── Init & Listen ──
   Future<void> _initAndStartListening() async {
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
       if (mounted) {
-        _showSnack(_isHindi
-            ? 'माइक्रोफोन की अनुमति दें'
-            : 'Please grant microphone permission');
+        _showSnack(_isHindi ? 'कृपया माइक्रोफोन अनुमति दें' : 'Please allow microphone access');
       }
       return;
     }
 
-    if (!_speechAvailable) {
+    try {
       _speechAvailable = await _speech.initialize(
         onError: (e) {
-          debugPrint('Speech error: $e');
-          if (mounted) setState(() => _isListeningNow = false);
+          debugPrint('Speech Error: $e');
+          if (mounted) setState(() => _isListening = false);
         },
         onStatus: (s) {
-          debugPrint('Speech status: $s');
+          debugPrint('Speech Status: $s');
           if (mounted) {
             if (s == 'listening') {
-              setState(() => _isListeningNow = true);
+              setState(() => _isListening = true);
             } else if (s == 'notListening' || s == 'done') {
-              setState(() => _isListeningNow = false);
+              setState(() => _isListening = false);
             }
           }
         },
       );
+    } catch (e) {
+      debugPrint('STT Init Exception: $e');
     }
 
     if (mounted) {
@@ -206,62 +200,21 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
 
     if (!_speechAvailable) {
       _speechAvailable = await _speech.initialize(
-        onError: (e) {
-          debugPrint('Speech error: $e');
-          if (mounted) setState(() => _isListeningNow = false);
-        },
-        onStatus: (s) {
-          debugPrint('Speech status: $s');
-          if (mounted) {
-            if (s == 'listening') {
-              setState(() => _isListeningNow = true);
-            } else if (s == 'notListening' || s == 'done') {
-              setState(() => _isListeningNow = false);
-            }
-          }
-        },
+        onError: (e) => debugPrint('STT Error: $e'),
+        onStatus: (s) => debugPrint('STT Status: $s'),
       );
     }
-
-    if (!_speechAvailable) {
-      if (mounted) {
-        _showSnack(_isHindi
-            ? 'माइक्रोफोन सेवा उपलब्ध नहीं है'
-            : 'Microphone service unavailable');
-      }
-      return;
-    }
-
-    // Force hi_IN for Devanagari Hindi output
-    String targetLocale = 'hi_IN';
-    try {
-      final locales = await _speech.locales();
-      for (final l in locales) {
-        final locId = l.localeId.toLowerCase();
-        if (_isHindi && (locId == 'hi_in' || locId == 'hi-in' || locId.startsWith('hi'))) {
-          targetLocale = l.localeId;
-          break;
-        } else if (!_isHindi && locId.startsWith('en')) {
-          targetLocale = l.localeId;
-          break;
-        }
-      }
-      debugPrint('Target STT locale: $targetLocale');
-    } catch (_) {}
-
-    if (!mounted) return;
 
     setState(() {
       _spokenText = '';
       _textCtrl.clear();
-      _isListeningNow = true;
+      _isListening = true;
     });
 
     try {
       await _speech.listen(
         onResult: (result) {
           final words = result.recognizedWords;
-          debugPrint('STT Recognized: "$words"');
           if (mounted) {
             setState(() {
               _spokenText = words;
@@ -274,11 +227,11 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
           _silenceTimer?.cancel();
 
           if (result.finalResult && words.trim().isNotEmpty) {
-            _submitQuestion();
+            _submitMessage(words.trim());
           } else if (words.trim().isNotEmpty) {
-            _silenceTimer = Timer(const Duration(milliseconds: 1800), () {
-              if (mounted && _spokenText.trim().isNotEmpty && _step == _AssistantStep.listening) {
-                _submitQuestion();
+            _silenceTimer = Timer(const Duration(milliseconds: 1600), () {
+              if (mounted && _spokenText.trim().isNotEmpty && !_isProcessing) {
+                _submitMessage(_spokenText.trim());
               }
             });
           }
@@ -286,36 +239,48 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
         listenOptions: stt.SpeechListenOptions(
           partialResults: true,
           cancelOnError: false,
-          listenMode: stt.ListenMode.dictation,
         ),
-        localeId: targetLocale,
         listenFor: const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 5),
+        pauseFor: const Duration(seconds: 4),
       );
     } catch (e) {
-      debugPrint('Speech listen exception: $e');
-      if (mounted) setState(() => _isListeningNow = false);
+      debugPrint('Speech Listen Error: $e');
+      if (mounted) setState(() => _isListening = false);
     }
   }
 
-  Future<void> _submitQuestion() async {
+  Future<void> _stopListening() async {
     _silenceTimer?.cancel();
     try {
       await _speech.stop();
     } catch (_) {}
-    if (mounted) setState(() => _isListeningNow = false);
+    if (mounted) setState(() => _isListening = false);
+  }
 
-    final query = _textCtrl.text.trim().isNotEmpty
-        ? _textCtrl.text.trim()
-        : _spokenText.trim();
+  // ── Send Message & Get AI Reply ──
+  Future<void> _submitMessage(String userText) async {
+    final text = userText.trim();
+    if (text.isEmpty || _isProcessing) return;
 
-    if (query.isEmpty) {
-      if (mounted) setState(() => _step = _AssistantStep.listening);
-      return;
-    }
-    if (mounted) setState(() => _step = _AssistantStep.processing);
+    _stopListening();
+    try {
+      await _tts.stop();
+    } catch (_) {}
 
-    // If market data not yet fetched, try again
+    setState(() {
+      _messages.add(_ChatMessage(
+        text: text,
+        isUser: true,
+        timestamp: DateTime.now(),
+      ));
+      _spokenText = '';
+      _textCtrl.clear();
+      _isProcessing = true;
+    });
+
+    _scrollToBottom();
+
+    // Fetch market data if not ready
     if (_marketData.isEmpty) {
       final token = widget.ref.read(sharedUtilityProvider).getToken();
       _marketData = await MarketDataFetcher.fetchLiveMarketSummary(
@@ -323,48 +288,63 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       );
     }
 
-    // Run Hugging Face Language & Dialect Detection (Marwari, Shekhawati, Hindi, English)
-    final langResult = await HuggingFaceService.detectLanguageAndDialect(text: query);
-    _detectedLanguageResult = langResult;
+    // Language Detection via Hugging Face API
+    final langResult = await HuggingFaceService.detectLanguageAndDialect(text: text);
+    final isEnglish = langResult.languageCode == 'en';
 
-    final isEnglishQuery = langResult.languageCode == 'en';
-
-    final response = await AiService.askClaude(
-      question: query,
+    // Get Response from AI Engine (Hugging Face / Anthropic with history)
+    final aiReply = await AiService.askClaude(
+      question: text,
       marketData: _marketData,
       history: _chatHistory,
-      isHindi: !isEnglishQuery,
+      isHindi: !isEnglish,
     );
 
-    _chatHistory.add({'user': query});
-    _chatHistory.add({'assistant': response});
+    // Save in chat history memory
+    _chatHistory.add({'user': text});
+    _chatHistory.add({'assistant': aiReply});
 
     if (!mounted) return;
+
     setState(() {
-      _aiResponse = response;
-      _step = _AssistantStep.response;
+      _messages.add(_ChatMessage(
+        text: aiReply,
+        isUser: false,
+        timestamp: DateTime.now(),
+        language: langResult,
+      ));
+      _isProcessing = false;
     });
 
-    // Auto-set TTS voice language matching the detected spoken query
-    try {
-      await _tts.setLanguage(isEnglishQuery ? 'en-IN' : 'hi-IN');
-    } catch (_) {}
+    _scrollToBottom();
 
-    _speakResponse(response);
+    // Speak AI response
+    _speakText(aiReply, isEnglish: isEnglish);
   }
 
-  Future<void> _speakResponse(String text) async {
+  Future<void> _speakText(String text, {bool isEnglish = false}) async {
     try {
       await _tts.stop();
+      await _tts.setLanguage(isEnglish ? 'en-IN' : 'hi-IN');
+      final cleanText = text
+          .replaceAll(RegExp(r'\*+'), '')
+          .replaceAll(RegExp(r'#+'), '')
+          .replaceAll(RegExp(r'\(|\)'), '')
+          .trim();
+      await _tts.speak(cleanText);
     } catch (_) {}
-    // Clean markdown formatting for clean speech synthesis
-    final cleanText = text
-        .replaceAll(RegExp(r'\*+'), '')
-        .replaceAll(RegExp(r'#+'), '')
-        .replaceAll(RegExp(r'\(|\)'), '')
-        .trim();
+  }
 
-    await _tts.speak(cleanText);
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.animateTo(
+          _scrollCtrl.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   void _showSnack(String msg) {
@@ -378,604 +358,566 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     );
   }
 
-  // ── UI build ──
-
+  // ── Main UI Layout ──
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: MediaQuery.of(context).size.height * 0.88,
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      padding: EdgeInsets.only(
-        top: 16,
-        left: 20,
-        right: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        color: Color(0xFFAFAFAF), // Soft neutral background for chat
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle bar
+          _buildHeader(),
+          Expanded(child: _buildChatStream()),
+          if (_isProcessing) _buildProcessingIndicator(),
+          _buildQuickSuggestions(),
+          _buildBottomControlBar(),
+        ],
+      ),
+    );
+  }
+
+  // ── Top Header ──
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: ColorConstant.maingreen,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
           Container(
-            width: 44,
-            height: 5,
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(10),
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'अपना गोदाम AI वॉइस चैट',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: Adaptive.sp(15),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Colors.greenAccent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Hugging Face AI active • मारवाड़ी & हिन्दी',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white70,
+                        fontSize: Adaptive.sp(11),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          // Top Bar
-          _buildTopBar(),
-          const SizedBox(height: 16),
-          // Step views with AnimatedSwitcher
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: _buildCurrentStep(),
+          // Auto voice chat toggle
+          IconButton(
+            onPressed: () {
+              setState(() => _autoVoiceChat = !_autoVoiceChat);
+              _showSnack(_autoVoiceChat
+                  ? '🎙️ ऑटो वॉइस मोड ऑन है'
+                  : '🔇 ऑटो वॉइस मोड बंद है');
+            },
+            icon: Icon(
+              _autoVoiceChat
+                  ? Icons.graphic_eq_rounded
+                  : Icons.voice_over_off_rounded,
+              color: _autoVoiceChat ? Colors.greenAccent : Colors.white60,
+            ),
+            tooltip: 'Continuous Voice Chat',
+          ),
+          // Close
+          IconButton(
+            onPressed: () {
+              _tts.stop();
+              _speech.stop();
+              Navigator.of(context).pop();
+            },
+            icon: const Icon(Icons.close_rounded, color: Colors.white),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTopBar() {
-    return Row(
-      children: [
-        // Back icon if in response state
-        if (_step == _AssistantStep.response) ...[
-          IconButton(
-            onPressed: () {
-              try {
-                _tts.stop();
-              } catch (_) {}
-              if (mounted) {
-                setState(() {
-                  _step = _AssistantStep.listening;
-                  _spokenText = '';
-                  _textCtrl.clear();
-                });
-              }
-              _startListening();
-            },
-            icon: const Icon(Icons.arrow_back_rounded),
-            color: ColorConstant.maingreen,
-          ),
-          const SizedBox(width: 4),
-        ],
-        // Assistant Logo & Title
-        Image.asset(
-          ImageConstant.mainlogopng,
-          width: 32,
-          height: 32,
-          errorBuilder: (_, __, ___) => Icon(
-            Icons.eco,
-            color: ColorConstant.maingreen,
-            size: 32,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'भाव पूछें',
-                style: GoogleFonts.poppins(
-                  fontSize: Adaptive.sp(18),
-                  fontWeight: FontWeight.bold,
-                  color: ColorConstant.maingreen,
-                ),
-              ),
-              Text(
-                _isHindi ? 'अपना गोदाम AI सहायक' : 'Apna Godam AI Assistant',
-                style: TextStyle(
-                  fontSize: Adaptive.sp(12),
-                  color: Colors.grey.shade500,
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Language Toggle Chip (Hindi / English)
-        InkWell(
-          onTap: () {
-            if (mounted) {
-              setState(() {
-                _isHindi = !_isHindi;
-              });
-            }
-            try {
-              _tts.setLanguage(_isHindi ? 'hi-IN' : 'en-IN');
-            } catch (_) {}
-            _startListening();
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: ColorConstant.maingreen.withValues(alpha: 0.5)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.language, size: 16, color: ColorConstant.maingreen),
-                const SizedBox(width: 4),
-                Text(
-                  _isHindi ? 'हिंदी' : 'English',
-                  style: GoogleFonts.poppins(
-                    fontSize: Adaptive.sp(12),
-                    fontWeight: FontWeight.bold,
-                    color: ColorConstant.maingreen,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 4),
-        // Close
-        IconButton(
-          onPressed: () {
-            try {
-              _tts.stop();
-            } catch (_) {}
-            Navigator.of(context).pop();
-          },
-          icon: const Icon(Icons.close_rounded),
-          color: Colors.grey.shade500,
-        ),
-      ],
+  // ── Chat Stream (Sender & Receiver Bubbles) ──
+  Widget _buildChatStream() {
+    return ListView.builder(
+      controller: _scrollCtrl,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      itemCount: _messages.length,
+      itemBuilder: (context, index) {
+        final msg = _messages[index];
+        return msg.isUser ? _buildUserBubble(msg) : _buildAiBubble(msg);
+      },
     );
   }
 
-  Widget _buildCurrentStep() {
-    switch (_step) {
-      case _AssistantStep.listening:
-        return _ListeningStep(
-          isHindi: _isHindi,
-          spokenText: _spokenText,
-          textCtrl: _textCtrl,
-          isListeningNow: _isListeningNow,
-          pulseCtrl: _pulseCtrl,
-          onTapMic: _startListening,
-          onSubmit: _submitQuestion,
-        );
-      case _AssistantStep.processing:
-        return _ProcessingStep(isHindi: _isHindi);
-      case _AssistantStep.response:
-        return _ResponseStep(
-          isHindi: _isHindi,
-          response: _aiResponse,
-          isSpeaking: _isSpeaking,
-          detectedLanguage: _detectedLanguageResult,
-          autoVoiceChatEnabled: _autoVoiceChatEnabled,
-          onToggleSpeech: () {
-            if (_isSpeaking) {
-              try {
-                _tts.stop();
-              } catch (_) {}
-            } else {
-              _speakResponse(_aiResponse);
-            }
-          },
-          onAskAgain: () {
-            try {
-              _tts.stop();
-            } catch (_) {}
-            if (mounted) {
-              setState(() {
-                _spokenText = '';
-                _textCtrl.clear();
-                _step = _AssistantStep.listening;
-              });
-            }
-            _startListening();
-          },
-        );
-    }
-  }
-}
-
-// ════════════════════════════════════════════════════
-//  STEP 1 — Listening (Direct Mic Open)
-// ════════════════════════════════════════════════════
-
-class _ListeningStep extends StatelessWidget {
-  final bool isHindi;
-  final String spokenText;
-  final TextEditingController textCtrl;
-  final bool isListeningNow;
-  final AnimationController pulseCtrl;
-  final VoidCallback onTapMic;
-  final VoidCallback onSubmit;
-
-  const _ListeningStep({
-    required this.isHindi,
-    required this.spokenText,
-    required this.textCtrl,
-    required this.isListeningNow,
-    required this.pulseCtrl,
-    required this.onTapMic,
-    required this.onSubmit,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      key: const ValueKey('listening'),
-      children: [
-        const SizedBox(height: 8),
-        // Mic pulse animation — custom ripple using AnimatedBuilder
-        AnimatedBuilder(
-          animation: pulseCtrl,
-          builder: (context, child) {
-            final scale = isListeningNow ? (1.0 + pulseCtrl.value * 0.35) : 1.0;
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                if (isListeningNow) ...[
-                  // outer ripple
-                  Transform.scale(
-                    scale: scale,
-                    child: Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: ColorConstant.maingreen
-                            .withValues(alpha: (1 - pulseCtrl.value) * 0.25),
-                      ),
-                    ),
-                  ),
-                  // mid ripple
-                  Transform.scale(
-                    scale: 1.0 + pulseCtrl.value * 0.18,
-                    child: Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: ColorConstant.maingreen
-                            .withValues(alpha: (1 - pulseCtrl.value) * 0.15),
-                      ),
-                    ),
+  // Sender (User) Bubble — Right Aligned
+  Widget _buildUserBubble(_ChatMessage msg) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, left: 40),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: ColorConstant.maingreen,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  topRight: Radius.circular(4),
+                  bottomLeft: Radius.circular(18),
+                  bottomRight: Radius.circular(18),
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
                   ),
                 ],
-                // mic button (tap to start/restart listening)
-                GestureDetector(
-                  onTap: onTapMic,
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: isListeningNow
-                          ? ColorConstant.maingreen
-                          : Colors.orange.shade700,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: (isListeningNow
-                                  ? ColorConstant.maingreen
-                                  : Colors.orange)
-                              .withValues(alpha: 0.4),
-                          blurRadius: 12,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      isListeningNow ? Icons.mic : Icons.mic_none_rounded,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    msg.text,
+                    style: GoogleFonts.poppins(
                       color: Colors.white,
-                      size: 36,
+                      fontSize: Adaptive.sp(14),
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
                     ),
                   ),
-                ),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 14),
-        Text(
-          isListeningNow
-              ? (isHindi ? '🎙️ बोलिए...' : '🎙️ Speak now...')
-              : (isHindi ? '👆 माइक दबाएं या टाइप करें' : '👆 Tap mic to speak or type'),
-          style: GoogleFonts.poppins(
-            fontSize: Adaptive.sp(15),
-            fontWeight: FontWeight.w600,
-            color: isListeningNow ? ColorConstant.maingreen : Colors.orange.shade800,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          isHindi
-              ? 'बोलने के 2 सेकंड बाद उत्तर अपने आप आ जाएगा'
-              : 'Answer will automatically appear 2 sec after speaking',
-          style: TextStyle(
-            fontSize: Adaptive.sp(11),
-            color: Colors.grey.shade500,
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Interactive live transcription / text input box
-        Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(minHeight: 56),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-          decoration: BoxDecoration(
-            color: textCtrl.text.isNotEmpty
-                ? Colors.green.shade50
-                : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: textCtrl.text.isNotEmpty
-                  ? ColorConstant.maingreen
-                  : Colors.grey.shade300,
-              width: 1.5,
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.mic_rounded, size: 12, color: Colors.white70),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatTime(msg.timestamp),
+                        style: GoogleFonts.poppins(
+                          color: Colors.white70,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          child: Row(
-            children: [
-              Icon(
-                textCtrl.text.isNotEmpty
-                    ? Icons.record_voice_over
-                    : Icons.keyboard_alt_outlined,
-                color: textCtrl.text.isNotEmpty
-                    ? ColorConstant.maingreen
-                    : Colors.grey.shade400,
-                size: 22,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: TextField(
-                  controller: textCtrl,
-                  style: GoogleFonts.poppins(
-                    fontSize: Adaptive.sp(14),
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: isHindi
-                        ? 'यहाँ बोलें या टाइप करें...'
-                        : 'Speak or type here...',
-                    hintStyle: GoogleFonts.poppins(
-                      fontSize: Adaptive.sp(13),
-                      color: Colors.grey.shade500,
-                      fontStyle: FontStyle.italic,
-                    ),
-                    border: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    isDense: true,
-                  ),
-                  onSubmitted: (_) => onSubmit(),
+          const SizedBox(width: 8),
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: ColorConstant.maingreen.withValues(alpha: 0.8),
+            child: const Icon(Icons.person_rounded, color: Colors.white, size: 18),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Receiver (AI) Bubble — Left Aligned
+  Widget _buildAiBubble(_ChatMessage msg) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14, right: 30),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: Colors.amber.shade700,
+            child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 18),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(18),
+                  bottomLeft: Radius.circular(18),
+                  bottomRight: Radius.circular(18),
                 ),
+                border: Border.all(color: Colors.grey.shade300),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
+                  ),
+                ],
               ),
-              IconButton(
-                onPressed: onSubmit,
-                icon: const Icon(Icons.send_rounded),
-                color: ColorConstant.maingreen,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Language & Hugging Face Badge
+                  if (msg.language != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade100,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.amber.shade400),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('🤗 ', style: TextStyle(fontSize: 12)),
+                          Text(
+                            'Hugging Face AI: ${msg.language!.languageName}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.amber.shade900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  // Response Text
+                  Text(
+                    msg.text,
+                    style: GoogleFonts.poppins(
+                      color: Colors.black87,
+                      fontSize: Adaptive.sp(14),
+                      height: 1.45,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Controls Row (Audio Listen + Direct IVR Call)
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          if (_isSpeaking) {
+                            _tts.stop();
+                          } else {
+                            _speakText(msg.text);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: ColorConstant.maingreen.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: ColorConstant.maingreen),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _isSpeaking ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                                size: 16,
+                                color: ColorConstant.maingreen,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _isSpeaking ? 'रुकें' : 'सुनें',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: ColorConstant.maingreen,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () => CallLaunch('tel:+917733901154'),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.orange.shade400),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.phone_in_talk_rounded, size: 14, color: Colors.deepOrange),
+                              const SizedBox(width: 4),
+                              Text(
+                                'IVR कॉल (7733901154)',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepOrange,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _formatTime(msg.timestamp),
+                        style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Processing Indicator Bubble
+  Widget _buildProcessingIndicator() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, bottom: 8),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 12,
+            backgroundColor: ColorConstant.maingreen,
+            child: const SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Hugging Face AI सोच रहा है...',
+            style: GoogleFonts.poppins(
+              color: Colors.grey.shade700,
+              fontSize: 12,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Quick Suggestions Pills ──
+  Widget _buildQuickSuggestions() {
+    final suggestions = [
+      '🌾 जौ का भाव क्या है?',
+      '💰 मुझे जौ बेचना है',
+      '📦 गोदाम में माल जमा कैसे करें?',
+      '📑 गेटपास कैसे बनाएं?',
+    ];
+
+    return Container(
+      height: 38,
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        itemCount: suggestions.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final s = suggestions[index];
+          return ActionChip(
+            label: Text(s),
+            labelStyle: GoogleFonts.poppins(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+              color: Colors.green.shade900,
+            ),
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+              side: BorderSide(color: Colors.green.shade300),
+            ),
+            onPressed: () => _submitMessage(s.replaceAll(RegExp(r'^[^\s]+\s*'), '')),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── Bottom Voice Control Bar & Mic Button ──
+  Widget _buildBottomControlBar() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 8,
+            offset: Offset(0, -3),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            // Voice status bar / Live spoken preview
+            if (_isListening || _spokenText.isNotEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.mic, color: Colors.red.shade700, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _spokenText.isNotEmpty
+                            ? '"$_spokenText"'
+                            : 'बोलिए... (Listening to your voice)',
+                        style: GoogleFonts.poppins(
+                          color: Colors.red.shade900,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
-          ),
-        ),
-        const SizedBox(height: 12),
-      ],
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════
-//  STEP 2 — Processing State
-// ════════════════════════════════════════════════════
-
-class _ProcessingStep extends StatelessWidget {
-  final bool isHindi;
-
-  const _ProcessingStep({required this.isHindi});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      key: const ValueKey('processing'),
-      children: [
-        const SizedBox(height: 24),
-        CircularProgressIndicator(
-          color: ColorConstant.maingreen,
-          strokeWidth: 3,
-        ),
-        const SizedBox(height: 20),
-        Text(
-          isHindi ? 'उत्तर तैयार हो रहा है...' : 'Processing answer...',
-          style: GoogleFonts.poppins(
-            fontSize: Adaptive.sp(15),
-            fontWeight: FontWeight.w600,
-            color: ColorConstant.maingreen,
-          ),
-        ),
-        const SizedBox(height: 24),
-      ],
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════
-//  STEP 3 — Response Display + TTS
-// ════════════════════════════════════════════════════
-
-class _ResponseStep extends StatelessWidget {
-  final bool isHindi;
-  final String response;
-  final bool isSpeaking;
-  final LanguageDetectionResult? detectedLanguage;
-  final bool autoVoiceChatEnabled;
-  final VoidCallback onToggleSpeech;
-  final VoidCallback onAskAgain;
-
-  const _ResponseStep({
-    required this.isHindi,
-    required this.response,
-    required this.isSpeaking,
-    this.detectedLanguage,
-    this.autoVoiceChatEnabled = true,
-    required this.onToggleSpeech,
-    required this.onAskAgain,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      key: const ValueKey('response'),
-      children: [
-        if (detectedLanguage != null) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: Colors.amber.shade100,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber.shade400),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            // Text Input Box + Big Pulsing Mic Button + Send Button
+            Row(
               children: [
-                const Text('🤗 ', style: TextStyle(fontSize: 13)),
-                Text(
-                  'Hugging Face AI: ${detectedLanguage!.languageName}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.amber.shade900,
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: TextField(
+                      controller: _textCtrl,
+                      style: GoogleFonts.poppins(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: _isHindi ? 'बोलें या टाइप करें...' : 'Speak or type...',
+                        hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      onSubmitted: (val) => _submitMessage(val),
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ),
-        ],
-        // Continuous Voice Chat Indicator Badge
-        if (autoVoiceChatEnabled) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: Colors.green.shade100.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.graphic_eq_rounded, size: 14, color: ColorConstant.maingreen),
+                const SizedBox(width: 8),
+                // Pulsing Mic Button
+                AnimatedBuilder(
+                  animation: _pulseCtrl,
+                  builder: (context, child) {
+                    final scale = _isListening ? 1.0 + (_pulseCtrl.value * 0.18) : 1.0;
+                    return Transform.scale(
+                      scale: scale,
+                      child: InkWell(
+                        onTap: () {
+                          if (_isListening) {
+                            _stopListening();
+                          } else {
+                            _startListening();
+                          }
+                        },
+                        customBorder: const CircleBorder(),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _isListening ? Colors.redAccent : ColorConstant.maingreen,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: (_isListening ? Colors.redAccent : ColorConstant.maingreen)
+                                    .withValues(alpha: 0.4),
+                                blurRadius: _isListening ? 12 : 6,
+                                spreadRadius: _isListening ? 4 : 1,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            _isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(width: 6),
-                Text(
-                  isHindi
-                      ? '🎙️ निरंतर बोलकर बातचीत चालू (Continuous Voice Chat)'
-                      : '🎙️ Continuous Voice Chat Active',
-                  style: GoogleFonts.poppins(
-                    fontSize: Adaptive.sp(11),
-                    fontWeight: FontWeight.w600,
-                    color: ColorConstant.maingreen,
-                  ),
+                // Send Button
+                IconButton(
+                  onPressed: () {
+                    if (_textCtrl.text.trim().isNotEmpty) {
+                      _submitMessage(_textCtrl.text.trim());
+                    }
+                  },
+                  icon: const Icon(Icons.send_rounded),
+                  color: ColorConstant.maingreen,
+                  iconSize: 26,
                 ),
               ],
-            ),
-          ),
-        ],
-        // AI Response Card
-        Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxHeight: 280),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.green.shade50.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.green.shade200),
-          ),
-          child: SingleChildScrollView(
-            child: Text(
-              response,
-              style: GoogleFonts.poppins(
-                fontSize: Adaptive.sp(14),
-                color: Colors.black87,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Controls: Listen / Speak Again
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onToggleSpeech,
-                icon: Icon(
-                  isSpeaking
-                      ? Icons.volume_off_rounded
-                      : Icons.volume_up_rounded,
-                ),
-                label: Text(
-                  isSpeaking
-                      ? (isHindi ? 'रुकें' : 'Stop')
-                      : (isHindi ? 'सुनें' : 'Listen'),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: ColorConstant.maingreen,
-                  side: BorderSide(color: ColorConstant.maingreen),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: onAskAgain,
-                icon: const Icon(Icons.mic_rounded),
-                label: Text(isHindi ? 'फिर से पूछें' : 'Ask Again'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorConstant.maingreen,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        // Direct Call IVR / Helpline Button
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => CallLaunch('tel:+917733901154'),
-            icon: const Icon(Icons.phone_in_talk_rounded, color: Colors.white),
-            label: Text(
-              isHindi ? '📞 IVR हेल्पलाइन (7733901154)' : '📞 Call IVR Support (7733901154)',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: Adaptive.sp(14),
-                color: Colors.white,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange.shade800,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 3,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-      ],
+      ),
     );
+  }
+
+  String _formatTime(DateTime dt) {
+    final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 }
