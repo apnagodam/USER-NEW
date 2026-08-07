@@ -55,6 +55,8 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   String _marketData = '';
   bool _isHindi = true;
   LanguageDetectionResult? _detectedLanguageResult;
+  final List<Map<String, String>> _chatHistory = [];
+  bool _autoVoiceChatEnabled = true;
 
   // ── packages ──
   final stt.SpeechToText _speech = stt.SpeechToText();
@@ -131,7 +133,21 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       if (mounted) setState(() => _isSpeaking = true);
     });
     _tts.setCompletionHandler(() {
-      if (mounted) setState(() => _isSpeaking = false);
+      if (mounted) {
+        setState(() => _isSpeaking = false);
+        if (_autoVoiceChatEnabled && _step == _AssistantStep.response) {
+          Future.delayed(const Duration(milliseconds: 600), () {
+            if (mounted && _autoVoiceChatEnabled && !_isListeningNow) {
+              setState(() {
+                _spokenText = '';
+                _textCtrl.clear();
+                _step = _AssistantStep.listening;
+              });
+              _startListening();
+            }
+          });
+        }
+      }
     });
     _tts.setCancelHandler(() {
       if (mounted) setState(() => _isSpeaking = false);
@@ -317,8 +333,12 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     final response = await AiService.askClaude(
       question: query,
       marketData: _marketData,
+      history: _chatHistory,
       isHindi: !isEnglishQuery,
     );
+
+    _chatHistory.add({'user': query});
+    _chatHistory.add({'assistant': response});
 
     if (!mounted) return;
     setState(() {
@@ -532,6 +552,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
           response: _aiResponse,
           isSpeaking: _isSpeaking,
           detectedLanguage: _detectedLanguageResult,
+          autoVoiceChatEnabled: _autoVoiceChatEnabled,
           onToggleSpeech: () {
             if (_isSpeaking) {
               try {
@@ -790,6 +811,7 @@ class _ResponseStep extends StatelessWidget {
   final String response;
   final bool isSpeaking;
   final LanguageDetectionResult? detectedLanguage;
+  final bool autoVoiceChatEnabled;
   final VoidCallback onToggleSpeech;
   final VoidCallback onAskAgain;
 
@@ -798,6 +820,7 @@ class _ResponseStep extends StatelessWidget {
     required this.response,
     required this.isSpeaking,
     this.detectedLanguage,
+    this.autoVoiceChatEnabled = true,
     required this.onToggleSpeech,
     required this.onAskAgain,
   });
@@ -826,6 +849,34 @@ class _ResponseStep extends StatelessWidget {
                     fontSize: 11.5,
                     fontWeight: FontWeight.bold,
                     color: Colors.amber.shade900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        // Continuous Voice Chat Indicator Badge
+        if (autoVoiceChatEnabled) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: Colors.green.shade100.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.graphic_eq_rounded, size: 14, color: ColorConstant.maingreen),
+                const SizedBox(width: 6),
+                Text(
+                  isHindi
+                      ? '🎙️ निरंतर बोलकर बातचीत चालू (Continuous Voice Chat)'
+                      : '🎙️ Continuous Voice Chat Active',
+                  style: GoogleFonts.poppins(
+                    fontSize: Adaptive.sp(11),
+                    fontWeight: FontWeight.w600,
+                    color: ColorConstant.maingreen,
                   ),
                 ),
               ],

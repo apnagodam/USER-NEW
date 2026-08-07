@@ -35,9 +35,6 @@ class HuggingFaceService {
   static const String _hfTextClassifyUrl = 'https://api-inference.huggingface.co/models/facebook/mms-lid-256';
   static const String _hfAsrUrl = 'https://api-inference.huggingface.co/models/ai4bharat/indicwav2vec-v1-mwr';
 
-  // Recommended Hugging Face Models for Indic/Rajasthani/Marwari AI Tasks
-  static const String _defaultHfModel = 'meta-llama/Llama-3.2-3B-Instruct';
-
   /// Detects whether the input text is in Marwari, Shekhawati, Rajasthani, Hindi, or English
   /// using a combination of Hugging Face Inference API and Regional Lexicon Pattern Matching.
   static Future<LanguageDetectionResult> detectLanguageAndDialect({
@@ -59,7 +56,7 @@ class HuggingFaceService {
 
     // 1. Marwari & Shekhawati Regional Dialect Lexicon & Grammar Markers
     final marwariKeywords = [
-      'रो', 'रा', 'री', 'कांई', 'काईं', 'म्हाने', 'म्हाका', 'थै', 'थारो', 'थांरो',
+      'रो', 'रा', 'री', 'कांई', 'ाईं', 'म्हाने', 'म्हाका', 'थै', 'थारो', 'थांरो',
       'किया', 'कतरा', 'कठै', 'अठै', 'बठै', 'कोण्या', 'कोइनी', 'छै', 'छै।', 'होवै',
       'लागैगा', 'लागसी', 'कराणो', 'बेचणी', 'खरीदणी', 'बोली', 'चिठ्ठो', 'बाजरी',
       'गैहूं', 'सरसो', 'मोठ', 'मंगफली', 'गवार'
@@ -161,10 +158,11 @@ class HuggingFaceService {
     );
   }
 
-  /// Sends farmer query to Hugging Face LLM Model trained for Rajasthani/Marwari dialect understanding
+  /// Sends farmer query to Hugging Face LLM Model trained for Marwari/Shekhawati multi-turn conversation
   static Future<String?> queryHuggingFaceModel({
     required String prompt,
     required String contextData,
+    List<Map<String, String>>? history,
     String? apiKeyOverride,
     String? modelOverride,
   }) async {
@@ -180,16 +178,33 @@ class HuggingFaceService {
 
     final systemInstruction = '''
 You are the official AI Agricultural Market & Logistics Specialist for Apna Godam (अपना गोदाम).
-You specialize in understanding regional Rajasthani dialects, including Marwari (मारवाड़ी) and Shekhawati (शेखावाटी).
+You specialize in continuous conversational voice chat with farmers in Marwari (मारवाड़ी) and Shekhawati (शेखावाटी) dialects.
 
-CORE INSTRUCTIONS:
-1. When farmers ask questions in Marwari or Shekhawati dialect (e.g. "गैहूं रो भाव कांई है?", "बाजरी बेचणी है", "गोदाम में माल किया जमा करावै?"), understand their dialect perfectly.
-2. Provide answers in clear, friendly, and respectful Marwari/Hindi that a Rajasthani farmer can easily understand.
+CORE INSTRUCTIONS FOR MULTI-TURN VOICE CHAT:
+1. Support multi-turn conversational context (e.g. if farmer asks "जौ का भाव क्या है?" and then asks "मुझे वो बेचना है कैसे बेचूं?", understand that "वो" refers to "जौ / Barley").
+2. Respond DIRECTLY in friendly, respectful Marwari / Shekhawati dialect (e.g., "अजमेर मंडी में जों रो भाव ₹2150/क्विंटल छै। थै गोदाम में माल आसानी सूं बेच सको छौ।").
 3. Use live market data context provided below:
 $contextData
 
-Provide concise, accurate, and helpful answers.
+Provide concise, friendly, and accurate answers suitable for voice playback.
 ''';
+
+    final List<Map<String, String>> messages = [
+      {'role': 'system', 'content': systemInstruction},
+    ];
+
+    if (history != null && history.isNotEmpty) {
+      for (final turn in history) {
+        if (turn.containsKey('user')) {
+          messages.add({'role': 'user', 'content': turn['user']!});
+        }
+        if (turn.containsKey('assistant')) {
+          messages.add({'role': 'assistant', 'content': turn['assistant']!});
+        }
+      }
+    }
+
+    messages.add({'role': 'user', 'content': prompt});
 
     try {
       final response = await http.post(
@@ -200,10 +215,7 @@ Provide concise, accurate, and helpful answers.
         },
         body: jsonEncode({
           'model': model,
-          'messages': [
-            {'role': 'system', 'content': systemInstruction},
-            {'role': 'user', 'content': prompt},
-          ],
+          'messages': messages,
           'temperature': 0.3,
           'max_tokens': 512,
         }),
@@ -229,7 +241,6 @@ Provide concise, accurate, and helpful answers.
   }
 
   /// Transcribes speech audio bytes using Hugging Face Automatic Speech Recognition (ASR)
-  /// fine-tuned for Marwari / Indic languages (e.g. ai4bharat/indicwav2vec-v1-mwr or MMS).
   static Future<String?> transcribeAudioHuggingFace({
     required List<int> audioBytes,
     String? apiKeyOverride,
@@ -274,8 +285,8 @@ Provide concise, accurate, and helpful answers.
       'रा भाव': 'के भाव',
       'री कीमत': 'की कीमत',
       'कांई है': 'क्या है',
-      'काईं है': 'क्या है',
-      'काईं': 'क्या',
+      'ाईं है': 'क्या है',
+      'ाईं': 'क्या',
       'कांई': 'क्या',
       'किया': 'कैसे',
       'कतरा': 'कितने',

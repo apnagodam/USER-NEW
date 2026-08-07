@@ -19,10 +19,11 @@ class AiService {
   ];
 
   /// Sends a farmer's question with live market data as context.
-  /// Integrates Hugging Face API for Language Detection & Marwari/Shekhawati AI inference.
+  /// Supports multi-turn conversational memory & Hugging Face API for Language Detection & Marwari/Shekhawati AI inference.
   static Future<String> askClaude({
     required String question,
     required String marketData,
+    List<Map<String, String>>? history,
     bool isHindi = true,
   }) async {
     // 1. Try Hugging Face Inference API Model for regional dialect (Marwari/Shekhawati/Hindi)
@@ -30,6 +31,7 @@ class AiService {
       final hfResult = await HuggingFaceService.queryHuggingFaceModel(
         prompt: question,
         contextData: marketData,
+        history: history,
       );
       if (hfResult != null && hfResult.trim().isNotEmpty) {
         return hfResult;
@@ -45,6 +47,20 @@ class AiService {
       marketData: marketData,
     );
 
+    // Build Anthropic messages array with multi-turn conversation history
+    final List<Map<String, String>> messages = [];
+    if (history != null && history.isNotEmpty) {
+      for (final turn in history) {
+        if (turn.containsKey('user')) {
+          messages.add({'role': 'user', 'content': turn['user']!});
+        }
+        if (turn.containsKey('assistant')) {
+          messages.add({'role': 'assistant', 'content': turn['assistant']!});
+        }
+      }
+    }
+    messages.add({'role': 'user', 'content': question});
+
     // Try available Anthropic models in sequence
     for (final modelName in _modelsToTry) {
       try {
@@ -59,9 +75,7 @@ class AiService {
             'model': modelName,
             'max_tokens': 512,
             'system': systemPrompt,
-            'messages': [
-              {'role': 'user', 'content': question},
-            ],
+            'messages': messages,
           }),
         );
 
@@ -73,12 +87,16 @@ class AiService {
     }
 
     // Use smart local market engine for instant, accurate response
-    return _fallbackMarketResponse(question, marketData);
+    return _fallbackMarketResponse(question, marketData, history: history);
   }
 
   /// Smart local answer generator for all process, feature, and market rate questions.
   /// Handles English, Hindi (Devanagari), and Marwari/Rajasthani queries.
-  static String _fallbackMarketResponse(String question, String marketData) {
+  static String _fallbackMarketResponse(
+    String question,
+    String marketData, {
+    List<Map<String, String>>? history,
+  }) {
     final q = question.toLowerCase().trim();
 
     // Detect if question is in English
@@ -105,6 +123,37 @@ class AiService {
         q.contains('कराणो') ||
         q.contains('किया') ||
         q.contains('कतरा');
+
+    // Handle follow-up selling/buying queries using conversation history (e.g. "मुझे वो बेचना है कैसे बेचूं?")
+    if (q.contains('बेच') || q.contains('बेचणी') || q.contains('बेचना') || q.contains('सेल') || q.contains('sell') || q.contains('खरीद') || q.contains('buy')) {
+      String previousCrop = 'अनाज';
+      if (history != null && history.isNotEmpty) {
+        for (final turn in history.reversed) {
+          final turnText = ((turn['user'] ?? '') + ' ' + (turn['assistant'] ?? '')).toLowerCase();
+          if (turnText.contains('गेहूं') || turnText.contains('gehu') || turnText.contains('wheat')) {
+            previousCrop = 'गेहूं (Wheat)'; break;
+          } else if (turnText.contains('जौ') || turnText.contains('jau') || turnText.contains('barley')) {
+            previousCrop = 'जौ (Barley)'; break;
+          } else if (turnText.contains('चना') || turnText.contains('chana') || turnText.contains('gram')) {
+            previousCrop = 'चना (Gram)'; break;
+          } else if (turnText.contains('सरसों') || turnText.contains('mustard')) {
+            previousCrop = 'सरसों (Mustard)'; break;
+          } else if (turnText.contains('मूंगफली') || turnText.contains('groundnut')) {
+            previousCrop = 'मूंगफली (Groundnut)'; break;
+          } else if (turnText.contains('मक्का') || turnText.contains('maize')) {
+            previousCrop = 'मक्का (Maize)'; break;
+          }
+        }
+      }
+
+      if (isEnglishQuery) {
+        return 'To sell your $previousCrop on Apna Godam:\n1. Open the WBT / SBT Market section.\n2. Tap "Sell Stack" (चिठ्ठा बेचें).\n3. Enter your target price and quantity. Once a buyer accepts your bid, your order will be executed instantly!';
+      }
+
+      return isMarwari
+          ? 'थै आपरो $previousCrop अपना गोदाम पर आसानी सूं बेच सको छौ सा:\n1. ऐप में व्यापार (WBT/SBT) सेक्शन में जावो सा।\n2. "चिठ्ठा बेचें" पर क्लिक कर आपरो भाव अर मात्रा दर्ज करो सा।\n3. खरीदार बिड स्वीकार करते ही आपरो सौदा पक्को हो जावेगा!'
+          : 'आप अपना $previousCrop अपना गोदाम पर आसानी से बेच सकते हैं:\n1. ऐप के व्यापार (WBT/SBT) सेक्शन में जाएं।\n2. "चिठ्ठा बेचें" पर क्लिक करके अपना भाव (Rate) और मात्रा दर्ज करें।\n3. जैसे ही खरीदार आपकी बिड स्वीकार करेगा, आपका सौदा पक्का हो जाएगा!';
+    }
 
     // 1. INWARD (माल जमा)
     if (q.contains('इनवर्ड') ||
