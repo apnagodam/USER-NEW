@@ -54,12 +54,18 @@ class HuggingFaceService {
       );
     }
 
-    // 1. Marwari & Shekhawati Regional Dialect Lexicon & Grammar Markers
+    // 1. Marwari & Shekhawati Regional Dialect Lexicon & Grammar Markers (Devanagari & Romanized)
     final marwariKeywords = [
       'रो', 'रा', 'री', 'कांई', 'ाईं', 'म्हाने', 'म्हाका', 'थै', 'थारो', 'थांरो',
       'किया', 'कतरा', 'कठै', 'अठै', 'बठै', 'कोण्या', 'कोइनी', 'छै', 'छै।', 'होवै',
       'लागैगा', 'लागसी', 'कराणो', 'बेचणी', 'खरीदणी', 'बोली', 'चिठ्ठो', 'बाजरी',
       'गैहूं', 'सरसो', 'मोठ', 'मंगफली', 'गवार'
+    ];
+
+    final marwariRomanKeywords = [
+      'chhe', 'che', 'chha', 'chho', 'bechain', 'bechni', 'bechna', 'kharidna',
+      'kharidni', 'mhane', 'tharo', 'tharo', 'the', 'kai', 'kain', 'katra', 'ktr',
+      'koni', 'kunya', 'atha', 'batha', 'katha', 'bhav', 'bhao', 'paisa'
     ];
 
     final shekhawatiKeywords = [
@@ -72,6 +78,10 @@ class HuggingFaceService {
 
     for (final kw in marwariKeywords) {
       if (rawText.contains(kw)) marwariScore++;
+    }
+
+    for (final kw in marwariRomanKeywords) {
+      if (lowerText.contains(kw)) marwariScore += 2;
     }
 
     for (final kw in shekhawatiKeywords) {
@@ -137,9 +147,27 @@ class HuggingFaceService {
       );
     }
 
-    // Check English vs Hindi Script
-    final isEnglishScript = RegExp(r'^[a-zA-Z0-9\s\?\,\.\!\%\-\_]+$').hasMatch(lowerText);
-    if (isEnglishScript) {
+    // Check pure English Query (must contain English words like 'what', 'how', 'price', 'rate', 'buy', 'sell', 'wheat')
+    final isPureEnglishWordQuery = (lowerText.contains('what') ||
+            lowerText.contains('how') ||
+            lowerText.contains('price') ||
+            lowerText.contains('rate') ||
+            lowerText.contains('buy') ||
+            lowerText.contains('sell') ||
+            lowerText.contains('wheat') ||
+            lowerText.contains('barley') ||
+            lowerText.contains('inward') ||
+            lowerText.contains('outward') ||
+            lowerText.contains('wallet') ||
+            lowerText.contains('loan')) &&
+        !lowerText.contains('bhav') &&
+        !lowerText.contains('bechain') &&
+        !lowerText.contains('chhe') &&
+        !lowerText.contains('che') &&
+        !lowerText.contains('kharidna') &&
+        !lowerText.contains('bechna');
+
+    if (isPureEnglishWordQuery) {
       return LanguageDetectionResult(
         languageCode: 'en',
         languageName: 'English',
@@ -149,11 +177,12 @@ class HuggingFaceService {
       );
     }
 
+    // Default to Marwari / Hindi for all regional queries
     return LanguageDetectionResult(
-      languageCode: 'hi',
-      languageName: 'Hindi (हिंदी)',
+      languageCode: 'mwr',
+      languageName: 'Marwari (मारवाड़ी)',
       confidence: 0.90,
-      isRegionalDialect: false,
+      isRegionalDialect: true,
       normalizedText: rawText,
     );
   }

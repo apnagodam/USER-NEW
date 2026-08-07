@@ -625,8 +625,11 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Controls Row (Audio Listen + Direct IVR Call)
-                  Row(
+                  // Controls Wrap (Audio Listen + Direct IVR Call + Time)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       InkWell(
                         onTap: () {
@@ -649,7 +652,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                             children: [
                               Icon(
                                 _isSpeaking ? Icons.volume_off_rounded : Icons.volume_up_rounded,
-                                size: 16,
+                                size: 15,
                                 color: ColorConstant.maingreen,
                               ),
                               const SizedBox(width: 4),
@@ -665,7 +668,6 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
                       InkWell(
                         onTap: () => CallLaunch('tel:+917733901154'),
                         borderRadius: BorderRadius.circular(20),
@@ -679,10 +681,10 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.phone_in_talk_rounded, size: 14, color: Colors.deepOrange),
+                              const Icon(Icons.phone_in_talk_rounded, size: 13, color: Colors.deepOrange),
                               const SizedBox(width: 4),
                               Text(
-                                'IVR कॉल (7733901154)',
+                                'IVR (7733901154)',
                                 style: GoogleFonts.poppins(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
@@ -693,7 +695,6 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                           ),
                         ),
                       ),
-                      const Spacer(),
                       Text(
                         _formatTime(msg.timestamp),
                         style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 10),

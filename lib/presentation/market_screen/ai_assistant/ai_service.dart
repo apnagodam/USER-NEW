@@ -334,18 +334,14 @@ class AiService {
         return 'Today\'s rate for $cropDisplayNameEn is ₹$priceDisplay. Do you want to buy or sell?';
       }
 
-      return isMarwari
-          ? 'आज $cropDisplayName रो भाव है ₹$priceDisplay। सा, आपणे खरीदना है या बेचना है?'
-          : 'आज $cropDisplayName का भाव है ₹$priceDisplay। आपको खरीदना है या बेचना है?';
+      return 'आज $cropDisplayName रो भाव ₹$priceDisplay/क्विंटल छै सा। थै खरीदना चाहो छौ या बेचना चाहो छौ?';
     }
 
     if (isEnglishQuery) {
       return 'Welcome to Apna Godam AI Assistant. You can ask about warehouse booking, Inward, Outward, SBT/WBT trading, loans and live crop prices.';
     }
 
-    return isMarwari
-        ? 'अपना गोदाम ऐप में आपरो स्वागत है सा! आप गोदाम बुकिंग, माल जमा (Inward), माल निकासी (Outward), बोली अर लोन री जानकारी पूछ सको हो।'
-        : 'अपना गोदाम ऐप में आपका स्वागत है। आप गोदाम बुकिंग, माल जमा (Inward), माल निकासी (Outward), SBT/WBT व्यापार, वॉलेट और कॉमोडिटी लोन की सभी सुविधाएं पूछ सकते हैं।';
+    return 'राम-राम सा! अपना गोदाम ऐप में आपरो स्वागत छै। आप गोदाम बुकिंग, माल जमा (Inward), माल निकासी (Outward), बोली अर लोन री जानकारी पूछ सको छौ।';
   }
 
   static String _buildSystemPrompt({
