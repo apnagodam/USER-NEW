@@ -54,6 +54,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   String _aiResponse = '';
   String _marketData = '';
   bool _isHindi = true;
+  LanguageDetectionResult? _detectedLanguageResult;
 
   // ── packages ──
   final stt.SpeechToText _speech = stt.SpeechToText();
