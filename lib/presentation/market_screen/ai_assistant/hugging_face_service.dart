@@ -3,13 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../../../core/config/app_config.dart';
 
-/// Language and Dialect Detection Result Model
+/// Language and Dialect Detection Result Model supporting 8 languages/dialects:
+/// Marwari, Hindi, English, Bhojpuri, Maithili, Magahi, Angika, Bajika.
 class LanguageDetectionResult {
-  final String languageCode; // e.g., 'mwr', 'shk', 'raj', 'hi', 'en'
-  final String languageName; // e.g., 'Marwari (मारवाड़ी)', 'Shekhawati (शेखावाटी)', 'Rajasthani (राजस्थानी)', 'Hindi (हिंदी)', 'English'
-  final double confidence; // e.g., 0.95
-  final bool isRegionalDialect; // true for Marwari, Shekhawati, Rajasthani
-  final String normalizedText; // Normalized standard Hindi/English text for query processing
+  final String languageCode; // 'mwr', 'hi', 'en', 'bho', 'mai', 'mag', 'anp', 'bjk'
+  final String languageName; // Display name with native script
+  final double confidence;
+  final bool isRegionalDialect;
+  final String normalizedText;
 
   LanguageDetectionResult({
     required this.languageCode,
@@ -28,15 +29,21 @@ class LanguageDetectionResult {
       };
 }
 
-/// Dedicated Hugging Face AI Service for Language Detection & Marwari/Shekhawati AI Inference
+/// Dedicated Hugging Face AI Service for 8-Language Dialect Detection & AI Inference
 class HuggingFaceService {
-  // Primary Hugging Face Router / Inference API Endpoints
   static const String _hfBaseUrl = 'https://router.huggingface.co/hf-inference/v1/chat/completions';
   static const String _hfTextClassifyUrl = 'https://api-inference.huggingface.co/models/facebook/mms-lid-256';
   static const String _hfAsrUrl = 'https://api-inference.huggingface.co/models/ai4bharat/indicwav2vec-v1-mwr';
 
-  /// Detects whether the input text is in Marwari, Shekhawati, Rajasthani, Hindi, or English
-  /// using a combination of Hugging Face Inference API and Regional Lexicon Pattern Matching.
+  /// Detects input language/dialect across 8 targets:
+  /// 1. Marwari (मारवाड़ी)
+  /// 2. Hindi (हिंदी)
+  /// 3. English
+  /// 4. Bhojpuri (भोजपुरी)
+  /// 5. Maithili (मैथिली)
+  /// 6. Magahi (मगही)
+  /// 7. Angika (अंगिका)
+  /// 8. Bajika (बजिका)
   static Future<LanguageDetectionResult> detectLanguageAndDialect({
     required String text,
     String? apiKeyOverride,
@@ -46,108 +53,161 @@ class HuggingFaceService {
 
     if (rawText.isEmpty) {
       return LanguageDetectionResult(
-        languageCode: 'hi',
-        languageName: 'Hindi (हिंदी)',
+        languageCode: 'mwr',
+        languageName: 'Marwari (मारवाड़ी)',
         confidence: 1.0,
-        isRegionalDialect: false,
+        isRegionalDialect: true,
         normalizedText: rawText,
       );
     }
 
-    // 1. Marwari & Shekhawati Regional Dialect Lexicon & Grammar Markers (Devanagari & Romanized)
+    // ── 1. Bhojpuri (भोजपुरी) Markers ──
+    final bhojpuriKeywords = [
+      'का बा', 'केतना', 'कइसे', 'हमरा', 'रउआ', 'रउरा', 'बेचैक', 'कीने', 'कहाँ बा',
+      'बाटे', 'बा', 'हमार', 'तोहार', 'बाड़ू', 'काहल', 'आईल', 'गईल'
+    ];
+    final bhojpuriRoman = [
+      'ka ba', 'ketna', 'kaise', 'raua', 'raura', 'humra', 'bechek', 'kine', 'ba'
+    ];
+
+    // ── 2. Maithili (मैथिली) Markers ──
+    final maithiliKeywords = [
+      'अहाँ', 'अहाँक', 'की', 'कतबा', 'कोना', 'बेचब', 'कैनब', 'अछि', 'सकइत छी',
+      'हमीरा', 'तोरा', 'छैत', 'भेल', 'कहलहुँ'
+    ];
+    final maithiliRoman = [
+      'ahan', 'ahank', 'ki', 'katba', 'kona', 'bechab', 'kainab', 'achi', 'hira'
+    ];
+
+    // ── 3. Magahi (मगही) Markers ──
+    final magahiKeywords = [
+      'का हई', 'कितना हई', 'कइसे', 'हमरा के', 'तोरा', 'बेचे के हई', 'कीने के हई',
+      'हई', 'बाढे', 'हलै', 'गेलई', 'अइलै'
+    ];
+    final magahiRoman = [
+      'ka hai', 'kitna hai', 'humra ke', 'tora', 'beche ke hai', 'kine ke hai'
+    ];
+
+    // ── 4. Angika (अंगिका) Markers ──
+    final angikaKeywords = [
+      'की छै', 'कतना छै', 'केन्हें', 'हमरा', 'तोरा', 'बेचै लेल', 'किनै लेल',
+      'छै', 'छौ', 'हिनका', 'ऐलै', 'गेलै'
+    ];
+    final angikaRoman = [
+      'ki chhai', 'katna chhai', 'kenhe', 'bechai lel', 'kinai lel'
+    ];
+
+    // ── 5. Bajika (बजिका) Markers ──
+    final bajikaKeywords = [
+      'का बा', 'केतना बा', 'कइसे', 'हमरा के', 'अहाँ के', 'बेचे के बा', 'कीने के बा',
+      'बानी', 'अथि'
+    ];
+
+    // ── 6. Marwari (मारवाड़ी) Markers ──
     final marwariKeywords = [
       'रो', 'रा', 'री', 'कांई', 'ाईं', 'म्हाने', 'म्हाका', 'थै', 'थारो', 'थांरो',
-      'किया', 'कतरा', 'कठै', 'अठै', 'बठै', 'कोण्या', 'कोइनी', 'छै', 'छै।', 'होवै',
-      'लागैगा', 'लागसी', 'कराणो', 'बेचणी', 'खरीदणी', 'बोली', 'चिठ्ठो', 'बाजरी',
-      'गैहूं', 'सरसो', 'मोठ', 'मंगफली', 'गवार'
+      'किया', 'कतरा', 'कठै', 'अठै', 'बठै', 'कोण्या', 'कोणी', 'छै', 'होवै', 'लागैगा',
+      'लागसी', 'कराणो', 'बेचणी', 'खरीदणी', 'बोली', 'चिठ्ठो', 'बाजरी', 'गैहूं',
+      'सरसो', 'मोठ', 'मंगफली', 'गवार', 'रोजा', 'रोजी'
+    ];
+    final marwariRoman = [
+      'chhe', 'che', 'chha', 'chho', 'bechain', 'bechni', 'bechna', 'mhane',
+      'tharo', 'the', 'kai', 'kain', 'katra', 'ktr', 'koni', 'kunya', 'atha', 'batha'
     ];
 
-    final marwariRomanKeywords = [
-      'chhe', 'che', 'chha', 'chho', 'bechain', 'bechni', 'bechna', 'kharidna',
-      'kharidni', 'mhane', 'tharo', 'tharo', 'the', 'kai', 'kain', 'katra', 'ktr',
-      'koni', 'kunya', 'atha', 'batha', 'katha', 'bhav', 'bhao', 'paisa'
-    ];
+    int bhoScore = 0, maiScore = 0, magScore = 0, anpScore = 0, bjkScore = 0, mwrScore = 0;
 
-    final shekhawatiKeywords = [
-      'कोणी', 'कठै', 'अठै', 'बठै', 'कतरया', 'कतरै', 'कियाकर', 'सुणाओ', 'सुणो',
-      'कांईयां', 'कियांस्यूं', 'पिया', 'रुपया', 'गोदामूं', 'मंडीस्यूं', 'भावड़ा'
-    ];
+    for (final kw in bhojpuriKeywords) {
+      if (rawText.contains(kw)) bhoScore += 2;
+    }
+    for (final kw in bhojpuriRoman) {
+      if (lowerText.contains(kw)) bhoScore += 2;
+    }
 
-    int marwariScore = 0;
-    int shekhawatiScore = 0;
+    for (final kw in maithiliKeywords) {
+      if (rawText.contains(kw)) maiScore += 2;
+    }
+    for (final kw in maithiliRoman) {
+      if (lowerText.contains(kw)) maiScore += 2;
+    }
+
+    for (final kw in magahiKeywords) {
+      if (rawText.contains(kw)) magScore += 2;
+    }
+    for (final kw in magahiRoman) {
+      if (lowerText.contains(kw)) magScore += 2;
+    }
+
+    for (final kw in angikaKeywords) {
+      if (rawText.contains(kw)) anpScore += 2;
+    }
+    for (final kw in angikaRoman) {
+      if (lowerText.contains(kw)) anpScore += 2;
+    }
+
+    for (final kw in bajikaKeywords) {
+      if (rawText.contains(kw)) bjkScore += 2;
+    }
 
     for (final kw in marwariKeywords) {
-      if (rawText.contains(kw)) marwariScore++;
+      if (rawText.contains(kw)) mwrScore += 2;
+    }
+    for (final kw in marwariRoman) {
+      if (lowerText.contains(kw)) mwrScore += 2;
     }
 
-    for (final kw in marwariRomanKeywords) {
-      if (lowerText.contains(kw)) marwariScore += 2;
-    }
-
-    for (final kw in shekhawatiKeywords) {
-      if (rawText.contains(kw)) shekhawatiScore++;
-    }
-
-    // 2. Query Hugging Face Language Detection Model (if API Key Available)
-    final apiKey = apiKeyOverride ?? AppConfig.huggingFaceApiKey;
-    if (apiKey.isNotEmpty && apiKey != 'YOUR_HUGGINGFACE_API_KEY') {
-      try {
-        final hfResponse = await http.post(
-          Uri.parse(_hfTextClassifyUrl),
-          headers: {
-            'Authorization': 'Bearer $apiKey',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({'inputs': rawText}),
-        );
-
-        if (hfResponse.statusCode == 200) {
-          final List<dynamic> data = jsonDecode(hfResponse.body);
-          if (data.isNotEmpty && data[0] is List) {
-            final predictions = data[0] as List;
-            for (final pred in predictions) {
-              final label = pred['label']?.toString() ?? '';
-              final score = (pred['score'] as num?)?.toDouble() ?? 0.0;
-
-              if ((label.contains('mwr') || label.contains('raj')) && score > 0.3) {
-                return LanguageDetectionResult(
-                  languageCode: 'mwr',
-                  languageName: 'Marwari (मारवाड़ी)',
-                  confidence: score,
-                  isRegionalDialect: true,
-                  normalizedText: _normalizeMarwariToHindi(rawText),
-                );
-              }
-            }
-          }
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print('Hugging Face Language Detection API Error: $e');
-        }
-      }
-    }
-
-    // 3. Rule-based Dialect Classification Fallback
-    if (shekhawatiScore >= 2 || (shekhawatiScore > 0 && marwariScore > 0)) {
+    // Evaluation Hierarchy
+    if (bhoScore >= 2 && bhoScore >= maiScore && bhoScore >= mwrScore) {
       return LanguageDetectionResult(
-        languageCode: 'shk',
-        languageName: 'Shekhawati (शेखावाटी)',
-        confidence: 0.92,
+        languageCode: 'bho',
+        languageName: 'Bhojpuri (भोजपुरी)',
+        confidence: 0.95,
         isRegionalDialect: true,
-        normalizedText: _normalizeMarwariToHindi(rawText),
+        normalizedText: rawText,
       );
-    } else if (marwariScore >= 1) {
+    } else if (maiScore >= 2 && maiScore >= magScore) {
+      return LanguageDetectionResult(
+        languageCode: 'mai',
+        languageName: 'Maithili (मैथिली)',
+        confidence: 0.95,
+        isRegionalDialect: true,
+        normalizedText: rawText,
+      );
+    } else if (magScore >= 2 && magScore >= anpScore) {
+      return LanguageDetectionResult(
+        languageCode: 'mag',
+        languageName: 'Magahi (मगही)',
+        confidence: 0.95,
+        isRegionalDialect: true,
+        normalizedText: rawText,
+      );
+    } else if (anpScore >= 2) {
+      return LanguageDetectionResult(
+        languageCode: 'anp',
+        languageName: 'Angika (अंगिका)',
+        confidence: 0.95,
+        isRegionalDialect: true,
+        normalizedText: rawText,
+      );
+    } else if (bjkScore >= 2) {
+      return LanguageDetectionResult(
+        languageCode: 'bjk',
+        languageName: 'Bajika (बजिका)',
+        confidence: 0.95,
+        isRegionalDialect: true,
+        normalizedText: rawText,
+      );
+    } else if (mwrScore >= 1) {
       return LanguageDetectionResult(
         languageCode: 'mwr',
         languageName: 'Marwari (मारवाड़ी)',
         confidence: 0.95,
         isRegionalDialect: true,
-        normalizedText: _normalizeMarwariToHindi(rawText),
+        normalizedText: rawText,
       );
     }
 
-    // Check pure English Query (must contain English words like 'what', 'how', 'price', 'rate', 'buy', 'sell', 'wheat')
+    // Check pure English Query
     final isPureEnglishWordQuery = (lowerText.contains('what') ||
             lowerText.contains('how') ||
             lowerText.contains('price') ||
@@ -163,9 +223,8 @@ class HuggingFaceService {
         !lowerText.contains('bhav') &&
         !lowerText.contains('bechain') &&
         !lowerText.contains('chhe') &&
-        !lowerText.contains('che') &&
-        !lowerText.contains('kharidna') &&
-        !lowerText.contains('bechna');
+        !lowerText.contains('ka ba') &&
+        !lowerText.contains('hai');
 
     if (isPureEnglishWordQuery) {
       return LanguageDetectionResult(
@@ -177,7 +236,18 @@ class HuggingFaceService {
       );
     }
 
-    // Default to Marwari / Hindi for all regional queries
+    // Check standard Hindi Devanagari
+    if (rawText.contains('क्या') || rawText.contains('कैसे') || rawText.contains('कितना') || rawText.contains('चाहिए')) {
+      return LanguageDetectionResult(
+        languageCode: 'hi',
+        languageName: 'Hindi (हिंदी)',
+        confidence: 0.92,
+        isRegionalDialect: false,
+        normalizedText: rawText,
+      );
+    }
+
+    // Default to Marwari / Regional for farmer queries
     return LanguageDetectionResult(
       languageCode: 'mwr',
       languageName: 'Marwari (मारवाड़ी)',
@@ -187,7 +257,7 @@ class HuggingFaceService {
     );
   }
 
-  /// Sends farmer query to Hugging Face LLM Model trained for Marwari/Shekhawati multi-turn conversation
+  /// Sends farmer query to Hugging Face LLM Model trained for 8 regional languages & Groundnut rules
   static Future<String?> queryHuggingFaceModel({
     required String prompt,
     required String contextData,
@@ -197,9 +267,6 @@ class HuggingFaceService {
   }) async {
     final apiKey = apiKeyOverride ?? AppConfig.huggingFaceApiKey;
     if (apiKey.isEmpty || apiKey == 'YOUR_HUGGINGFACE_API_KEY') {
-      if (kDebugMode) {
-        print('Hugging Face API Key is not set in AppConfig.huggingFaceApiKey');
-      }
       return null;
     }
 
@@ -211,16 +278,40 @@ class HuggingFaceService {
     ];
 
     final systemInstruction = '''
-You are the official AI Agricultural Market & Logistics Specialist for Apna Godam (अपना गोदाम).
-You specialize in continuous conversational voice chat with farmers in Marwari (मारवाड़ी) and Shekhawati (शेखावाटी) dialects.
+You are the official AI Agricultural Market & Customer Service Specialist for Apna Godam (अपना गोदाम).
+You specialize in continuous conversational voice chat with farmers across 8 regional languages and dialects:
+1. Marwari (मारवाड़ी)
+2. Hindi (हिंदी)
+3. English
+4. Bhojpuri (भोजपुरी)
+5. Maithili (मैथिली)
+6. Magahi (मगही)
+7. Angika (अंगिका)
+8. Bajika (बजिका)
 
-CORE INSTRUCTIONS FOR MULTI-TURN VOICE CHAT:
-1. Support multi-turn conversational context (e.g. if farmer asks "जौ का भाव क्या है?" and then asks "मुझे वो बेचना है कैसे बेचूं?", understand that "वो" refers to "जौ / Barley").
-2. Respond DIRECTLY in friendly, respectful Marwari / Shekhawati dialect (e.g., "अजमेर मंडी में जों रो भाव ₹2150/क्विंटल छै। थै गोदाम में माल आसानी सूं बेच सको छौ।").
-3. Use live market data context provided below:
+CRITICAL INSTRUCTIONS:
+1. DETECT THE USER'S EXACT LANGUAGE/DIALECT (Marwari, Hindi, English, Bhojpuri, Maithili, Magahi, Angika, Bajika) AND RESPOND DIRECTLY IN THAT SAME LANGUAGE/DIALECT IN DEVANAGARI SCRIPT.
+   - Example Marwari: "अजमेर मंडी में मूंगफली रो भाव ₹65/किग्रा छै सा। थै अपना गोदाम पर आसानी सूं बेच सको छौ।"
+   - Example Bhojpuri: "अजमेर मंडी में मूंगफली के भाव ₹65/किलो बा। रउआ अपना गोदाम पर आसानी से बेच सकिला।"
+   - Example Maithili: "अजमेर मंडी में मूंगफलीक भाव ₹65/किग्रा अछि। अहाँ अपना गोदाम पर आसानी सँ बेच सकइत छी।"
+   - Example Hindi: "अजमेर मंडी में मूंगफली का भाव ₹65/किग्रा है। आप अपना गोदाम पर आसानी से बेच सकते हैं।"
+
+2. GROUNDNUT (मूंगफली) DOMAIN & CUSTOMER SERVICE RULES:
+   - Synonyms: मूंगफली, मूंफली, ग्राउंडनट, सिकाई मूंगफली, सिंगदाना, गोटा।
+   - 3 Quality Types:
+     a) सिकाई गुणवत्ता (Sikai Quality): Whole roasted/baked. Golden shell, grown in Western Rajasthan (Jaisalmer, Bikaner, Phalodi, Mohangarh, Bajju, Nachna). Only Khala (खला) type is used. Price ~₹60 to ₹70-75/kg. (Do NOT quote Sikai rates for Jaipur/Chomu/Sikar without quality test!).
+     b) दाना गुणवत्ता (Dana Quality): Inner kernel/gota is good, outer shell thin. Sold shelled (singdana/gota). Only Khala (खला) type used.
+     c) तेल गुणवत्ता (Oil Quality): Lighter seed/shell, thin kernels for oil extraction. Both Khala (खला) and Chugga (चुग्गा) types used.
+   - Harvesting Types: Khala (खला - pulled with plant) vs Chugga (चुग्गा - detached in soil). Note: Chugga is treated as Oil Quality!
+   - Truckload Rules: Full truckload = 20-25 Tons (23-27 Tons max). If farmer has ~25 Tons, dispatch trading member immediately! If low quantity (2-3 Tons or 4-6 bags), put on waitlist until full truckload is aggregated nearby.
+   - Ownership Policy: Deals ONLY with land/stock owner (मालिक). If caller is Bataidar (बटाईदार) or laborer (मजदूर), politely request owner's phone number.
+   - Location Verification: Always confirm actual storage location (do not assume caller current location).
+   - Quality Parameters: 2-dana & 3-dana pods are positive (+ price), 1-dana pods are negative (- price due to extra peeling labor).
+
+3. Live Market Data Context:
 $contextData
 
-Provide concise, friendly, and accurate answers suitable for voice playback.
+Provide concise, polite, and dialect-accurate answers suitable for voice playback.
 ''';
 
     final List<Map<String, String>> messages = [
@@ -264,16 +355,8 @@ Provide concise, friendly, and accurate answers suitable for voice playback.
               return reply.trim();
             }
           }
-        } else {
-          if (kDebugMode) {
-            print('Hugging Face API ($currentModel) HTTP ${response.statusCode}: ${response.body}');
-          }
         }
-      } catch (e) {
-        if (kDebugMode) {
-          print('Hugging Face Query Exception ($currentModel): $e');
-        }
-      }
+      } catch (_) {}
     }
     return null;
   }
@@ -304,50 +387,7 @@ Provide concise, friendly, and accurate answers suitable for voice playback.
           return data['text'] as String?;
         }
       }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Hugging Face ASR Exception: $e');
-      }
-    }
+    } catch (_) {}
     return null;
-  }
-
-  /// Normalizes Marwari / Shekhawati dialect sentences into Standard Hindi
-  static String _normalizeMarwariToHindi(String marwariText) {
-    String normalized = marwariText;
-
-    final replacements = {
-      'गैहूं': 'गेहूं',
-      'गेहू': 'गेहूं',
-      'रो भाव': 'का भाव',
-      'रा भाव': 'के भाव',
-      'री कीमत': 'की कीमत',
-      'कांई है': 'क्या है',
-      'ाईं है': 'क्या है',
-      'ाईं': 'क्या',
-      'कांई': 'क्या',
-      'किया': 'कैसे',
-      'कतरा': 'कितने',
-      'म्हाने': 'मुझे',
-      'थै': 'आप',
-      'थारो': 'आपका',
-      'कराणो': 'कराना',
-      'बेचणी': 'बेचना',
-      'खरीदणी': 'खरीदना',
-      'कोण्या': 'नहीं',
-      'कोणी': 'नहीं',
-      'लागैगा': 'लगेगा',
-      'लागसी': 'लगेगा',
-      'छै': 'है',
-      'अठै': 'यहाँ',
-      'बठै': 'वहाँ',
-      'कठै': 'कहाँ',
-    };
-
-    replacements.forEach((key, value) {
-      normalized = normalized.replaceAll(key, value);
-    });
-
-    return normalized;
   }
 }

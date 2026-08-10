@@ -464,7 +464,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Hugging Face AI active • मारवाड़ी & हिन्दी',
+                      'Hugging Face AI active • 8 भाषाएँ (मारवाड़ी, भोजपुरी...)',
                       style: GoogleFonts.poppins(
                         color: Colors.white70,
                         fontSize: Adaptive.sp(11),

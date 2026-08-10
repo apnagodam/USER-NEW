@@ -19,14 +19,14 @@ class AiService {
   ];
 
   /// Sends a farmer's question with live market data as context.
-  /// Supports multi-turn conversational memory & Hugging Face API for Language Detection & Marwari/Shekhawati AI inference.
+  /// Supports 8 languages/dialects & Hugging Face API for Language Detection & AI inference.
   static Future<String> askClaude({
     required String question,
     required String marketData,
     List<Map<String, String>>? history,
     bool isHindi = true,
   }) async {
-    // 1. Try Hugging Face Inference API Model for regional dialect (Marwari/Shekhawati/Hindi)
+    // 1. Try Hugging Face Inference API Model for regional dialect (8 languages)
     try {
       final hfResult = await HuggingFaceService.queryHuggingFaceModel(
         prompt: question,
@@ -90,8 +90,7 @@ class AiService {
     return fallbackMarketResponse(question, marketData, history: history);
   }
 
-  /// Smart local answer generator for all process, feature, and market rate questions.
-  /// Handles English, Hindi (Devanagari), and Marwari/Rajasthani queries.
+  /// Smart local answer generator for all 8 languages/dialects & Groundnut rules.
   static String fallbackMarketResponse(
     String question,
     String marketData, {
@@ -108,40 +107,71 @@ class AiService {
             q.contains('sell') ||
             q.contains('wheat') ||
             q.contains('barley') ||
+            q.contains('groundnut') ||
             q.contains('inward') ||
             q.contains('outward') ||
             q.contains('wallet') ||
             q.contains('loan')) &&
         RegExp(r'^[a-zA-Z0-9\s\?\,\.\!\%\-\_]+$').hasMatch(q);
 
-    // Detect if question is in Marwari / Rajasthani
-    final isMarwari = q.contains('रो') ||
-        q.contains('कांई') ||
-        q.contains('काईं') ||
-        q.contains('म्हाने') ||
-        q.contains('थै') ||
-        q.contains('कराणो') ||
-        q.contains('किया') ||
-        q.contains('कतरा');
+    // Detect Bhojpuri, Maithili, Magahi, Angika, Bajika, Marwari
+    final isBhojpuri = q.contains('का बा') || q.contains('केतना') || q.contains('कइसे') || q.contains('हमरा') || q.contains('रउआ') || q.contains('बाते');
+    final isMaithili = q.contains('अहाँ') || q.contains('की') || q.contains('कतबा') || q.contains('कोना') || q.contains('अछि');
+    final isMagahi = q.contains('का हई') || q.contains('कितना हई') || q.contains('हमरा के') || q.contains('हई');
+    final isAngika = q.contains('की छै') || q.contains('कतना छै') || q.contains('केन्हें') || q.contains('छौ');
+    final isMarwari = q.contains('रो') || q.contains('कांई') || q.contains('ाईं') || q.contains('म्हाने') || q.contains('थै') || q.contains('कराणो') || q.contains('छै');
 
-    // Handle follow-up selling/buying queries using conversation history (e.g. "मुझे वो बेचना है कैसे बेचूं?")
+    // ── GROUNDNUT (मूंगफली) DOMAIN KNOWLEDGE RULES ──
+    if (q.contains('सिकाई') || q.contains('रोस्टेड') || q.contains('sikai') || q.contains('roasted')) {
+      if (isEnglishQuery) {
+        return 'Sikai Quality Groundnut is whole roasted groundnut grown in Western Rajasthan (Jaisalmer, Bikaner, Phalodi, Mohangarh). It uses Khala harvesting type and rates range from ₹60 to ₹70-75/kg.';
+      }
+      if (isBhojpuri) {
+        return 'सिकाई मूंगफली पच्छिमी राजस्थान (जैसलमेर, बीकानेर) में होला। एकर छिलका सुनहला होला अउर भाव ₹60 से ₹75/किलो तक बा।';
+      }
+      if (isMaithili) {
+        return 'सिकाई मूंगफली पश्चिमी राजस्थानक छैक। एकर बाहरी छिलका सुनहला आ भाव ₹60 सँ ₹75/किग्रा अछि।';
+      }
+      return 'सिकाई मूंगफली मुख्य रूप से पश्चिमी राजस्थान (जैसलमेर, बीकानेर, फलोदी) में उगाई जाती है। इसका बाहरी छिलका सुनहरे रंग का होता है और केवल खला प्रकार की मूंगफली सिकाई में काम आती है। भाव ₹60 से ₹70–75 प्रति किग्रा तक रहता है।';
+    }
+
+    if (q.contains('चुग्गा') || q.contains('खला') || q.contains('chugga') || q.contains('khala')) {
+      if (isEnglishQuery) {
+        return 'Khala groundnut is harvested with plant roots. Chugga groundnut is detached pods left in soil, which is categorized under Oil Quality for rate calculation.';
+      }
+      return 'पौधे के साथ जड़ से निकलने वाली मूंगफली को "खला" कहते हैं। जमीन में रह जाने वाली मूंगफली को "चुग्गा" कहते हैं। चुग्गा को मुख्य रूप से तेल गुणवत्ता (Oil Quality) का माना जाता है।';
+    }
+
+    if (q.contains('टन') || q.contains('ट्रक') || q.contains('truck') || q.contains('ton') || q.contains('मात्रा')) {
+      if (isEnglishQuery) {
+        return 'Full truckload capacity is 20-25 Tons (up to 27 Tons max). If you have ~25 Tons, a trading member will be dispatched immediately! Small quantities (2-3 tons) are placed on the waitlist.';
+      }
+      return 'मूंगफली की सामान्य ट्रक क्षमता 20 से 25 टन (23-27 टन) होती है। यदि आपके पास लगभग 25 टन माल है, तो आपके लिए तुरंत ट्रेडिंग सदस्य भेजा जाएगा। कम मात्रा (2-3 टन) वाले किसानों को ट्रक पूरा होने तक प्रतीक्षा सूची में रखा जाता है।';
+    }
+
+    if (q.contains('बटाईदार') || q.contains('मजदूर') || q.contains('मालिक') || q.contains('bataidar') || q.contains('owner')) {
+      if (isEnglishQuery) {
+        return 'Apna Godam trades exclusively with valid land/stock owners. If you are a Bataidar or laborer, please provide the owner\'s mobile number.';
+      }
+      return 'मूंगफली का सौदा केवल जमीन या माल के वैध मालिक के साथ ही किया जाता है। यदि आप बटाईदार या मजदूर हैं, तो कृपया मालिक का मोबाइल नंबर उपलब्ध कराएं।';
+    }
+
+    // Handle follow-up selling/buying queries using conversation history
     if (q.contains('बेच') || q.contains('बेचणी') || q.contains('बेचना') || q.contains('सेल') || q.contains('sell') || q.contains('खरीद') || q.contains('buy')) {
-      String previousCrop = 'अनाज';
+      String previousCrop = 'मूंगफली (Groundnut)';
       if (history != null && history.isNotEmpty) {
         for (final turn in history.reversed) {
           final turnText = ((turn['user'] ?? '') + ' ' + (turn['assistant'] ?? '')).toLowerCase();
-          if (turnText.contains('गेहूं') || turnText.contains('gehu') || turnText.contains('wheat')) {
+          if (turnText.contains('गेहूं') || turnText.contains('wheat')) {
             previousCrop = 'गेहूं (Wheat)'; break;
-          } else if (turnText.contains('जौ') || turnText.contains('jau') || turnText.contains('barley')) {
+          } else if (turnText.contains('जौ') || turnText.contains('barley')) {
             previousCrop = 'जौ (Barley)'; break;
-          } else if (turnText.contains('चना') || turnText.contains('chana') || turnText.contains('gram')) {
+          } else if (turnText.contains('चना') || turnText.contains('gram')) {
             previousCrop = 'चना (Gram)'; break;
           } else if (turnText.contains('सरसों') || turnText.contains('mustard')) {
             previousCrop = 'सरसों (Mustard)'; break;
           } else if (turnText.contains('मूंगफली') || turnText.contains('groundnut')) {
             previousCrop = 'मूंगफली (Groundnut)'; break;
-          } else if (turnText.contains('मक्का') || turnText.contains('maize')) {
-            previousCrop = 'मक्का (Maize)'; break;
           }
         }
       }
@@ -150,162 +180,61 @@ class AiService {
         return 'To sell your $previousCrop on Apna Godam:\n1. Open the WBT / SBT Market section.\n2. Tap "Sell Stack" (चिठ्ठा बेचें).\n3. Enter your target price and quantity. Once a buyer accepts your bid, your order will be executed instantly!';
       }
 
+      if (isBhojpuri) {
+        return 'रउआ आपन $previousCrop अपना गोदाम पर आसानी से बेच सकिला:\n1. ऐप में व्यापार (WBT/SBT) सेक्शन में जाईं।\n2. "चिठ्ठा बेचें" पर क्लिक करके भाव अउर मात्रा दर्ज करीं।\n3. खरीदार बिड स्वीकार करत ही सौदा पक्का हो जाई!';
+      }
+
+      if (isMaithili) {
+        return 'अहाँ अपना $previousCrop अपना गोदाम पर आसानी सँ बेच सकइत छी:\n1. ऐप में व्यापार (WBT/SBT) सेक्शन में जाउ।\n2. "चिठ्ठा बेचें" पर क्लिक क क भाव आ मात्रा दर्ज करू।\n3. खरीदार बिड स्वीकार करतहि सौदा पक्का भ जायत!';
+      }
+
       return isMarwari
           ? 'थै आपरो $previousCrop अपना गोदाम पर आसानी सूं बेच सको छौ सा:\n1. ऐप में व्यापार (WBT/SBT) सेक्शन में जावो सा।\n2. "चिठ्ठा बेचें" पर क्लिक कर आपरो भाव अर मात्रा दर्ज करो सा।\n3. खरीदार बिड स्वीकार करते ही आपरो सौदा पक्को हो जावेगा!'
           : 'आप अपना $previousCrop अपना गोदाम पर आसानी से बेच सकते हैं:\n1. ऐप के व्यापार (WBT/SBT) सेक्शन में जाएं।\n2. "चिठ्ठा बेचें" पर क्लिक करके अपना भाव (Rate) और मात्रा दर्ज करें।\n3. जैसे ही खरीदार आपकी बिड स्वीकार करेगा, आपका सौदा पक्का हो जाएगा!';
     }
 
     // 1. INWARD (माल जमा)
-    if (q.contains('इनवर्ड') ||
-        q.contains('इनवाइट') ||
-        q.contains('इनवाड़') ||
-        q.contains('इंवार्ड') ||
-        q.contains('इनवर्ड्स') ||
-        q.contains('inward') ||
-        q.contains('माल जमा') ||
-        q.contains('जमा') ||
-        q.contains('रखवा') ||
-        q.contains('रखें') ||
-        q.contains('कराणो')) {
+    if (q.contains('इनवर्ड') || q.contains('inward') || q.contains('माल जमा') || q.contains('जमा')) {
       if (isEnglishQuery) {
         return 'To deposit goods (Inward):\n1. Tap "Inwards" in the app.\n2. Select warehouse, commodity & stack number.\n3. Enter weight (quintals), vehicle number & driver phone to submit.';
       }
-      return isMarwari
-          ? 'गोदाम मांय माल जमा (Inward) करावण वास्ते:\n1. ऐप में "माल जमा" पर क्लिक करो सा।\n2. आपरो गोदाम, जिंस अर स्टैक नंबर चुणो।\n3. वजन, गाड़ी नंबर अर ड्राइवर नंबर भर समिट करो सा। गोदाम पुगण पर नमी जांच कर माल जमा हो ज्यासी।'
-          : 'गोदाम में माल जमा (Inward) करने के लिए:\n1. ऐप में "माल जमा" (Inwards) पर क्लिक करें।\n2. अपना गोदाम टर्मिनल, अनाज और स्टैक नंबर चुनें।\n3. वजन (क्विंटल), वाहन नंबर और ड्राइवर मोबाइल नंबर दर्ज करके सबमिट करें। गोदाम पर पहुंचने पर नमी व गुणवत्ता जांच के बाद माल जमा हो जाएगा।';
+      return 'गोदाम में माल जमा (Inward) करने के लिए:\n1. ऐप में "माल जमा" (Inwards) पर क्लिक करें।\n2. अपना गोदाम टर्मिनल, अनाज और स्टैक नंबर चुनें।\n3. वजन (क्विंटल), वाहन नंबर और ड्राइवर मोबाइल नंबर दर्ज करके सबमिट करें। गोदाम पर पहुंचने पर नमी व गुणवत्ता जांच के बाद माल जमा हो जाएगा।';
     }
 
     // 2. OUTWARD (माल निकासी)
-    if (q.contains('आउटवर्ड') ||
-        q.contains('आउटवाड़') ||
-        q.contains('आउटवर्ड्स') ||
-        q.contains('outward') ||
-        q.contains('निकासी') ||
-        q.contains('निकाल') ||
-        q.contains('बाहर')) {
+    if (q.contains('आउटवर्ड') || q.contains('outward') || q.contains('निकासी') || q.contains('निकाल')) {
       if (isEnglishQuery) {
         return 'To withdraw goods (Outward):\n1. Tap "Outward" in the warehouse section.\n2. Select your warehouse, commodity and stack.\n3. Enter withdrawal weight and vehicle details to submit.';
       }
-      return isMarwari
-          ? 'गोदाम सूं माल काढण (Outward) वास्ते:\n1. ऐप के गोदाम सेक्शन में "माल निकासी" पर जावो।\n2. आपरो गोदाम अर स्टैक चुणो।\n3. वजन भर सबमिट करो सा, अप्रूवल मिलता ही गेट पास बण ज्यासी।'
-          : 'गोदाम से माल निकालने (Outward) के लिए:\n1. ऐप के गोदाम सेक्शन में "माल निकासी" पर क्लिक करें।\n2. अपना गोदाम और अनाज चुनकर संबंधित स्टैक चुनें।\n3. निकासी वजन और वाहन विवरण भरकर सबमिट करें। अप्रूवल के बाद डिजिटल गेट पास जारी होगा।';
+      return 'गोदाम से माल निकालने (Outward) के लिए:\n1. ऐप के गोदाम सेक्शन में "माल निकासी" पर क्लिक करें।\n2. अपना गोदाम और अनाज चुनकर संबंधित स्टैक चुनें।\n3. निकासी वजन और वाहन विवरण भरकर सबमिट करें। अप्रूवल के बाद डिजिटल गेट पास जारी होगा।';
     }
 
-    // 3. STACK BOOKING / CHITTHA (चिठ्ठा बुकिंग)
-    if (q.contains('चिठ्ठा') ||
-        q.contains('चिठा') ||
-        q.contains('चिट्ठा') ||
-        q.contains('स्टैक') ||
-        q.contains('बुकिंग') ||
-        q.contains('रेट कार्ड') ||
-        q.contains('stack')) {
-      if (isEnglishQuery) {
-        return 'To book a vacant stack:\n1. Tap "Find Warehouse" and select a nearby warehouse.\n2. Tap "Book Now" and select your commodity.\n3. Select a vacant stack (Green) and accept the rate card to submit.';
-      }
-      return isMarwari
-          ? 'खाली चिठ्ठा (Stack) बुक करण वास्ते:\n1. ऐप में "गोदाम खोजें" में जाइने नजदीकी गोदाम चुणो।\n2. हरा रंग रो खाली स्टैक चुणो अर रेट कार्ड मंजूर कर सबमिट करो सा।'
-          : 'खाली चिठ्ठा (Stack) बुक करने के लिए:\n1. ऐप में "गोदाम खोजें" पर जाकर नजदीकी गोदाम चुनें।\n2. "अभी बुक करें" पर क्लिक कर अनाज का प्रकार चुनें।\n3. हरा चिठ्ठा (खाली स्टैक) चुनकर रेट कार्ड (किराया, मजदूरी) स्वीकार करें और सबमिट करें।';
-    }
-
-    // 4. GATEPASS (गेट पास)
-    if (q.contains('गेट पास') ||
-        q.contains('गेटपास') ||
-        q.contains('gatepass') ||
-        q.contains('gate pass') ||
-        q.contains('banaun') ||
-        q.contains('banaye') ||
-        q.contains('banao') ||
-        q.contains('गेट')) {
+    // 3. GATEPASS (गेट पास)
+    if (q.contains('गेट पास') || q.contains('गेटपास') || q.contains('gatepass') || q.contains('gate pass') || q.contains('banaun') || q.contains('banaye')) {
       if (isEnglishQuery) {
         return 'Digital Gate Pass is generated automatically once your Inward or Outward request is approved, displaying your QR code, stack number and vehicle details.';
       }
-      return isMarwari
-          ? 'डिजिटल गेट पास (Gate Pass) बणावण वास्ते:\n1. ऐप में माल जमा (Inward) या निकासी (Outward) री रिक्वेस्ट सबमिट करो सा।\n2. अप्रूवल मिलता ही आपरो QR कोड गेट पास ऐप में बण ज्यासी। गोदाम गेट पर आ गेटपास दिखावता ही तुरंत एंट्री मिल जावेगी।'
-          : 'डिजिटल गेट पास (Gate Pass) बनाने के लिए:\n1. ऐप में इनवर्ड या आउटवर्ड रिक्वेस्ट दर्ज करें।\n2. रिक्वेस्ट अप्रूव होते ही ऐप में QR कोड गेट पास जारी हो जाएगा। इसमें गेटपास नंबर, वजन, स्टैक संख्या दर्ज होती है जिससे गोदाम पर तुरंत प्रवेश मिलता है।';
+      return 'डिजिटल गेट पास (Gate Pass) बनाने के लिए:\n1. ऐप में इनवर्ड या आउटवर्ड रिक्वेस्ट दर्ज करें।\n2. रिक्वेस्ट अप्रूव होते ही ऐप में QR कोड गेट पास जारी हो जाएगा। इसमें गेटपास नंबर, वजन, स्टैक संख्या दर्ज होती है जिससे गोदाम पर तुरंत प्रवेश मिलता है।';
     }
 
-    // 5. QUALITY CALCULATOR (गुणवत्ता जांच)
-    if (q.contains('गुणवत्ता') ||
-        q.contains('क्वालिटी') ||
-        q.contains('quality') ||
-        q.contains('nami') ||
-        q.contains('नमी') ||
-        q.contains('fm') ||
-        q.contains('दाना') ||
-        q.contains('टिक्की')) {
-      if (isEnglishQuery) {
-        return 'To check grain quality:\n1. Open "Calculate Quality" in the app.\n2. Select state, district and commodity.\n3. Enter FM, Moisture %, Dana & Tikki values to calculate final price.';
-      }
-      return 'अनाज की गुणवत्ता जांचने के लिए:\n1. ऐप में "गुणवत्ता जांचें" (Quality Calculator) पर क्लिक करें।\n2. अपना राज्य, जिला व फसल चुनें।\n3. FM, नमी %, दाना और टिक्की के मान दर्ज करें। सिस्टम तुरंत सही गुणवत्ता मूल्य (QV Price & Final Price) की गणना कर देगा।';
-    }
-
-    // 6. WALLET & WITHDRAWAL (वॉलेट / पैसे निकालना)
-    if (q.contains('वॉलेट') ||
-        q.contains('वालेट') ||
-        q.contains('वालेत') ||
-        q.contains('wallet') ||
-        q.contains('पैसे') ||
-        q.contains('रुपये') ||
-        q.contains('रिपिया') ||
-        q.contains('पैसा') ||
-        q.contains('निकासी') ||
-        q.contains('ट्रांसफर')) {
-      if (isEnglishQuery) {
-        return 'To withdraw money from wallet:\n1. Open the "Wallet" tab.\n2. Tap "Withdraw Money".\n3. Enter amount and submit for instant transfer to your verified bank account.';
-      }
-      return isMarwari
-          ? 'वॉलेट सूं रिपिया काढण वास्ते:\n1. नीचे "वॉलेट" पर जावो सा।\n2. "पैसे निकालें" पर क्लिक कर राशी भरो। रिपिया सीधा आपरे बैंक खाता में आ ज्यासी।'
-          : 'वॉलेट से बैंक खाते में पैसे निकालने के लिए:\n1. ऐप के नीचे "वॉलेट" सेक्शन पर जाएं।\n2. "पैसे निकालें" बटन पर क्लिक करें।\n3. निकासी राशि दर्ज करके सबमिट करें। राशि तुरंत आपके सत्यापित बैंक खाते में ट्रांसफर कर दी जाएगी।';
-    }
-
-    // 7. BNPL LOAN (कॉमोडिटी लोन)
-    if (q.contains('bnpl') ||
-        q.contains('लोन') ||
-        q.contains('loan') ||
-        q.contains('ऋण') ||
-        q.contains('बीएनपीएल')) {
-      if (isEnglishQuery) {
-        return 'BNPL Commodity Loan provides instant credit against your stored warehouse stock. Open the Loan/BNPL section, enter required amount and apply.';
-      }
-      return 'BNPL (Buy Now Pay Later / कॉमोडिटी लोन) के लिए:\nगोदाम में जमा फसल के आधार पर स्वीकृत लोन लिमिट (₹1.5 करोड़ तक) से बिना फसल बेचे तुरंत पैसे पा सकते हैं। वॉलेट के "ऋण खाता" या "बीएनपीएल" सेक्शन में जाकर राशि दर्ज करें और आवेदन करें।';
-    }
-
-    // 8. CROP RATE INQUIRY (फसल भाव पूछताछ) — STRICT TEMPLATE REQUIREMENT WITH DECIMAL SUPPORT
+    // 4. CROP RATE INQUIRY (फसल भाव पूछताछ)
     String searchedCropName = '';
     String cropDisplayName = '';
     String cropDisplayNameEn = '';
     List<String> keywords = [];
 
-    if (q.contains('गेहूं') || q.contains('गेहूँ') || q.contains('gehu') || q.contains('wheat')) {
-      searchedCropName = 'गेहूं';
-      cropDisplayName = 'गेहूं';
-      cropDisplayNameEn = 'Wheat';
-      keywords = ['गेहूं', 'गेहूँ', 'wheat'];
-    } else if (q.contains('जौ') || q.contains('jo') || q.contains('jau') || q.contains('barley')) {
-      searchedCropName = 'जौ';
-      cropDisplayName = 'जौ';
-      cropDisplayNameEn = 'Barley';
-      keywords = ['जौ', 'barley'];
+    if (q.contains('गेहूं') || q.contains('gehu') || q.contains('wheat')) {
+      searchedCropName = 'गेहूं'; cropDisplayName = 'गेहूं'; cropDisplayNameEn = 'Wheat'; keywords = ['गेहूं', 'wheat'];
+    } else if (q.contains('जौ') || q.contains('jau') || q.contains('barley')) {
+      searchedCropName = 'जौ'; cropDisplayName = 'जौ'; cropDisplayNameEn = 'Barley'; keywords = ['जौ', 'barley'];
     } else if (q.contains('चना') || q.contains('chana') || q.contains('gram')) {
-      searchedCropName = 'चना';
-      cropDisplayName = 'चना';
-      cropDisplayNameEn = 'Gram';
-      keywords = ['चना', 'gram'];
-    } else if (q.contains('सरसों') || q.contains('sarson') || q.contains('mustard') || q.contains('रोजा') || q.contains('रोजी') || q.contains('roza')) {
-      searchedCropName = 'सरसों';
-      cropDisplayName = 'सरसों';
-      cropDisplayNameEn = 'Mustard';
-      keywords = ['सरसों', 'mustard', 'सरसो'];
-    } else if (q.contains('मूंगफली') || q.contains('मूंगफली') || q.contains('mungfali') || q.contains('groundnut')) {
-      searchedCropName = 'मूंगफली';
-      cropDisplayName = 'मूंगफली';
-      cropDisplayNameEn = 'Groundnut';
-      keywords = ['मूंगफली', 'groundnut', 'ground nut', 'ऑयल क्वालिटी'];
-    } else if (q.contains('मक्का') || q.contains('makka') || q.contains('maize')) {
-      searchedCropName = 'मक्का';
-      cropDisplayName = 'मक्का';
-      cropDisplayNameEn = 'Maize';
-      keywords = ['मक्का', 'maize'];
+      searchedCropName = 'चना'; cropDisplayName = 'चना'; cropDisplayNameEn = 'Gram'; keywords = ['चना', 'gram'];
+    } else if (q.contains('सरसों') || q.contains('mustard') || q.contains('रोजा') || q.contains('रोजी')) {
+      searchedCropName = 'सरसों'; cropDisplayName = 'सरसों'; cropDisplayNameEn = 'Mustard'; keywords = ['सरसों', 'mustard', 'सरसो'];
+    } else if (q.contains('मूंगफली') || q.contains('mungfali') || q.contains('groundnut') || q.contains('सिंगदाना') || q.contains('गोटा')) {
+      searchedCropName = 'मूंगफली'; cropDisplayName = 'मूंगफली'; cropDisplayNameEn = 'Groundnut'; keywords = ['मूंगफली', 'groundnut', 'सिकाई', 'सिंगदाना'];
+    } else if (q.contains('मक्का') || q.contains('maize')) {
+      searchedCropName = 'मक्का'; cropDisplayName = 'मक्का'; cropDisplayNameEn = 'Maize'; keywords = ['मक्का', 'maize'];
     }
 
     if (searchedCropName.isNotEmpty && marketData.isNotEmpty) {
@@ -317,7 +246,6 @@ class AiService {
         final lineLower = line.toLowerCase();
         for (final kw in keywords) {
           if (lineLower.contains(kw)) {
-            // Updated regex to support both integer & decimal price formats (e.g. ₹2469, ₹2320.20)
             final priceMatch = RegExp(r'₹\s*([\d\.]+)').firstMatch(line);
             if (priceMatch != null) {
               final pStr = priceMatch.group(1)!;
@@ -334,20 +262,40 @@ class AiService {
         if (foundPrice != null && foundPrice > 0) break;
       }
 
-      final priceDisplay = foundPrice ?? 2469;
+      final priceDisplay = foundPrice ?? (searchedCropName == 'मूंगफली' ? 65 : 2469);
 
       if (isEnglishQuery) {
         return 'Today\'s rate for $cropDisplayNameEn is ₹$priceDisplay. Do you want to buy or sell?';
       }
 
-      return 'आज $cropDisplayName रो भाव ₹$priceDisplay/क्विंटल छै सा। थै खरीदना चाहो छौ या बेचना चाहो छौ?';
+      if (isBhojpuri) {
+        return 'आज $cropDisplayName के भाव ₹$priceDisplay/किलो बा। रउआ खरीदे के बा कि बेचे के बा?';
+      }
+
+      if (isMaithili) {
+        return 'अजका $cropDisplayName क भाव ₹$priceDisplay/किग्रा अछि। अहाँ कैनब चाहइत छी या बेचब चाहइत छी?';
+      }
+
+      return isMarwari
+          ? 'आज $cropDisplayName रो भाव ₹$priceDisplay/क्विंटल छै सा। थै खरीदना चाहो छौ या बेचना चाहो छौ?'
+          : 'आज $cropDisplayName का भाव ₹$priceDisplay/क्विंटल है। आप खरीदना चाहते हैं या बेचना चाहते हैं?';
     }
 
     if (isEnglishQuery) {
       return 'Welcome to Apna Godam AI Assistant. You can ask about warehouse booking, Inward, Outward, SBT/WBT trading, loans and live crop prices.';
     }
 
-    return 'राम-राम सा! अपना गोदाम ऐप में आपरो स्वागत छै। आप गोदाम बुकिंग, माल जमा (Inward), माल निकासी (Outward), बोली अर लोन री जानकारी पूछ सको छौ।';
+    if (isBhojpuri) {
+      return 'राम-राम! अपना गोदाम ऐप में रउरा स्वागत बा। रउरा गोदाम बुकिंग, माल जमा, माल निकासी, बोली अउर लोन के जानकारी पूछ सकिला।';
+    }
+
+    if (isMaithili) {
+      return 'राम-राम! अपना गोदाम ऐप में अहाँक स्वागत अछि। अहाँ गोदाम बुकिंग, माल जमा, माल निकासी आ लोनक जानकारी पूछ सकइत छी।';
+    }
+
+    return isMarwari
+        ? 'राम-राम सा! अपना गोदाम ऐप में आपरो स्वागत छै। आप गोदाम बुकिंग, माल जमा (Inward), माल निकासी (Outward), बोली अर लोन री जानकारी पूछ सको छौ।'
+        : 'अपना गोदाम ऐप में आपका स्वागत है। आप गोदाम बुकिंग, माल जमा (Inward), माल निकासी (Outward), SBT/WBT व्यापार, वॉलेट और कॉमोडिटी लोन की सभी सुविधाएं पूछ सकते हैं।';
   }
 
   static String _buildSystemPrompt({
@@ -355,27 +303,38 @@ class AiService {
     required String marketData,
   }) {
     return '''CRITICAL MULTI-DIALECT & EXACT RESPONSE FORMAT RULE:
-1. MATCH THE USER'S INPUT LANGUAGE & DIALECT EXACTLY:
-   - IF ENGLISH QUESTION: Respond ONLY in simple English. Example rate response: "Today's rate for Wheat is ₹2600. Do you want to buy or sell?"
-   - IF HINDI / HINGLISH QUESTION: Respond ONLY in simple Hindi in Devanagari script. Example rate response: "आज गेहूं का भाव है ₹2600। आपको खरीदना है या बेचना है?"
-   - IF MARWARI / RAJASTHANI QUESTION: Respond ONLY in Marwari in Devanagari script. Example rate response: "आज गेहूं रो भाव है ₹2600। सा, आपणे खरीदना है या बेचना है?"
+1. DETECT THE USER'S EXACT LANGUAGE/DIALECT (Marwari, Hindi, English, Bhojpuri, Maithili, Magahi, Angika, Bajika) AND RESPOND DIRECTLY IN THAT SAME LANGUAGE/DIALECT IN DEVANAGARI SCRIPT:
+   - Marwari (मारवाड़ी): "अजमेर मंडी में मूंगफली रो भाव ₹65/किग्रा छै सा। थै अपना गोदाम पर आसानी सूं बेच सको छौ।"
+   - Hindi (हिंदी): "अजमेर मंडी में मूंगफली का भाव ₹65/किग्रा है। आप अपना गोदाम पर आसानी से बेच सकते हैं।"
+   - English: "Today's rate for Groundnut is ₹65/kg on Apna Godam."
+   - Bhojpuri (भोजपुरी): "अजमेर मंडी में मूंगफली के भाव ₹65/किलो बा। रउआ अपना गोदाम पर आसानी से बेच सकिला।"
+   - Maithili (मैथिली): "अजमेर मंडी में मूंगफलीक भाव ₹65/किग्रा अछि। अहाँ अपना गोदाम पर आसानी सँ बेच सकइत छी।"
+   - Magahi (मगही): "अजमेर मंडी में मूंगफली के भाव ₹65/किलो हई। तोरा अपना गोदाम पर आसानी से बेचे के हई।"
+   - Angika (अंगिका): "अजमेर मंडी में मूंगफली के भाव ₹65/किग्रा छै। हमरा अपना गोदाम पर आसानी से बेचै लेल सकै छियै।"
+   - Bajika (बजिका): "अजमेर मंडी में मूंगफली के भाव ₹65/किलो बा। अहाँ अपना गोदाम पर आसानी से बेच सकिला।"
 
-2. AUTOMATIC PERSONA DETECTION:
-   - Market Rates, Bidding, Buy/Sell, SBT, WBT -> SALES EXPERT.
-   - Inward, Outward, Stacks, Gatepass, Quality Calculator -> OPERATIONS EXPERT.
-   - Wallet, Withdrawal, BNPL Loan, Settlement, Invoices, Transport -> ACCOUNTS EXPERT.
+2. GROUNDNUT (मूंगफली) DOMAIN & QUALITY RULES:
+   - Synonyms: मूंगफली, मूंफली, ग्राउंडनट, सिकाई मूंगफली, सिंगदाना, गोटा।
+   - 3 Quality Types:
+     a) सिकाई गुणवत्ता (Sikai Quality): Whole roasted. Golden shell, grown in Western Rajasthan (Jaisalmer, Bikaner, Phalodi, Mohangarh, Bajju, Nachna). Khala (खला) type only. Price ~₹60 to ₹70-75/kg. (Do NOT quote Sikai rates for Jaipur/Chomu/Sikar without quality verification!).
+     b) दाना गुणवत्ता (Dana Quality): Inner kernel/gota is good, outer shell thin. Sold shelled (singdana/gota). Khala (खला) type only.
+     c) तेल गुणवत्ता (Oil Quality): Lighter seed/shell, thin kernels for oil extraction. Both Khala (खला) and Chugga (चुग्गा) types used.
+   - Harvesting Types: Khala (खला - pulled with plant) vs Chugga (चुग्गा - detached in soil). Note: Chugga is treated as Oil Quality!
+   - Truckload Rules: Full truckload = 20-25 Tons (23-27 Tons max). If farmer has ~25 Tons, dispatch trading member immediately! If low quantity (2-3 Tons or 4-6 bags), put on waitlist until full truckload is aggregated nearby.
+   - Ownership Policy: Deals ONLY with land/stock owner (मालिक). If caller is Bataidar (बटाईदार) or laborer (मजदूर), politely request owner's phone number.
+   - Location Verification: Always confirm actual storage location (do not assume caller current location).
+   - Quality Parameters: 2-dana & 3-dana pods are positive (+ price), 1-dana pods are negative (- price due to extra peeling labor).
 
-FULL APNA GODAM KNOWLEDGE BASE:
-- Inward (माल जमा): Select terminal, commodity, stack no, tax type, weight (qtl), vehicle & driver phone.
-- Outward (माल निकासी): Select warehouse, commodity, stack, weight. Approved request generates QR Gatepass.
-- Stack Booking (चिठ्ठा): Reserve vacant stack (Green). Rate card confirms rent/day, labour, fumigation/insurance.
-- Quality Calculator (गुणवत्ता जांच): FM, Moisture %, Dana, Tikki parameters calculate QV Price & Final Price.
-- SBT (Stock Based Trade): Live bidding with Upper/Lower Circuits, LTP, bidding time slots. Match order -> Dispatch GRN.
-- WBT (Warehouse Based Trade): Certified grain trading stack-wise or gatepass-wise.
-- Wallet: Storage Wallet, Trade Wallet, Loan Wallet. Instant withdrawal to bank account.
-- BNPL Loan: Credit limit (up to ₹1.5 Cr) against stored commodity value.
+3. FULL APNA GODAM SERVICES:
+   - Inward (माल जमा): Select terminal, commodity, stack no, weight (qtl), vehicle & driver phone.
+   - Outward (माल निकासी): Select warehouse, commodity, stack, weight. Approved request generates QR Gatepass.
+   - Stack Booking (चिठ्ठा): Reserve vacant stack (Green). Rate card confirms rent/day, labour, fumigation/insurance.
+   - Quality Calculator: FM, Moisture %, Dana, Tikki parameters calculate QV Price & Final Price.
+   - SBT / WBT Trading: Live bidding with Upper/Lower Circuits, LTP, bidding time slots. Match order -> Dispatch GRN.
+   - Wallet: Storage Wallet, Trade Wallet, Loan Wallet. Instant withdrawal to bank account.
+   - BNPL Loan: Credit limit (up to ₹1.5 Cr) against stored commodity value.
 
-LIVE MARKET DATA & LIVE BIDS (SbtLiveBidData & sbt_product_list):
+LIVE MARKET DATA:
 $marketData''';
   }
 }
