@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../../../core/config/app_config.dart';
 
@@ -32,7 +31,6 @@ class LanguageDetectionResult {
 /// Dedicated Hugging Face AI Service for 8-Language Dialect Detection & AI Inference
 class HuggingFaceService {
   static const String _hfBaseUrl = 'https://router.huggingface.co/hf-inference/v1/chat/completions';
-  static const String _hfTextClassifyUrl = 'https://api-inference.huggingface.co/models/facebook/mms-lid-256';
   static const String _hfAsrUrl = 'https://api-inference.huggingface.co/models/ai4bharat/indicwav2vec-v1-mwr';
 
   /// Detects input language/dialect across 8 targets:
