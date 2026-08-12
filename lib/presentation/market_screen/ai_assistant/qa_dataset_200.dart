@@ -563,5 +563,168 @@ class QaDataset200 {
       bho: 'खरीददार पर लागू होवे वाला प्लेटफ़ॉर्म सेवा शुल्क।',
       guj: 'ખરીદદાર પર લાગુ પડતી પ્લેટફોર્મ સેવા ફી.',
     ),
+
+    // ── MODULE 4: AGRI-LOANS, PLEDGE FINANCE & BNPL (Q61–Q80) ──
+    // Q61
+    QaItem(
+      keywords: ['pledge loan', 'pledge finance', 'girvi loan', 'गिरवी ऋण क्या है', 'गिरवी लोन', 'गिरवी ऋण'],
+      en: 'Instant loan provided by banks against stored commodity receipts in warehouse without selling crop.',
+      hi: 'फसल बेचे बिना गोदाम में रखी रसीद (WR) को बैंक में गिरवी रखकर तुरंत लिया जाने वाला ऋण।',
+      mwr: 'फसल बेच्या बिना गोदाम मांय राख्योड़ा माल पर बैंक सूं मिलण वालो तुरंत कर्ज सा।',
+      bho: 'फसल बेचल बिना गोदाम में रखल रसीद पर तुरंत बैंक लोन।',
+      guj: 'ગોડાઉનમાં રાખેલા માલની રસીદ પર તુરંત બેંક લોન.',
+    ),
+    // Q62
+    QaItem(
+      keywords: ['how much loan value', 'loan value', 'कितना प्रतिशत लोन मिलता है', 'कितना लोन'],
+      en: 'Typically up to 70% to 75% of total market value of stored commodity.',
+      hi: 'जमा अनाज के कुल बाजार मूल्य का लगभग 70% से 75% तक लोन राशि।',
+      mwr: 'गोदाम मांय जमा फसल रे कुल भाव रो 70% सूं 75% तक लोन मिल जावै छै सा।',
+      bho: 'जमा माल के कुल बाजार भाव के 70% से 75% तक लोन मिलेला।',
+      guj: 'જમા માલના કુલ બજાર ભાવના 70% થી 75% સુધી લોન મળે છે.',
+    ),
+    // Q63
+    QaItem(
+      keywords: ['interest rate on pledge loan', 'pledge loan interest', 'गिरवी लोन पर ब्याज दर कितनी है', 'ब्याज दर'],
+      en: 'Attractive agricultural interest rates (approx 8% to 11% p.a.) as per partner bank terms.',
+      hi: 'सहभागी बैंकों द्वारा निर्धारित रियायती कृषि ब्याज दर (लगभग 8% से 11% वार्षिक)।',
+      mwr: 'बैंक नियमानुसार सस्ती कृषि ब्याज दर (8% सूं 11% सालाना) लागै छै सा।',
+      bho: 'बैंक के नियम अनुसार कृषि ब्याज दर 8% से 11% होला।',
+      guj: 'બેંકના નિયમ મુજબ 8% થી 11% વાર્ષિક વ્યાજ દર.',
+    ),
+    // Q64
+    QaItem(
+      keywords: ['collateral manager', 'collateral manager role', 'कोलैटरल मैनेजर का क्या काम है', 'कोलैटरल मैनेजर'],
+      en: 'Bank representative who monitors and protects pledged grain stock inside warehouse.',
+      hi: 'बैंक का प्रतिनिधि जो गोदाम में गिरवी रखे माल की भौतिक सुरक्षा और सत्यापन करता है।',
+      mwr: 'बैंक रो अधिकारी जको गोदाम मांय गिरवी राख्योड़ा माल री सुरक्षा देखे छै सा।',
+      bho: 'बैंक के प्रतिनिधि जवन गोदाम में गिरवी रखल माल के सुरक्षा देखेला।',
+      guj: 'બેંકનો પ્રતિનિધિ જે ગીરો રાખેલા માલની સુરક્ષા જુએ છે.',
+    ),
+    // Q65
+    QaItem(
+      keywords: ['bnpl', 'buy now pay later', 'BNPL क्या है', 'बीएनपीएल'],
+      en: 'Credit power limit allowing verified traders/farmers to buy commodities now and pay later.',
+      hi: 'व्यापारियों को बिना नकद तुरंत माल खरीदने और बाद में भुगतान करने की क्रेडिट पावर लिमिट।',
+      mwr: 'तुरंत माल खरीदण अर बाद में पेमेंट देवण री क्रेडिट लिमिट सुविधा (BNPL) सा।',
+      bho: 'तुरंत माल खरीद के बाद में पेमेंट करे के क्रेडिट लिमिट।',
+      guj: 'અત્યારે માલ ખરીદીને પછી ચૂકવણી કરવાની ક્રેડિટ લિમિટ.',
+    ),
+    // Q66 & Q67
+    QaItem(
+      keywords: ['bnpl power limit', 'bnpl used power', 'BNPL पावर लिमिट क्या है', 'पावर लिमिट'],
+      en: 'Total pre-approved credit limit allocated to user profile for deferred trading.',
+      hi: 'उपयोगकर्ता की प्रोफाइल और साख के आधार पर मंजूर की गई कुल उधार व्यापार सीमा।',
+      mwr: 'आपरी प्रोफाइल पर मंजूर करी गई कुल उधार व्यापार लिमिट सा।',
+      bho: 'रउआ प्रोफाइल पर मंजूर कइल कुल क्रेडिट लिमिट।',
+      guj: 'તમારી પ્રોફાઇલ પર મંજૂર થયેલી કુલ ક્રેડિટ લિમિટ.',
+    ),
+    // Q68
+    QaItem(
+      keywords: ['repay pledge loan', 'repay loan', 'गिरवी लोन कैसे चुकाएं', 'लोन चुकाएं'],
+      en: 'Repay loan amount + interest through app; pledged stock is instantly unlien registered.',
+      hi: 'ऐप से लोन व ब्याज राशि चुकाएं; जमा माल तुरंत गिरवी से मुक्त (Unlien) हो जाता है।',
+      mwr: 'ऐप सूं लोन भर दो सा, आपरो गिरवी राख्योड़ो माल तुरंत छूट (Unlien) ज्यासी सा।',
+      bho: 'ऐप से लोन चुकता करत ही माल गिरवी से मुक्त हो जाला।',
+      guj: 'એપથી લોન ચુકવતાં જ માલ ગીરોમાંથી મુક્ત થાય છે.',
+    ),
+    // Q69 & Q70
+    QaItem(
+      keywords: ['lien marked stock', 'unlien stock', 'लीन स्टॉक क्या है', 'अनलीन स्टॉक क्या है', 'लीन', 'अनलीन'],
+      en: 'Lien stock is bank-locked against active loan; Unlien stock is fully cleared and free for withdrawal or trade.',
+      hi: 'बैंक लोन के एवज में लॉक माल लीन (Lien) है; लोन चुकाने के बाद मुक्त माल अनलीन (Unlien) होता है।',
+      mwr: 'बैंक लोन रा कारण लॉक माल लीन होवै छै; लोन चुकाया पछे फ्री माल अनलीन होवै छै सा।',
+      bho: 'बैंक लोन खातिर लॉक माल लीन बा; लोन चुकावे पर माल अनलीन होला।',
+      guj: 'બેંક લોન માટે લોક થયેલો માલ લીન છે; લોન ચુકવ્યા પછી માલ અનલીન થાય છે.',
+    ),
+    // Q71 - Q75
+    QaItem(
+      keywords: ['documents needed for loan', 'loan sanction', 'cibil', 'ckyc', 'loan tenure', 'लोन के लिए दस्तावेज', 'सिबिल', 'लोन की अवधि'],
+      en: 'Aadhaar, PAN, Bank Passbook, Khasra & WR are required. Instant digital sanction occurs in 24-48h with flexible 3-12 month tenure.',
+      hi: 'आधार, पैन, बैंक पासबुक, खसरा और गोदाम रसीद चाहिए। 24-48 घंटे में डिजिटल स्वीकृति मिलती है (3-12 महीने अवधि)।',
+      mwr: 'आधार, पैन, पासबुक, जमाबंदी अर गोदाम रसीद चाहीजै सा। 24-48 घंटा मांय लोन मंजूर हो जावै सा।',
+      bho: 'आधार, पैन, पासबुक अउर गोदाम रसीद चाही। 24-48 घंटा में स्वीकृति मिलेला।',
+      guj: 'આધાર, પાન, પાસબુક અને ગોડાઉન રસીદ જરૂરી છે. 24-48 કલાકમાં લોન મંજૂર થાય છે.',
+    ),
+
+    // ── MODULE 5: LOGISTICS & TRANSPORTATION RULES (Q81–Q100) ──
+    // Q81 - Q83
+    QaItem(
+      keywords: ['standard truck capacity', '25 tons groundnut', '2-3 tons groundnut', '25 टन मूंगफली', '2-3 टन माल'],
+      en: 'Standard truck capacity is 20-25 Tons. 25 Tons triggers immediate trading member dispatch; 2-3 Tons is waitlisted.',
+      hi: 'सामान्य ट्रक क्षमता 20-25 टन है। 25 टन माल होने पर तुरंत व्यापारी भेजा जाता है; 2-3 टन वालों को प्रतीक्षा सूची में रखा जाता है।',
+      mwr: 'ट्रक क्षमता 20-25 टन होवै छै सा। 25 टन माल पर तुरंत व्यापारी आवै छै सा।',
+      bho: 'ट्रक क्षमता 20-25 टन होला। 25 टन माल पर तुरंत व्यापारी आवेला।',
+      guj: 'ટ્રક ક્ષમતા 20-25 ટન છે. 25 ટન પર તુરંત વેપારી મોકલાય છે.',
+    ),
+    // Q87 & Q88
+    QaItem(
+      keywords: ['transit shortage', 'who bears transit shortage', 'ट्रांजिट शॉर्टेज', 'रास्ते की घटत'],
+      en: 'Transit shortage occurs due to moisture loss during transit. Shortage beyond agreed tolerance percentage is deducted per trade terms.',
+      hi: 'परिवहन के दौरान नमी सूखने से वजन में कमी होती है। तय छूट सीमा से अधिक घटत होने पर नियमानुसार कटौती होती है।',
+      mwr: 'रास्ते मांय नमी सूखबा सूं घटत आवै छै। तय छूट सूं बत्ती घटत पर नियमानुसार कटौती होवै सा।',
+      bho: 'रास्ते में नमी सूखे से घटत होला। जादा घटत पर कटौती होला।',
+      guj: 'રસ્તામાં ભેજ સુકાવાથી ઘાટ પડે છે. નિયમ મુજબ કપાત થાય છે.',
+    ),
+    // Q90 - Q92
+    QaItem(
+      keywords: ['gross weight', 'tare weight', 'net weight', 'ग्रॉस वेट', 'टेयर वेट', 'नेट वेट'],
+      en: 'Gross Weight = Loaded truck weight. Tare Weight = Empty truck weight. Net Weight = Gross Weight minus Tare Weight.',
+      hi: 'ग्रॉस वेट = भरी गाड़ी का वजन। टेयर वेट = खाली गाड़ी का वजन। नेट वेट = शुद्ध माल का तोल (Gross - Tare)।',
+      mwr: 'ग्रॉस वेट = भरी गाड़ी रो तोल। टेयर वेट = खाली गाड़ी रो तोल। नेट वेट = पक्को माल रो वजन सा।',
+      bho: 'ग्रॉस वेट = भरल गाड़ी। टेयर वेट = खाली गाड़ी। नेट वेट = शुद्ध माल।',
+      guj: 'ગ્રોસ વજન = ભરેલી ગાડી. ટેર વજન = ખાલી ગાડી. નેટ વજન = શુદ્ધ માલ.',
+    ),
+    // Q93 & Q99 & Q100
+    QaItem(
+      keywords: ['bilty', 'lr', 'eway bill', 'fastpath', 'बिल्टी', 'ई-वे बिल', 'फास्टपाथ'],
+      en: 'Bilty (L/R) is transport receipt. e-Way Bill is mandatory GST document for goods over ₹50,000. FastPath offers rapid farmgate collection.',
+      hi: 'बिल्टी ट्रांसपोर्टर रसीद है। ₹50,000 से अधिक माल के लिए ई-वे बिल आवश्यक है। फास्टपाथ से खेत से सीधे आवक होती है।',
+      mwr: 'बिल्टी गाड़ी री रसीद छै। 50 हजार सूं बत्ती माल पर ई-वे बिल जरूरी छै सा।',
+      bho: 'बिल्टी ट्रांसपोर्ट रसीद बा। 50 हजार से जादा के माल पर ई-वे बिल चाही।',
+      guj: 'બિલ્ટી ટ્રાન્સપોર્ટ રસીદ છે. ₹50,000 થી વધુ માલ માટે ઈ-વે બિલ જરૂરી છે.',
+    ),
+
+    // ── MODULE 6: MANDI TAX & CHARGES (Q101–Q120) ──
+    // Q101 & Q102
+    QaItem(
+      keywords: ['mandi tax', 'who pays mandi tax', 'मंडी टैक्स क्या है', 'मंडी टैक्स कौन भरता है', 'मंडी टैक्स'],
+      en: 'Mandi Tax is statutory APMC tax collected and remitted per state market regulations (usually borne by buyer/trader).',
+      hi: 'मंडी टैक्स राज्य कृषि उपज मंडी समिति का कानूनी टैक्स है जो नियमानुसार व्यापारी/खरीदार जमा करता है।',
+      mwr: 'मंडी टैक्स राज्य सरकार रो कानूनी टैक्स छै जको तय व्यापारी या खरीदार जमा करे छै सा।',
+      bho: 'मंडी टैक्स कानूनन लागू होला जवना के खरीदार जमा करेला।',
+      guj: 'મંડી ટેક્સ કાયદાકીય ટેક્સ છે જે વેપારી દ્વારા ભરાય છે.',
+    ),
+
+    // ── MODULE 7: USER ROLES & OWNERSHIP RULES (Q121–Q140) ──
+    // Q121 & Q122
+    QaItem(
+      keywords: ['ownership rule', 'bataidar', 'bataidar trade', 'स्वामित्व नियम', 'बटाईदार', 'मालिक कौन'],
+      en: 'Groundnut trade is strictly conducted ONLY with the verified land/stock owner! Bataidars or laborers cannot trade directly.',
+      hi: 'मूंगफली का सौदा केवल जमीन या माल के वैध मालिक (Owner) के साथ ही किया जाता है! बटाईदार या मजदूर सीधे सौदा नहीं कर सकते।',
+      mwr: 'मूंगफली रो सौदा केवल पक्का मालिक सागे ही कर्यो जावै छै सा! बटाईदार सीधे सौदा नी कर सकै सा।',
+      bho: 'मूंगफली के सौदा सिर्फ जमीन चाहे माल के असली मालिक से ही होला। बटाईदार सीधे सौदा ना कर सकेला।',
+      guj: 'મગફળીનો સોદો માત્ર અસલી માલિક સાથે જ થાય છે. બટાઈદાર સીધો સોદો કરી શકતો નથી.',
+    ),
+
+    // ── MODULE 10: OUT-OF-SCOPE FALLBACK & HELPLINE (Q181–Q200) ──
+    // Q181 - Q188 Out of Scope
+    QaItem(
+      keywords: ['president of india', 'ipl', 'weather', 'movie', 'election', 'paneer butter masala', 'reliance share', 'laptop windows', 'राष्ट्रपति', 'आईपीएल', 'बारिश', 'फिल्म', 'चुनाव'],
+      en: 'Sorry, I do not have information on this out-of-scope question. Please contact our IVR Helpline at 7733901154 for assistance.',
+      hi: 'क्षमा करें, मुझे इस प्रश्न की जानकारी नहीं है। अधिक जानकारी के लिए कृपया हमारी IVR हेल्पलाइन 7733901154 पर कॉल करें।',
+      mwr: 'माफ़ करना सा, म्हाने इण सवाल रो जवाब कोइनी। बत्ती जानकारी वास्ते आप IVR हेल्पलाइन 7733901154 पर कॉल करो सा।',
+      bho: 'क्षमा करीं, हमरा ई सवाल के जानकारी नईखे। अधिक जानकारी खातिर हमार IVR हेल्पलाइन 7733901154 पर कॉल करीं।',
+      guj: 'માફ કરશો, આ પ્રશ્નની માહિતી મારી પાસે નથી. વધુ માહિતી માટે અમારી IVR હેલ્પલાઇન 7733901154 પર કોલ કરો.',
+    ),
+    // Q190 - Q193 Helpline & App Support
+    QaItem(
+      keywords: ['customer care', 'helpline', 'ivr helpline', '7733901154', 'कस्टमर केयर', 'हेल्पलाइन', 'हेल्पलाइन नंबर'],
+      en: 'Our official IVR Helpline number is 7733901154. Tap the call button in app to connect directly during working hours!',
+      hi: 'हमारी आधिकारिक IVR हेल्पलाइन नंबर 7733901154 है। ऐप में कॉल बटन दबाकर तुरंत बात करें!',
+      mwr: 'अपना गोदाम री अधिकृत IVR हेल्पलाइन नंबर 7733901154 छै सा। ऐप मांय कॉल बटन दबा बात करो सा!',
+      bho: 'हमार आधिकारिक IVR हेल्पलाइन नंबर 7733901154 बा। ऐप में कॉल बटन दबा के बात करीं!',
+      guj: 'અમારી સત્તાવાર IVR હેલ્પલાઇન 7733901154 છે. એપ્લિકેશનમાં કોલ બટન દબાવીને વાત કરો!',
+    ),
   ];
 }
