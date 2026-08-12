@@ -778,8 +778,9 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   Widget _buildQuickSuggestions() {
     final suggestions = [
       '🌾 जौ का भाव क्या है?',
-      '💰 मुझे जौ बेचना है',
-      '📦 गोदाम में माल जमा कैसे करें?',
+      '📋 कांटा पर्ची क्या है?',
+      '👤 कांटा मैन का कार्य क्या है?',
+      '📦 माल जमा (Inward) कैसे करें?',
       '📑 गेटपास कैसे बनाएं?',
     ];
 
