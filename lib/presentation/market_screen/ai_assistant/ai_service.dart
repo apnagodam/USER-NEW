@@ -105,6 +105,7 @@ class AiService {
     // Detect Dialects
     final isBhojpuri = q.contains('का बा') || q.contains('केतना') || q.contains('कइसे') || q.contains('हमरा') || q.contains('रउआ') || q.contains('बाते');
     final isMaithili = q.contains('अहाँ') || q.contains('की') || q.contains('कतबा') || q.contains('कोना') || q.contains('अछि');
+    final isHindi = q.contains('क्या') || q.contains('कैसे') || q.contains('कितना') || q.contains('बनाएं') || q.contains('बताएं');
 
     // ── 0. PERSONAL DATA CONSENT & PROFILE ISOLATION RULE ──
     if (q.contains('पर्सनल') ||
@@ -121,13 +122,19 @@ class AiService {
       if (isEnglishQuery) {
         return 'For security and privacy, accessing personal profile details requires OTP verification on your registered mobile number. Please log in to your authenticated account. (Data is shown ONLY for your own profile)';
       }
+      if (isHindi) {
+        return 'सुरक्षा और गोपनीयता कारणों से व्यक्तिगत जानकारी (प्रोफाइल/बैलेंस) देखने के लिए पंजीकृत मोबाइल नंबर और OTP सत्यापन आवश्यक है।';
+      }
       return 'सा, आपरी पर्सनल जानकारी (प्रोफाइल/बैलेंस) देखण वास्ते आपरो रजिस्टर्ड मोबाइल नंबर अर OTP सत्यापन जरूरी छै। मेहरबानी कर ऐप में लॉगिन करो सा।';
     }
 
     // ── 1. WEIGH SLIP / KATA PARCHI (कांटा पर्ची) ──
-    if (q.contains('कांटा पर्ची') || q.contains('कट पर्ची') || q.contains('kata parchi') || q.contains('weigh slip') || q.contains('तोल पर्ची')) {
+    if (q.contains('कांटा पर्ची') || q.contains('कट पर्ची') || q.contains('kata parchi') || q.contains('kanta parchi') || q.contains('weigh slip') || q.contains('तोल पर्ची')) {
       if (isEnglishQuery) {
         return 'Kata Parchi (Weigh Slip) records the official weighment transaction including gross weight, tare weight, net weight, vehicle number, date/time, and material details.';
+      }
+      if (isHindi) {
+        return 'कांटा पर्ची (Weigh Slip) में तोल का पूरा विवरण दर्ज होता है, जिसमें गाड़ी का वजन (Gross/Tare Weight), कुल शुद्ध वजन, वाहन नंबर और तारीख शामिल होती है।';
       }
       return 'कांटा पर्ची (Weigh Slip) में वजन रो पूरो ब्योरो, गाड़ी नंबर, तारीख, सकल अर शुद्ध वजन दर्ज होवै छै सा।';
     }
@@ -137,6 +144,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'Moisture Meter measures moisture % in grain before inward. Tripal/Tarpaulin protects stored crop bags from rain and dust. Pakhki is used for winnowing and cleaning grain.';
       }
+      if (isHindi) {
+        return 'नमी मापक (Moisture Meter) से अनाज की नमी जांची जाती है। तिरपाल (Tarpaulin) फसल की बोरियों की सुरक्षा करता है और पाखी से अनाज की सफाई की जाती है।';
+      }
       return 'नमी मापक (Moisture Meter) सूं अनाज री नमी जांची जावै छै सा। तिरपाल सूं बोरियां री सुरक्षा होवै छै सा, अर पाखी सूं अनाज री सफाई करी जावै छै सा।';
     }
 
@@ -145,6 +155,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'Kanta Man / Weighbridge Operator performs and records the exact weighing operations of trucks and commodity bags.';
       }
+      if (isHindi) {
+        return 'कांटा मैन (Weighbridge Operator) धर्म कांटा पर गाड़ियों और अनाज का सही वजन करने और कांटा पर्ची जारी करने का काम करता है।';
+      }
       return 'कांटा मैन (Weighbridge Operator) धर्म कांटा पर गाड़ियां अर अनाज रो सही वजन कर कांटा पर्ची देवै छै सा।';
     }
 
@@ -152,12 +165,18 @@ class AiService {
       if (isEnglishQuery) {
         return 'Quality Assayer samples, tests, and records grain quality parameters such as moisture %, foreign matter (FM), damaged grain, and oil content.';
       }
+      if (isHindi) {
+        return 'क्वालिटी अस्सेयर (Quality Assayer) अनाज का सैंपल लेकर नमी (Moisture %), कचरा (FM) और गुणवत्ता मापदंडों की जांच कर रिपोर्ट दर्ज करता है।';
+      }
       return 'क्वालिटी अस्सेयर (Quality Assayer) अनाज रो सैंपल लेइने नमी (Moisture %), कचरा (FM) अर गुणवत्ता री जांच कर रिपोर्ट दर्ज करे छै सा।';
     }
 
     if (q.contains('सुपरवाइजर') || q.contains('supervisor') || q.contains('लेबर') || q.contains('labour')) {
       if (isEnglishQuery) {
         return 'Warehouse Supervisor oversees staff & daily operations. Labour handles loading, unloading, stitching, stacking, and cleaning.';
+      }
+      if (isHindi) {
+        return 'गोदाम सुपरवाइजर पूरी व्यवस्था और कर्मचारियों की देखरेख करता है। लेबर (मजदूर) लोडिंग, अनलोडिंग, सिलाई और सफाई का कार्य करती है।';
       }
       return 'गोदाम सुपरवाइजर पूरी व्यवस्था री देखरेख करे छै सा। लेबर (मजदूर) माल री लोडिंग, अनलोडिंग, बोरी सिलाई अर सफाई रो काम करे छै सा।';
     }
@@ -167,6 +186,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'Applicable warehouse rules specify loading/unloading charges, transportation freight, Mandi tax, state charges, and weighbridge (Kanta) fees.';
       }
+      if (isHindi) {
+        return 'अपना गोदाम में लोडिंग/अनलोडिंग चार्ज, परिवहन भाड़ा, मंडी टैक्स और कांटा पर्ची चार्ज नियमानुसार पारदर्शी रूप से लागू होते हैं।';
+      }
       return 'अपना गोदाम में लोडिंग/अनलोडिंग चार्ज, परिवहन भाड़ो, मंडी टैक्स अर कांटा पर्ची चार्ज नियमानुसार पारदर्शी रूप सूं लागू होवै छै सा।';
     }
 
@@ -175,31 +197,70 @@ class AiService {
       if (isEnglishQuery) {
         return 'Sikai Quality Groundnut is whole roasted groundnut grown in Western Rajasthan (Jaisalmer, Bikaner, Phalodi). It uses Khala harvesting type and rates range from ₹60 to ₹70-75/kg.';
       }
+      if (isHindi) {
+        return 'सिकाई मूंगफली मुख्य रूप से पश्चिमी राजस्थान (जैसलमेर, बीकानेर) में उगाई जाती है। इसका बाहरी छिलका सुनहरे रंग का होता है और भाव ₹60 से ₹75/किग्रा रहता है।';
+      }
       return 'सिकाई मूंगफली मुख्य रूप सूं पश्चिमी राजस्थान (जैसलमेर, बीकानेर) री छै सा। छिलका सुनहलो अर भाव ₹60 सूं ₹75/किग्रा तक छै सा।';
     }
 
     if (q.contains('चुग्गा') || q.contains('खला') || q.contains('chugga') || q.contains('khala')) {
+      if (isEnglishQuery) {
+        return 'Khala groundnut is harvested with plant roots. Chugga groundnut is detached pods left in soil, which is categorized under Oil Quality for rate calculation.';
+      }
+      if (isHindi) {
+        return 'पौधे के साथ जड़ से निकलने वाली मूंगफली को "खला" कहते हैं। जमीन में रह जाने वाली मूंगफली को "चुग्गा" कहते हैं। चुग्गा को मुख्य रूप से तेल गुणवत्ता (Oil Quality) का माना जाता है।';
+      }
       return 'पौधे सागे जड़ सूं निकलण वाली मूंगफली ने "खला" कहे छै सा। जमीन मांय रह जाण वाली मूंगफली ने "चुग्गा" कहे छै सा। चुग्गा ने मुख्य रूप सूं तेल गुणवत्ता (Oil Quality) रो मान्यो जावै छै सा।';
     }
 
     if (q.contains('टन') || q.contains('ट्रक') || q.contains('truck') || q.contains('ton') || q.contains('मात्रा')) {
+      if (isEnglishQuery) {
+        return 'Full truckload capacity is 20-25 Tons (up to 27 Tons max). If you have ~25 Tons, a trading member will be dispatched immediately! Small quantities (2-3 tons) are placed on the waitlist.';
+      }
+      if (isHindi) {
+        return 'मूंगफली की सामान्य ट्रक क्षमता 20 से 25 टन होती है। यदि आपके पास लगभग 25 टन माल है, तो आपके लिए तुरंत ट्रेडिंग सदस्य भेजा जाएगा। कम मात्रा वाले किसानों को प्रतीक्षा सूची में रखा जाता है।';
+      }
       return 'मूंगफली री सामान्य ट्रक क्षमता 20 सूं 25 टन होवै छै सा। यदि आपरे पाखे 25 टन माल छै, तो आपरे वास्ते तुरंत ट्रेडिंग सदस्य भेज्यो ज्यासी सा। कम मात्रा वाला किसानों ने वेटलिस्ट मांय राख्यो जावै सा।';
     }
 
     if (q.contains('बटाईदार') || q.contains('मजदूर') || q.contains('मालिक') || q.contains('bataidar') || q.contains('owner')) {
+      if (isEnglishQuery) {
+        return 'Apna Godam trades exclusively with valid land/stock owners. If you are a Bataidar or laborer, please provide the owner\'s mobile number.';
+      }
+      if (isHindi) {
+        return 'मूंगफली का सौदा केवल जमीन या माल के वैध मालिक के साथ ही किया जाता है। यदि आप बटाईदार या मजदूर हैं, तो कृपया मालिक का मोबाइल नंबर उपलब्ध कराएं।';
+      }
       return 'मूंगफली रो सौदा केवल जमीन या माल रा वैध मालिक सागे ही कर्यो जावै छै सा। यदि आप बटाईदार या मजदूर हो, तो मालिक रो नंबर देवो सा।';
     }
 
     // ── 6. PROCESSES (इनवर्ड, आउटवर्ड, गेटपास, व्यापार) ──
     if (q.contains('इनवर्ड') || q.contains('inward') || q.contains('माल जमा') || q.contains('जमा')) {
+      if (isEnglishQuery) {
+        return 'To deposit goods (Inward):\n1. Tap "Inwards" in the app.\n2. Select warehouse, commodity & stack number.\n3. Enter weight (quintals), vehicle number & driver phone to submit.';
+      }
+      if (isHindi) {
+        return 'गोदाम में माल जमा (Inward) करने के लिए:\n1. ऐप में "माल जमा" पर क्लिक करें।\n2. अपना गोदाम, अनाज और स्टैक नंबर चुनें।\n3. वजन और वाहन नंबर दर्ज करके सबमिट करें।';
+      }
       return 'गोदाम मांय माल जमा (Inward) करावण वास्ते:\n1. ऐप में "माल जमा" पर क्लिक करो सा।\n2. आपरो गोदाम, जिंस अर स्टैक नंबर चुणो सा।\n3. वजन अर गाड़ी नंबर भर समिट करो सा।';
     }
 
     if (q.contains('आउटवर्ड') || q.contains('outward') || q.contains('निकासी') || q.contains('निकाल')) {
+      if (isEnglishQuery) {
+        return 'To withdraw goods (Outward):\n1. Tap "Outward" in the warehouse section.\n2. Select your warehouse, commodity and stack.\n3. Enter withdrawal weight and vehicle details to submit.';
+      }
+      if (isHindi) {
+        return 'गोदाम से माल निकालने (Outward) के लिए:\n1. ऐप में "माल निकासी" पर क्लिक करें।\n2. अपना गोदाम और स्टैक चुनकर वजन दर्ज करें और सबमिट करें।';
+      }
       return 'गोदाम सूं माल काढण (Outward) वास्ते:\n1. ऐप में "माल निकासी" पर जावो सा।\n2. आपरो स्टैक चुणो अर सबमिट करो सा।';
     }
 
     if (q.contains('गेट पास') || q.contains('गेटपास') || q.contains('gatepass') || q.contains('gate pass') || q.contains('banaun') || q.contains('banaye')) {
+      if (isEnglishQuery) {
+        return 'Digital Gate Pass is generated automatically once your Inward or Outward request is approved, displaying your QR code, stack number and vehicle details.';
+      }
+      if (isHindi) {
+        return 'डिजिटल गेट पास (Gate Pass) बनाने के लिए इनवर्ड या आउटवर्ड रिक्वेस्ट सबमिट करें, अप्रूवल मिलते ही ऐप में QR कोड गेट पास जारी हो जाएगा।';
+      }
       return 'डिजिटल गेट पास (Gate Pass) बणावण वास्ते इनवर्ड या आउटवर्ड रिक्वेस्ट सबमिट करो सा, अप्रूवल मिलता ही QR कोड गेट पास ऐप में बण ज्यासी सा।';
     }
 
@@ -253,12 +314,18 @@ class AiService {
       if (isEnglishQuery) {
         return 'Today\'s rate for $cropDisplayNameEn is ₹$priceDisplay. Do you want to buy or sell?';
       }
+      if (isHindi) {
+        return 'आज $cropDisplayName का भाव ₹$priceDisplay/क्विंटल है। आप खरीदना चाहते हैं या बेचना चाहते हैं?';
+      }
       return 'आज $cropDisplayName रो भाव ₹$priceDisplay/क्विंटल छै सा। थै खरीदना चाहो छौ या बेचना चाहो छौ?';
     }
 
     // ── 8. UNKNOWN / OUT-OF-SCOPE QUERY FALLBACK TO IVR HELPLINE (7733901154) ──
     if (isEnglishQuery) {
       return 'Sorry, I do not have information on this out-of-scope question. Please contact our IVR Helpline at 7733901154 for assistance.';
+    }
+    if (isHindi) {
+      return 'क्षमा करें, मुझे इस प्रश्न की जानकारी नहीं है। अधिक जानकारी के लिए कृपया हमारी IVR हेल्पलाइन 7733901154 पर कॉल करें।';
     }
     if (isBhojpuri) {
       return 'क्षमा करीं, हमरा ई सवाल के जानकारी नईखे। अधिक जानकारी खातिर हमार IVR हेल्पलाइन 7733901154 पर कॉल करीं।';
@@ -267,7 +334,6 @@ class AiService {
       return 'क्षमा करू, हमरा ऐ प्रश्नक जानकारी नहि अछि। अधिक जानकारी लेल हमर IVR हेल्पलाइन 7733901154 पर कॉल करू।';
     }
 
-    // Default to PURE MARWARI for all unknown regional questions
     return 'माफ़ करना सा, म्हाने इण सवाल रो जवाब कोइनी। बत्ती जानकारी वास्ते आप IVR हेल्पलाइन 7733901154 पर कॉल करो सा।';
   }
 
@@ -275,15 +341,17 @@ class AiService {
     required String question,
     required String marketData,
   }) {
-    return '''CRITICAL MANDATORY MARWARI RESPONSE RULE:
-1. ALWAYS RESPOND IN PURE RESPECTFUL MARWARI (मारवाड़ी) DIALECT IN DEVANAGARI SCRIPT FOR ALL REGIONAL/HINDI QUERIES!
-   - NEVER RESPOND IN STANDARD HINDI!
-   - Marwari Example: "आज मूंगफली रो भाव ₹65/किग्रा छै सा। थै अपना गोदाम पर आसानी सूं बेच सको छौ।"
+    return '''CRITICAL LANGUAGE ROUTING RULE:
+1. DETECT THE USER'S EXACT LANGUAGE AND RESPOND IN THAT SAME LANGUAGE:
+   - ENGLISH QUERY ("how make gatepass", "what is kanta parchi"): RESPOND 100% IN PURE ENGLISH!
+   - HINDI QUERY ("गेटपास कैसे बनाएं"): RESPOND 100% IN PURE SIMPLE HINDI!
+   - MARWARI QUERY ("गेटपास किया बणावा सा"): RESPOND 100% IN PURE RESPECTFUL MARWARI!
+   - GUJARATI QUERY: RESPOND 100% IN PURE GUJARATI!
+   - BHOJPURI QUERY: RESPOND 100% IN PURE BHOJPURI!
 
 2. OUT-OF-SCOPE / UNKNOWN QUESTION RULE:
    If the question is outside Apna Godam business, crops, rates, logistics, or quality:
-   APOLOGIZE POLITELY IN MARWARI AND REDIRECT TO IVR HELPLINE 7733901154!
-   - Marwari: "माफ़ करना सा, म्हाने इण सवाल रो जवाब कोइनी। बत्ती जानकारी वास्ते आप IVR हेल्पलाइन 7733901154 पर कॉल करो सा।"
+   APOLOGIZE POLITELY IN THE USER'S EXACT LANGUAGE AND REDIRECT TO IVR HELPLINE 7733901154!
 
 LIVE MARKET DATA:
 $marketData''';
