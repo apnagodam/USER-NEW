@@ -109,7 +109,7 @@ class AiService {
 • KYC Verification Status: ${userProfile['kycVerified'] == true ? 'Complete & Verified' : 'Pending'}''';
   }
 
-  /// Smart local answer generator covering ALL 200 Questions, Roles, Actions, Charges, Objects, and IVR Fallback across all languages.
+  /// Smart local answer generator covering ALL 200 Questions from PDF/Matrix.
   static String fallbackMarketResponse(
     String question,
     String marketData, {
@@ -301,7 +301,23 @@ class AiService {
       return 'कांटा पर्ची (Weigh Slip) में वजन रो पूरो ब्योरो, गाड़ी नंबर, तारीख, सकल अर शुद्ध वजन दर्ज होवै छै सा।';
     }
 
-    // ── 2. MOISTURE METER & PAKHKI & TRIPAL (नमी मापक / तिरपाल / पाखी) ──
+    // ── 2. MOISTURE METER & PAKHKI & TRIPAL & POCKET SCALE (नमी मापक / पॉकेट स्केल / तिरपाल / पाखी) ──
+    if (q.contains('pocket scale') || q.contains('पॉकेट स्केल') || q.contains('scale') || q.contains('स्केल')) {
+      if (isEnglishQuery) {
+        return 'Pocket Scale & Sampling Tray is used by the Quality Assayer to weigh exact 100g sample for FM (Foreign Matter) & damage analysis.';
+      }
+      if (isGujarati) {
+        return 'પોકેટ સ્કેલ અને ટ્રેનો ઉપયોગ ક્વોલિટી અસેયર દ્વારા 100 ગ્રામ સેમ્પલ જોખીને કચરો અને દાણાની ચકાસણી કરવા માટે થાય છે.';
+      }
+      if (isBhojpuri) {
+        return 'पॉकेट स्केल अउर ट्रे से 100 ग्राम सैंपल तोल के कचरा अउर दाना के प्रतिशत जांचल जाला।';
+      }
+      if (isHindi) {
+        return 'पॉकेट स्केल और ट्रे का उपयोग क्वालिटी अस्सेयर द्वारा 100 ग्राम सैंपल तोलकर कचरा और दाना प्रतिशत जांचने के लिए किया जाता है।';
+      }
+      return '100 ग्राम सैंपल तोलन कचरा अरे दाना रो प्रतिशत काढण वाली छोटी कांटा ट्रे पॉकेट स्केल होवै छै सा।';
+    }
+
     if (q.contains('नमी') || q.contains('moisture') || q.contains('तिरपाल') || q.contains('tripal') || q.contains('पाखी') || q.contains('pakhki')) {
       if (isEnglishQuery) {
         return 'Moisture Meter measures moisture % in grain before inward. Tripal/Tarpaulin protects stored crop bags from rain and dust. Pakhki is used for winnowing and cleaning grain.';
@@ -316,6 +332,31 @@ class AiService {
         return 'नमी मापक (Moisture Meter) से अनाज की नमी जांची जाती है। तिरपाल (Tarpaulin) फसल की बोरियों की सुरक्षा करता है और पाखी से अनाज की सफाई की जाती है।';
       }
       return 'नमी मापक (Moisture Meter) सूं अनाज री नमी जांची जावै छै सा। तिरपाल सूं बोरियां री सुरक्षा होवै छै सा, अर पाखी सूं अनाज री सफाई करी जावै छै सा।';
+    }
+
+    // ── 2.5 FOREIGN MATTER & SAMPLE DIVIDER & GRADING ──
+    if (q.contains('foreign matter') || q.contains('फॉरेन मैटर') || q.contains('fm') || q.contains('कचरा')) {
+      if (isEnglishQuery) {
+        return 'Foreign Matter (FM) includes chaff, dust, stones, weed seeds and non-grain particles mixed inside crop lot.';
+      }
+      if (isHindi) {
+        return 'अनाज में मिला कचरा, धूल, कंकड़, तिनके और भूसा जिसे फॉरेन मैटर (FM) कहते हैं।';
+      }
+      return 'फसल में मिल्योड़ो कचरो, कं कड़, धूड़ अरे भूसा ने फॉरेेन मैटरे (FM) कहे छै सा।';
+    }
+
+    if (q.contains('sample divider') || q.contains('सैंपल डिवाइडर')) {
+      if (isEnglishQuery) {
+        return 'Sample Divider is used to homogeneously divide bulk grain sample into unbiased testing portions.';
+      }
+      return 'बड़े अनाज सैंपल को निष्पक्ष रूप से छोटे जांच नमूनों में विभाजित करने वाला उपकरण।';
+    }
+
+    if (q.contains('grading') || q.contains('ग्रेडिंग') || q.contains('ग्रेड')) {
+      if (isEnglishQuery) {
+        return 'Grading sorts grain by size, weight, color & purity to classify into A-Grade, B-Grade or Commercial.';
+      }
+      return 'दाने के आकार, रंग, चमक और शुद्धता के आधार पर ए-ग्रेड, बी-ग्रेड में वर्गीकरण करना।';
     }
 
     // ── 3. ROLES (कांटा मैन, सुपरवाइजर, लेबर, क्वालिटी अस्सेयर) ──
@@ -637,7 +678,7 @@ class AiService {
   }) {
     return '''CRITICAL LANGUAGE ROUTING RULE:
 1. DETECT THE USER'S EXACT SPOKEN LANGUAGE AND RESPOND IN THAT SAME LANGUAGE:
-   - ENGLISH QUERY ("how make gatepass", "what is my name"): RESPOND 100% IN PURE ENGLISH!
+   - ENGLISH QUERY ("how make gatepass", "what is pocket scale"): RESPOND 100% IN PURE ENGLISH!
    - GUJARATI QUERY ("આજે ઘઉંનો ભાવ કેટલો છે"): RESPOND 100% IN PURE NATIVE GUJARATI!
    - BHOJPURI QUERY ("हमार नाम का बा"): RESPOND 100% IN PURE BHOJPURI!
    - HINDI QUERY ("मेरा नाम क्या है"): RESPOND 100% IN PURE SIMPLE HINDI!
