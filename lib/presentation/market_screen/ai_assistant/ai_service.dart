@@ -313,17 +313,17 @@ class AiService {
     List<String> keywords = [];
 
     if (q.contains('गेहूं') || q.contains('gehu') || q.contains('wheat')) {
-      searchedCropName = 'गेहूं'; cropDisplayName = 'गेहूं'; cropDisplayNameEn = 'Wheat'; keywords = ['गेहूं', 'wheat'];
+      searchedCropName = 'गेहूं'; cropDisplayName = 'गेहूं'; cropDisplayNameEn = 'Wheat'; keywords = ['गेहूं', 'wheat', 'gehu'];
     } else if (q.contains('जौ') || q.contains('jau') || q.contains('barley')) {
-      searchedCropName = 'जौ'; cropDisplayName = 'जौ'; cropDisplayNameEn = 'Barley'; keywords = ['जौ', 'barley'];
+      searchedCropName = 'जौ'; cropDisplayName = 'जौ'; cropDisplayNameEn = 'Barley'; keywords = ['जौ', 'barley', 'barley 2026', 'jau', 'jo'];
     } else if (q.contains('चना') || q.contains('chana') || q.contains('gram')) {
-      searchedCropName = 'चना'; cropDisplayName = 'चना'; cropDisplayNameEn = 'Gram'; keywords = ['चना', 'gram'];
+      searchedCropName = 'चना'; cropDisplayName = 'चना'; cropDisplayNameEn = 'Gram'; keywords = ['चना', 'gram', 'chana'];
     } else if (q.contains('सरसों') || q.contains('mustard') || q.contains('रोजा') || q.contains('रोजी')) {
-      searchedCropName = 'सरसों'; cropDisplayName = 'सरसों'; cropDisplayNameEn = 'Mustard'; keywords = ['सरसों', 'mustard', 'सरसो'];
-    } else if (q.contains('मूंगफली') || q.contains('mungfali') || q.contains('groundnut') || q.contains('सिंगदाना') || q.contains('गोटा')) {
-      searchedCropName = 'मूंगफली'; cropDisplayName = 'मूंगफली'; cropDisplayNameEn = 'Groundnut'; keywords = ['मूंगफली', 'groundnut', 'सिकाई', 'सिंगदाना'];
+      searchedCropName = 'सरसों'; cropDisplayName = 'सरसों'; cropDisplayNameEn = 'Mustard'; keywords = ['सरसों', 'mustard', 'sarso', 'सरसो'];
+    } else if (q.contains('मूंगफली') || q.contains('mungfali') || q.contains('groundnut') || q.contains('ground nut') || q.contains('सिंगदाना') || q.contains('गोटा')) {
+      searchedCropName = 'मूंगफली'; cropDisplayName = 'मूंगफली'; cropDisplayNameEn = 'Groundnut'; keywords = ['मूंगफली', 'ground nut', 'groundnut', 'mungfali', 'सिकाई', 'सिंगदाना', 'गोटा', 'oil quality'];
     } else if (q.contains('मक्का') || q.contains('maize')) {
-      searchedCropName = 'मक्का'; cropDisplayName = 'मक्का'; cropDisplayNameEn = 'Maize'; keywords = ['मक्का', 'maize'];
+      searchedCropName = 'मक्का'; cropDisplayName = 'मक्का'; cropDisplayNameEn = 'Maize'; keywords = ['मक्का', 'maize', 'makka'];
     }
 
     if (searchedCropName.isNotEmpty) {
