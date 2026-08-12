@@ -96,6 +96,27 @@ class AiService {
     final isMaithili = q.contains('अहाँ') || q.contains('की') || q.contains('कतबा') || q.contains('कोना') || q.contains('अछि');
     final isMarwari = q.contains('रो') || q.contains('कांई') || q.contains('ाईं') || q.contains('म्हाने') || q.contains('थै') || q.contains('कराणो') || q.contains('छै');
 
+    // ── 0. PERSONAL DATA CONSENT & PROFILE ISOLATION RULE ──
+    if (q.contains('पर्सनल') ||
+        q.contains('प्रोफाइल') ||
+        q.contains('प्रोफ़ाइल') ||
+        q.contains('माहरो अकाउंट') ||
+        q.contains('मेरा अकाउंट') ||
+        q.contains('मेरा बैलेंस') ||
+        q.contains('मेरा डिटेल') ||
+        q.contains('profile') ||
+        q.contains('personal') ||
+        q.contains('my account') ||
+        q.contains('my balance')) {
+      if (isEnglishQuery) {
+        return 'For security and privacy, accessing personal profile details requires OTP verification on your registered mobile number. Please log in to your authenticated account. (Data is shown ONLY for your own profile)';
+      }
+      if (isMarwari) {
+        return 'सा, आपरी पर्सनल जानकारी (प्रोफाइल/बैलेंस) देखण वास्ते आपरो रजिस्टर्ड मोबाइल नंबर अर OTP सत्यापन जरूरी छै। मेहरबानी कर ऐप में लॉगिन करो सा।';
+      }
+      return 'सुरक्षा और गोपनीयता कारणों से व्यक्तिगत जानकारी (प्रोफाइल/बैलेंस) देखने के लिए पंजीकृत मोबाइल नंबर और OTP सत्यापन आवश्यक है। केवल सत्यापित उपयोगकर्ता ही अपनी प्रोफाइल देख सकते हैं।';
+    }
+
     // ── 1. WEIGH SLIP / KATA PARCHI (कांटा पर्ची) ──
     if (q.contains('कांटा पर्ची') || q.contains('कट पर्ची') || q.contains('kata parchi') || q.contains('weigh slip') || q.contains('तोल पर्ची')) {
       if (isEnglishQuery) {
