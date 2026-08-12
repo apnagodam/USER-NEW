@@ -441,6 +441,33 @@ class AiService {
       return 'डिजिटल गेट पास (Gate Pass) बणावण वास्ते इनवर्ड या आउटवर्ड रिक्वेस्ट सबमिट करो सा, अप्रूवल मिलता ही QR कोड गेट पास ऐप में बण ज्यासी सा।';
     }
 
+    // ── 6.5. LOANS, PLEDGE FINANCE & BNPL ──
+    if (q.contains('लोन') || q.contains('loan') || q.contains('गिरवी') || q.contains('pledge') || q.contains('bnpl')) {
+      if (isEnglishQuery) {
+        return 'Apna Godam offers instant collateral bank loans up to 75% of your stored crop value at 8-11% p.a. interest, plus BNPL credit limits for trading.';
+      }
+      if (isBhojpuri) {
+        return 'अपना गोदाम में जमा फसल के रसीद पर 75% तक बैंक लोन अउर व्यापार खातिर BNPL सुविधा मिलेला।';
+      }
+      if (isHindi) {
+        return 'अपना गोदाम में जमा फसल पर 75% तक तुरंत बैंक लोन (Pledge Loan) और व्यापार के लिए BNPL क्रेडिट सुविधा मिलती है।';
+      }
+      return 'सा, अपना गोदाम मांय जमा माल पर 75% तक तुरंत बैंक लोन अर व्यापार वास्ते BNPL सुविधा मिलै छै सा।';
+    }
+
+    if (q.contains('सौदा') || q.contains('बोली') || q.contains('bid') || q.contains('wbt') || q.contains('sbt') || q.contains('व्यापार') || q.contains('trade')) {
+      if (isEnglishQuery) {
+        return 'Apna Godam supports WBT (Warehouse Based Trading) & SBT (Stock Based Trading) with live buy/sell bidding and 24-hour instant seller payments.';
+      }
+      if (isBhojpuri) {
+        return 'अपना गोदाम में WBT अउर SBT द्वारा फसल के लाइव बोली लगा के खरीद-बिक्री कइल जाला अउर 24 घंटा में भुगतान मिलेला।';
+      }
+      if (isHindi) {
+        return 'अपना गोदाम पर WBT और SBT द्वारा लाइव बोलियां लगाकर फसल खरीद-बिक्री की जाती है और 24 घंटे में सीधे बैंक खाते में भुगतान मिलता है।';
+      }
+      return 'सा, अपना गोदाम पर WBT अर SBT सूं लाइव बोली लगाइने व्यापार कर्यो जावै छै अर 24 घंटा में पक्को भुगतान मिलै छै सा।';
+    }
+
     // ── 7. LIVE CROP RATES INQUIRY (STRICT BACKEND API DATA ONLY - NO HARDCODED NUMBERS) ──
     String searchedCropName = '';
     String cropDisplayName = '';
