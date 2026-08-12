@@ -88,8 +88,19 @@ class AiService {
   }) {
     final q = question.toLowerCase().trim();
 
-    // Detect English
-    final isEnglishQuery = (q.contains('what') || q.contains('how') || q.contains('price') || q.contains('rate') || q.contains('buy') || q.contains('sell') || q.contains('wheat') || q.contains('groundnut') || q.contains('inward') || q.contains('outward') || q.contains('wallet') || q.contains('loan') || q.contains('who') || q.contains('role') || q.contains('weigh') || q.contains('slip')) && RegExp(r'^[a-zA-Z0-9\s\?\,\.\!\%\-\_]+$').hasMatch(q);
+    // Detect English Query: English letters, no Devanagari, no Roman Marwari markers
+    final hasEnglishChars = RegExp(r'[a-zA-Z]').hasMatch(q);
+    final hasDevanagariChars = RegExp(r'[\u0900-\u097F]').hasMatch(question);
+    final isRomanMarwari = q.contains('chhe') ||
+        q.contains('che') ||
+        q.contains('mhane') ||
+        q.contains('tharo') ||
+        q.contains('bechain') ||
+        q.contains('bechni') ||
+        q.contains('kai') ||
+        q.contains('katra');
+
+    final isEnglishQuery = hasEnglishChars && !hasDevanagariChars && !isRomanMarwari;
 
     // Detect Dialects
     final isBhojpuri = q.contains('का बा') || q.contains('केतना') || q.contains('कइसे') || q.contains('हमरा') || q.contains('रउआ') || q.contains('बाते');

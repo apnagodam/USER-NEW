@@ -91,14 +91,36 @@ class HuggingFaceService {
     for (final kw in marathiKeywords) { if (rawText.contains(kw)) return LanguageDetectionResult(languageCode: 'mr', languageName: 'Marathi (मराठी)', confidence: 0.95, isRegionalDialect: true, normalizedText: rawText); }
     for (final kw in dravidianKeywords) { if (rawText.contains(kw)) return LanguageDetectionResult(languageCode: 'south', languageName: 'South Indian Language', confidence: 0.90, isRegionalDialect: true, normalizedText: rawText); }
 
-    // Check pure English
-    final isPureEnglish = (lowerText.contains('what') || lowerText.contains('how') || lowerText.contains('price') || lowerText.contains('rate') || lowerText.contains('buy') || lowerText.contains('sell') || lowerText.contains('warehouse') || lowerText.contains('inward') || lowerText.contains('outward') || lowerText.contains('gatepass') || lowerText.contains('stack') || lowerText.contains('role') || lowerText.contains('driver') || lowerText.contains('kanta')) && RegExp(r'^[a-zA-Z0-9\s\?\,\.\!\%\-\_]+$').hasMatch(lowerText);
-    if (isPureEnglish) {
-      return LanguageDetectionResult(languageCode: 'en', languageName: 'English', confidence: 0.98, isRegionalDialect: false, normalizedText: rawText);
+    // Check pure English query (English characters, no Devanagari, no Roman Marwari markers)
+    final hasEnglishChars = RegExp(r'[a-zA-Z]').hasMatch(lowerText);
+    final hasDevanagariChars = RegExp(r'[\u0900-\u097F]').hasMatch(rawText);
+    final isRomanMarwari = lowerText.contains('chhe') ||
+        lowerText.contains('che') ||
+        lowerText.contains('mhane') ||
+        lowerText.contains('tharo') ||
+        lowerText.contains('bechain') ||
+        lowerText.contains('bechni') ||
+        lowerText.contains('kai') ||
+        lowerText.contains('katra');
+
+    if (hasEnglishChars && !hasDevanagariChars && !isRomanMarwari) {
+      return LanguageDetectionResult(
+        languageCode: 'en',
+        languageName: 'English',
+        confidence: 0.99,
+        isRegionalDialect: false,
+        normalizedText: rawText,
+      );
     }
 
     if (rawText.contains('क्या') || rawText.contains('कैसे') || rawText.contains('कितना') || rawText.contains('चाहिए') || rawText.contains('करना')) {
-      return LanguageDetectionResult(languageCode: 'hi', languageName: 'Hindi (हिंदी)', confidence: 0.92, isRegionalDialect: false, normalizedText: rawText);
+      return LanguageDetectionResult(
+        languageCode: 'hi',
+        languageName: 'Hindi (हिंदी)',
+        confidence: 0.92,
+        isRegionalDialect: false,
+        normalizedText: rawText,
+      );
     }
 
     return LanguageDetectionResult(
