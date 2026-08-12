@@ -109,7 +109,7 @@ class AiService {
 • KYC Verification Status: ${userProfile['kycVerified'] == true ? 'Complete & Verified' : 'Pending'}''';
   }
 
-  /// Smart local answer generator covering ALL Profile Queries, Roles, Actions, Charges, Objects, and IVR Fallback.
+  /// Smart local answer generator covering ALL 200 Questions, Roles, Actions, Charges, Objects, and IVR Fallback across all languages.
   static String fallbackMarketResponse(
     String question,
     String marketData, {
@@ -118,9 +118,10 @@ class AiService {
   }) {
     final q = question.toLowerCase().trim();
 
-    // Detect English Query: English letters, no Devanagari, no Roman Marwari markers
+    // Detect English Query: English letters, no Devanagari/Gujarati, no Roman Marwari markers
     final hasEnglishChars = RegExp(r'[a-zA-Z]').hasMatch(q);
     final hasDevanagariChars = RegExp(r'[\u0900-\u097F]').hasMatch(question);
+    final hasGujaratiChars = RegExp(r'[\u0A80-\u0AFF]').hasMatch(question);
     final isRomanMarwari = q.contains('chhe') ||
         q.contains('che') ||
         q.contains('mhane') ||
@@ -130,9 +131,10 @@ class AiService {
         q.contains('kai') ||
         q.contains('katra');
 
-    final isEnglishQuery = hasEnglishChars && !hasDevanagariChars && !isRomanMarwari;
+    final isEnglishQuery = hasEnglishChars && !hasDevanagariChars && !hasGujaratiChars && !isRomanMarwari;
 
-    // Detect Dialects
+    // Detect Dialects & Languages
+    final isGujarati = hasGujaratiChars || q.contains('ભાવ') || q.contains('તમારું') || q.contains('વિગતો') || q.contains('ગુજરાતી');
     final isBhojpuri = q.contains('का बा') || q.contains('केतना') || q.contains('कइसे') || q.contains('हमरा') || q.contains('हमार') || q.contains('रउआ') || q.contains('बाते') || q.contains('बा') || q.contains('करीं') || q.contains('बनी') || q.contains('बताईं');
     final isMaithili = q.contains('अहाँ') || q.contains('की') || q.contains('कतबा') || q.contains('कोना') || q.contains('अछि');
     final isHindi = q.contains('क्या') || q.contains('कैसे') || q.contains('कितना') || q.contains('बनाएं') || q.contains('बताएं') || q.contains('बताओ');
@@ -154,84 +156,96 @@ class AiService {
     final walletAmount = userProfile?['walletAmount'] ?? 0;
 
     // Check specific name query
-    if (q.contains('नाम') || q.contains('name') || q.contains('मेरा नाम') || q.contains('माहरो नाम') || q.contains('हमार नाम')) {
+    if (q.contains('नाम') || q.contains('name') || q.contains('मेरा नाम') || q.contains('माहरो नाम') || q.contains('हमार नाम') || q.contains('નામ')) {
       if (!isLoggedIn) {
         if (isEnglishQuery) return 'Please log in to your Apna Godam account to view your registered profile name.';
+        if (isGujarati) return 'તમારું રજિસ્ટર્ડ નામ જોવા માટે કૃપા કરીને લોગિન કરો.';
         if (isBhojpuri) return 'अपना रजिस्टर्ड नाम देखे खातिर ऐप में लॉगिन करीं।';
         if (isHindi) return 'अपना पंजीकृत नाम देखने के लिए कृपया ऐप में लॉगिन करें।';
         return 'आपरो रजिस्टर्ड नाम देखण वास्ते ऐप में लॉगिन करो सा।';
       }
       if (isEnglishQuery) return 'Your registered name in Apna Godam is $name.';
+      if (isGujarati) return 'તમારું રજિસ્ટર્ડ નામ $name છે.';
       if (isBhojpuri) return 'अपना गोदाम में रउआ रजिस्टर्ड नाम $name बा।';
       if (isHindi) return 'अपना गोदाम में आपका पंजीकृत नाम $name है।';
       return 'सा, अपना गोदाम में आपरो रजिस्टर्ड नाम $name छै सा।';
     }
 
     // Check specific email query
-    if (q.contains('ईमेल') || q.contains('इमेल') || q.contains('email')) {
+    if (q.contains('ईमेल') || q.contains('इमेल') || q.contains('email') || q.contains('ઈમેલ')) {
       if (!isLoggedIn) {
         if (isEnglishQuery) return 'Please log in to view your registered email address.';
+        if (isGujarati) return 'તમારું ઈમેલ આઈડી જોવા માટે લોગિન કરો.';
         if (isBhojpuri) return 'अपना रजिस्टर्ड ईमेल देखे खातिर ऐप में लॉगिन करीं।';
         if (isHindi) return 'अपना पंजीकृत ईमेल देखने के लिए कृपया ऐप में लॉगिन करें।';
         return 'आपरी रजिस्टर्ड ईमेल देखण वास्ते ऐप में लॉगिन करो सा।';
       }
       if (isEnglishQuery) return 'Your registered email address is $email.';
+      if (isGujarati) return 'તમારું રજિસ્ટર્ડ ઈમેલ $email છે.';
       if (isBhojpuri) return 'रउआ रजिस्टर्ड ईमेल $email बा।';
       if (isHindi) return 'आपका पंजीकृत ईमेल $email है।';
       return 'सा, आपरी रजिस्टर्ड ईमेल $email छै सा।';
     }
 
     // Check specific mobile/phone number query
-    if (q.contains('नंबर') || q.contains('नम्बर') || q.contains('मोबाइल') || q.contains('फोन') || q.contains('phone') || q.contains('number') || q.contains('mobile')) {
+    if (q.contains('नंबर') || q.contains('नम्बर') || q.contains('मोबाइल') || q.contains('फोन') || q.contains('phone') || q.contains('number') || q.contains('mobile') || q.contains('નંબર')) {
       if (!isLoggedIn) {
         if (isEnglishQuery) return 'Please log in to view your registered mobile number.';
+        if (isGujarati) return 'તમારો મોબાઇલ નંબર જોવા માટે લોગિન કરો.';
         if (isBhojpuri) return 'अपना रजिस्टर्ड नंबर देखे खातिर ऐप में लॉगिन करीं।';
         if (isHindi) return 'अपना पंजीकृत मोबाइल नंबर देखने के लिए कृपया ऐप में लॉगिन करें।';
         return 'आपरो रजिस्टर्ड मोबाइल नंबर देखण वास्ते ऐप में लॉगिन करो सा।';
       }
       if (isEnglishQuery) return 'Your registered mobile number is $phone.';
+      if (isGujarati) return 'તમારો રજિસ્ટર્ડ મોબાઇલ નંબર $phone છે.';
       if (isBhojpuri) return 'रउआ रजिस्टर्ड मोबाइल नंबर $phone बा।';
       if (isHindi) return 'आपका पंजीकृत मोबाइल नंबर $phone है।';
       return 'सा, आपरो रजिस्टर्ड मोबाइल नंबर $phone छै सा।';
     }
 
     // Check specific address/location query
-    if (q.contains('पता') || q.contains('पतो') || q.contains('एड्रेस') || q.contains('address') || q.contains('location') || q.contains('गाँव') || q.contains('जिला')) {
+    if (q.contains('पता') || q.contains('पतो') || q.contains('एड्रेस') || q.contains('address') || q.contains('location') || q.contains('गाँव') || q.contains('जिला') || q.contains('સરનામું')) {
       if (!isLoggedIn) {
         if (isEnglishQuery) return 'Please log in to view your registered address.';
+        if (isGujarati) return 'તમારું સરનામું જોવા માટે લોગિન કરો.';
         if (isBhojpuri) return 'अपना दर्ज पता देखे खातिर ऐप में लॉगिन करीं।';
         if (isHindi) return 'अपना दर्ज पता देखने के लिए कृपया ऐप में लॉगिन करें।';
         return 'आपरो दर्ज पतो देखण वास्ते ऐप में लॉगिन करो सा।';
       }
       if (isEnglishQuery) return 'Your registered address is: $address.';
+      if (isGujarati) return 'તમારું રજિસ્ટર્ડ સરનામું: $address છે.';
       if (isBhojpuri) return 'रउआ दर्ज पता: $address बा।';
       if (isHindi) return 'आपका दर्ज पता: $address है।';
       return 'सा, आपरो दर्ज पतो: $address छै सा।';
     }
 
     // Check specific wallet amount / balance query
-    if (q.contains('वॉलेट') || q.contains('बैलेंस') || q.contains('balance') || q.contains('wallet') || q.contains('पैसा') || q.contains('रुपया') || q.contains('क्रेडिट')) {
+    if (q.contains('वॉलेट') || q.contains('बैलेंस') || q.contains('balance') || q.contains('wallet') || q.contains('पैसा') || q.contains('रुपया') || q.contains('क्रेडिट') || q.contains('વોલેટ')) {
       if (!isLoggedIn) {
         if (isEnglishQuery) return 'Please log in to view your wallet balance.';
+        if (isGujarati) return 'તમારું વોલેટ બેલેન્સ જોવા માટે લોગિન કરો.';
         if (isBhojpuri) return 'अपना वॉलेट बैलेंस देखे खातिर ऐप में लॉगिन करीं।';
         if (isHindi) return 'अपना वॉलेट बैलेंस देखने के लिए कृपया ऐप में लॉगिन करें।';
         return 'आपरो वॉलेट बैलेंस देखण वास्ते ऐप में लॉगिन करो सा।';
       }
       if (isEnglishQuery) return 'Your current wallet trade balance is ₹$walletAmount.';
+      if (isGujarati) return 'તમારું વોલેટ ટ્રેડ બેલેન્સ ₹$walletAmount છે.';
       if (isBhojpuri) return 'रउआ वॉलेट ट्रेड बैलेंस ₹$walletAmount बा।';
       if (isHindi) return 'आपका वॉलेट ट्रेड बैलेंस ₹$walletAmount है।';
       return 'सा, आपरो वॉलेट ट्रेड बैलेंस ₹$walletAmount छै सा।';
     }
 
     // Check specific stock/storage query
-    if (q.contains('स्टॉक') || q.contains('stock') || q.contains('जमा माल') || q.contains('बोरियां')) {
+    if (q.contains('स्टॉक') || q.contains('stock') || q.contains('जमा माल') || q.contains('बोरियां') || q.contains('સ્ટોક')) {
       if (!isLoggedIn) {
         if (isEnglishQuery) return 'Please log in to view your stored stock in Apna Godam.';
+        if (isGujarati) return 'તમારો ગોડાઉન સ્ટોક જોવા માટે લોગિન કરો.';
         if (isBhojpuri) return 'अपना जमा माल अउर स्टॉक देखे खातिर ऐप में लॉगिन करीं।';
         if (isHindi) return 'अपना जमा स्टॉक देखने के लिए कृपया ऐप में लॉगिन करें।';
         return 'आपरो जमा स्टॉक देखण वास्ते ऐप में लॉगिन करो सा।';
       }
       if (isEnglishQuery) return 'Your stored crop stock details are available in the "My Stock" section of Apna Godam.';
+      if (isGujarati) return 'તમારા ગોડાઉનમાં જમા માલની વિગતો "My Stock" વિભાગમાં ઉપલબ્ધ છે.';
       if (isBhojpuri) return 'अपना गोदाम में रउआ जमा माल अउर स्टॉक के जानकारी "माय स्टॉक" सेक्शन में उपलब्ध बा।';
       if (isHindi) return 'अपना गोदाम में आपके जमा स्टॉक की जानकारी "माय स्टॉक" सेक्शन में उपलब्ध है।';
       return 'सा, अपना गोदाम में आपरे जमा स्टॉक री जानकारी "माय स्टॉक" सेक्शन में उपलब्ध छै सा।';
@@ -249,6 +263,7 @@ class AiService {
         q.contains('my account')) {
       if (!isLoggedIn) {
         if (isEnglishQuery) return 'Please log in to view your authenticated personal profile.';
+        if (isGujarati) return 'તમારી પ્રોફાઇલ વિગતો જોવા માટે કૃપા કરીને લોગિન કરો.';
         if (isBhojpuri) return 'अपना पर्सनल जानकारी देखे खातिर ऐप में लॉगिन करीं।';
         if (isHindi) return 'अपनी व्यक्तिगत जानकारी (प्रोफाइल/बैलेंस) देखने के लिए कृपया ऐप में लॉगिन करें।';
         return 'सा, आपरी पर्सनल जानकारी (प्रोफाइल/बैलेंस) देखण वास्ते ऐप में लॉगिन करो सा।';
@@ -256,6 +271,9 @@ class AiService {
 
       if (isEnglishQuery) {
         return 'Here are your profile details:\n• Name: $name\n• Mobile: $phone\n• Email: $email\n• Address: $address\n• Wallet Balance: ₹$walletAmount';
+      }
+      if (isGujarati) {
+        return 'તમારી પ્રોફાઇલ વિગતો:\n• નામ: $name\n• મોબાઇલ: $phone\n• ઈમેલ: $email\n• સરનામું: $address\n• વોલેટ બેલેન્સ: ₹$walletAmount';
       }
       if (isBhojpuri) {
         return 'रउआ प्रोफाइल जानकारी:\n• नाम: $name\n• मोबाइल: $phone\n• ईमेल: $email\n• पता: $address\n• वॉलेट बैलेंस: ₹$walletAmount';
@@ -271,6 +289,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'Kata Parchi (Weigh Slip) records the official weighment transaction including gross weight, tare weight, net weight, vehicle number, date/time, and material details.';
       }
+      if (isGujarati) {
+        return 'કાંટા પર્ચી (Weigh Slip) અનાજના તોલની સત્તાવાર રસીદ છે, જેમાં વાહન નંબર, ગ્રોસ વજન, ટેર વજન અને નેટ વજન નોંધાય છે.';
+      }
       if (isBhojpuri) {
         return 'कांटा पर्ची (Weigh Slip) में तोल के पूरा विवरण दर्ज होला, जवना में गाड़ी के वजन (Gross/Tare Weight), कुल शुद्ध वजन, वाहन नंबर अउर तारीख शामिल होला।';
       }
@@ -284,6 +305,9 @@ class AiService {
     if (q.contains('नमी') || q.contains('moisture') || q.contains('तिरपाल') || q.contains('tripal') || q.contains('पाखी') || q.contains('pakhki')) {
       if (isEnglishQuery) {
         return 'Moisture Meter measures moisture % in grain before inward. Tripal/Tarpaulin protects stored crop bags from rain and dust. Pakhki is used for winnowing and cleaning grain.';
+      }
+      if (isGujarati) {
+        return 'ભેજ માપક (Moisture Meter)થી અનાજનો ભેજ મપાય છે. ત્રિપાલ વરસાદથી બોરીઓને રક્ષણ આપે છે અને પાખીથી અનાજ સાફ થાય છે.';
       }
       if (isBhojpuri) {
         return 'नमी मापक (Moisture Meter) से अनाज के नमी जांचल जाला। तिरपाल फसल के बोरियन के सुरक्षा करेला अउर पाखी से अनाज के सफाई कईल जाला।';
@@ -299,6 +323,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'Kanta Man / Weighbridge Operator performs and records the exact weighing operations of trucks and commodity bags.';
       }
+      if (isGujarati) {
+        return 'કાંટા મેન (Weighbridge Operator) ધર્મ કાંટા પર ગાડીઓ અને અનાજનું સાચું વજન કરીને રસીદ આપે છે.';
+      }
       if (isBhojpuri) {
         return 'कांटा मैन (Weighbridge Operator) धर्म कांटा पर गाड़ियन अउर अनाज के सही वजन करे के अउर कांटा पर्ची जारी करे के काम करेला।';
       }
@@ -312,6 +339,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'Quality Assayer samples, tests, and records grain quality parameters such as moisture %, foreign matter (FM), damaged grain, and oil content.';
       }
+      if (isGujarati) {
+        return 'ક્વોલિટી અસેયર (Quality Assayer) અનાજનો સેમ્પલ લઈને ભેજ %, કચરો અને ગુણવત્તા ચકાસીને રિપોર્ટ બનાવે છે.';
+      }
       if (isBhojpuri) {
         return 'क्वालिटी अस्सेयर (Quality Assayer) अनाज के सैंपल लेके नमी (Moisture %), कचरा (FM) अउर गुणवत्ता के जांच क के रिपोर्ट दर्ज करेला।';
       }
@@ -324,6 +354,9 @@ class AiService {
     if (q.contains('सुपरवाइजर') || q.contains('supervisor') || q.contains('लेबर') || q.contains('labour')) {
       if (isEnglishQuery) {
         return 'Warehouse Supervisor oversees staff & daily operations. Labour handles loading, unloading, stitching, stacking, and cleaning.';
+      }
+      if (isGujarati) {
+        return 'ગોડાઉન સુપરવાઇઝર સમગ્ર વ્યવસ્થા જુએ છે. મજૂર (Labour) લોડિંગ, અનલોડિંગ, સિલાઇ અને સફાઇ કરે છે.';
       }
       if (isBhojpuri) {
         return 'गोदाम सुपरवाइजर पूरा व्यवस्था के देखरेख करेला। लेबर (मजदूर) लोडिंग, अनलोडिंग, सिलाई अउर सफाई के काम करेला।';
@@ -339,6 +372,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'Applicable warehouse rules specify loading/unloading charges, transportation freight, Mandi tax, state charges, and weighbridge (Kanta) fees.';
       }
+      if (isGujarati) {
+        return 'અપના ગોડાઉનમાં લોડિંગ/અનલોડિંગ ચાર્જ, ટ્રાન્સપોર્ટ ભાડું, મંડી ટેક્સ અને કાંટા પર્ચી ચાર્જ નિયમ મુજબ પારદર્શક રીતે લાગુ થાય છે.';
+      }
       if (isBhojpuri) {
         return 'अपना गोदाम में लोडिंग/अनलोडिंग चार्ज, परिवहन भाड़ा, मंडी टैक्स अउर कांटा पर्ची चार्ज नियमानुसार पारदर्शी रूप से लागू होला।';
       }
@@ -353,6 +389,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'Sikai Quality Groundnut is whole roasted groundnut grown in Western Rajasthan (Jaisalmer, Bikaner, Phalodi). It uses Khala harvesting type.';
       }
+      if (isGujarati) {
+        return 'સિકાઈ મગફળી પશ્ચિમ રાજસ્થાનની સોનેરી ફોતરાંવાળી આખી શેકેલી મગફળી છે. તેમાં માત્ર "ખલા" મગફળી વપરાય છે.';
+      }
       if (isBhojpuri) {
         return 'सिकाई मूंगफली पच्छिमी राजस्थान (जैसलमेर, बीकानेर) में होला। एकर बाहरी छिलका सुनहला होला।';
       }
@@ -365,6 +404,9 @@ class AiService {
     if (q.contains('चुग्गा') || q.contains('खला') || q.contains('chugga') || q.contains('khala')) {
       if (isEnglishQuery) {
         return 'Khala groundnut is harvested with plant roots. Chugga groundnut is detached pods left in soil, which is categorized under Oil Quality.';
+      }
+      if (isGujarati) {
+        return 'છોડ સાથે મૂળમાંથી નીકળતી મગફળીને "ખલા" કહે છે. જમીનમાં રહી જતી મગફળીને "ચુગ્ગા" કહે છે, જે તેલ ક્વોલિટીમાં ગણાય છે.';
       }
       if (isBhojpuri) {
         return 'पौधा के साथ जड़ से निकले वाला मूंगफली के "खला" कहल जाला। जमीन में छूट गईल मूंगफली के "चुग्गा" कहल जाला। चुग्गा के मुख्य रूप से तेल गुणवत्ता (Oil Quality) के मानल जाला।';
@@ -379,6 +421,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'Full truckload capacity is 20-25 Tons (up to 27 Tons max). If you have ~25 Tons, a trading member will be dispatched immediately!';
       }
+      if (isGujarati) {
+        return 'મગફળીની સામાન્ય ટ્રક ક્ષમતા 20 થી 25 ટન હોય છે. જો તમારી પાસે 25 ટન માલ હોય તો તરત ટ્રેડિંગ સભ્ય મોકલવામાં આવે છે.';
+      }
       if (isBhojpuri) {
         return 'मूंगफली के सामान्य ट्रक क्षमता 20 से 25 टन होला। यदि रउआ लगे 25 टन माल बा, तो रउआ खातिर तुरंत ट्रेडिंग सदस्य भेजल जाई!';
       }
@@ -391,6 +436,9 @@ class AiService {
     if (q.contains('बटाईदार') || q.contains('मजदूर') || q.contains('मालिक') || q.contains('bataidar') || q.contains('owner')) {
       if (isEnglishQuery) {
         return 'Apna Godam trades exclusively with valid land/stock owners. If you are a Bataidar or laborer, please provide the owner\'s mobile number.';
+      }
+      if (isGujarati) {
+        return 'મગફળીનો સોદો માત્ર જમીન અથવા માલના અસલી માલિક (Owner) સાથે જ થાય છે. બટાઈદાર અથવા મજૂરે માલિકનો નંબર આપવો પડશે.';
       }
       if (isBhojpuri) {
         return 'मूंगफली के सौदा सिर्फ जमीन भा माल के वैध मालिक के साथे ही कइल जाला। यदि रउआ बटाईदार भा मजदूर बानी, तो मालिक के नंबर दीं।';
@@ -406,6 +454,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'To deposit goods (Inward):\n1. Tap "Inwards" in the app.\n2. Select warehouse, commodity & stack number.\n3. Enter weight (quintals), vehicle number & driver phone to submit.';
       }
+      if (isGujarati) {
+        return 'ગોડાઉનમાં માલ જમા (Inward) કરવા માટે:\n1. એપ્લિકેશનમાં "માલ જમા" પર ક્લિક કરો.\n2. તમારું ગોડાઉન, અનાજ અને સ્ટેક નંબર પસંદ કરો.\n3. વજન અને વાહન નંબર ભરીને સબમિટ કરો.';
+      }
       if (isBhojpuri) {
         return 'गोदाम में माल जमा (Inward) करे खातिर:\n1. ऐप में "माल जमा" पर क्लिक करीं।\n2. अपना गोदाम, अनाज अउर स्टैक नंबर चुनीं।\n3. वजन अउर गाड़ी नंबर भर के सबमिट करीं।';
       }
@@ -419,6 +470,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'To withdraw goods (Outward):\n1. Tap "Outward" in the warehouse section.\n2. Select your warehouse, commodity and stack.\n3. Enter withdrawal weight and vehicle details to submit.';
       }
+      if (isGujarati) {
+        return 'ગોડાઉનમાંથી માલ કાઢવા (Outward) માટે:\n1. "માલ નિકાસી" પર ક્લિક કરો.\n2. તમારું સ્ટેક પસંદ કરો અને વજન ભરી સબમિટ કરો.';
+      }
       if (isBhojpuri) {
         return 'गोदाम से माल निकाले (Outward) खातिर:\n1. ऐप में "माल निकासी" पर क्लिक करीं।\n2. अपना गोदाम अउर स्टैक चुन के वजन दर्ज करीं अउर सबमिट करीं।';
       }
@@ -431,6 +485,9 @@ class AiService {
     if (q.contains('गेट पास') || q.contains('गेटपास') || q.contains('gatepass') || q.contains('gate pass') || q.contains('banaun') || q.contains('banaye')) {
       if (isEnglishQuery) {
         return 'Digital Gate Pass is generated automatically once your Inward or Outward request is approved, displaying your QR code, stack number and vehicle details.';
+      }
+      if (isGujarati) {
+        return 'ડિજિટલ ગેટ પાસ (Gate Pass) માટે ઈનવર્ડ કે આઉટવર્ડ વિનંતી મંજૂર થતાં જ એપ્લિકેશનમાં QR ગેટ પાસ જનરેટ થઈ જાય છે.';
       }
       if (isBhojpuri) {
         return 'डिजिटल गेट पास (Gate Pass) बनावे खातिर इनवर्ड भा आउटवर्ड रिक्वेस्ट सबमिट करीं, अप्रूवल मिलत ही ऐप में QR कोड गेट पास जारी हो जाई।';
@@ -446,6 +503,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'Apna Godam offers instant collateral bank loans up to 75% of your stored crop value at 8-11% p.a. interest, plus BNPL credit limits for trading.';
       }
+      if (isGujarati) {
+        return 'અપના ગોડાઉનમાં જમા માલ પર 75% સુધી તુરંત બેંક લોન (Pledge Loan) અને ટ્રેડિંગ માટે BNPL લિમિટ મળે છે.';
+      }
       if (isBhojpuri) {
         return 'अपना गोदाम में जमा फसल के रसीद पर 75% तक बैंक लोन अउर व्यापार खातिर BNPL सुविधा मिलेला।';
       }
@@ -458,6 +518,9 @@ class AiService {
     if (q.contains('सौदा') || q.contains('बोली') || q.contains('bid') || q.contains('wbt') || q.contains('sbt') || q.contains('व्यापार') || q.contains('trade')) {
       if (isEnglishQuery) {
         return 'Apna Godam supports WBT (Warehouse Based Trading) & SBT (Stock Based Trading) with live buy/sell bidding and 24-hour instant seller payments.';
+      }
+      if (isGujarati) {
+        return 'અપના ગોડાઉનમાં WBT અને SBT દ્વારા લાઈવ બોલી લગાવીને અનાજનો વેપાર થાય છે અને 24 કલાકમાં ચૂકવણી મળે છે.';
       }
       if (isBhojpuri) {
         return 'अपना गोदाम में WBT अउर SBT द्वारा फसल के लाइव बोली लगा के खरीद-बिक्री कइल जाला अउर 24 घंटा में भुगतान मिलेला।';
@@ -474,18 +537,18 @@ class AiService {
     String cropDisplayNameEn = '';
     List<String> keywords = [];
 
-    if (q.contains('गेहूं') || q.contains('gehu') || q.contains('wheat')) {
-      searchedCropName = 'गेहूं'; cropDisplayName = 'गेहूं'; cropDisplayNameEn = 'Wheat'; keywords = ['गेहूं', 'wheat', 'gehu'];
-    } else if (q.contains('जौ') || q.contains('jau') || q.contains('barley')) {
-      searchedCropName = 'जौ'; cropDisplayName = 'जौ'; cropDisplayNameEn = 'Barley'; keywords = ['जौ', 'barley', 'barley 2026', 'jau', 'jo'];
-    } else if (q.contains('चना') || q.contains('chana') || q.contains('gram')) {
-      searchedCropName = 'चना'; cropDisplayName = 'चना'; cropDisplayNameEn = 'Gram'; keywords = ['चना', 'gram', 'chana'];
-    } else if (q.contains('सरसों') || q.contains('mustard') || q.contains('रोजा') || q.contains('रोजी')) {
-      searchedCropName = 'सरसों'; cropDisplayName = 'सरसों'; cropDisplayNameEn = 'Mustard'; keywords = ['सरसों', 'mustard', 'sarso', 'सरसो'];
-    } else if (q.contains('मूंगफली') || q.contains('mungfali') || q.contains('groundnut') || q.contains('ground nut') || q.contains('सिंगदाना') || q.contains('गोटा')) {
-      searchedCropName = 'मूंगफली'; cropDisplayName = 'मूंगफली'; cropDisplayNameEn = 'Groundnut'; keywords = ['मूंगफली', 'ground nut', 'groundnut', 'mungfali', 'सिकाई', 'सिंगदाना', 'गोटा', 'oil quality'];
-    } else if (q.contains('मक्का') || q.contains('maize')) {
-      searchedCropName = 'मक्का'; cropDisplayName = 'मक्का'; cropDisplayNameEn = 'Maize'; keywords = ['मक्का', 'maize', 'makka'];
+    if (q.contains('गेहूं') || q.contains('gehu') || q.contains('wheat') || q.contains('ઘઉં')) {
+      searchedCropName = 'गेहूं'; cropDisplayName = 'गेहूं'; cropDisplayNameEn = 'Wheat'; keywords = ['गेहूं', 'wheat', 'gehu', 'ઘઉં'];
+    } else if (q.contains('जौ') || q.contains('jau') || q.contains('barley') || q.contains('જવ')) {
+      searchedCropName = 'जौ'; cropDisplayName = 'जौ'; cropDisplayNameEn = 'Barley'; keywords = ['जौ', 'barley', 'barley 2026', 'jau', 'jo', 'જવ'];
+    } else if (q.contains('चना') || q.contains('chana') || q.contains('gram') || q.contains('ચણા')) {
+      searchedCropName = 'चना'; cropDisplayName = 'चना'; cropDisplayNameEn = 'Gram'; keywords = ['चना', 'gram', 'chana', 'ચણા'];
+    } else if (q.contains('सरसों') || q.contains('mustard') || q.contains('रोजा') || q.contains('रोजी') || q.contains('રાયડો')) {
+      searchedCropName = 'सरसों'; cropDisplayName = 'सरसों'; cropDisplayNameEn = 'Mustard'; keywords = ['सरसों', 'mustard', 'sarso', 'सरसो', 'રાયડો'];
+    } else if (q.contains('मूंगफली') || q.contains('mungfali') || q.contains('groundnut') || q.contains('ground nut') || q.contains('सिंगदाना') || q.contains('गोटा') || q.contains('મગફળી')) {
+      searchedCropName = 'मूंगफली'; cropDisplayName = 'मूंगफली'; cropDisplayNameEn = 'Groundnut'; keywords = ['मूंगफली', 'ground nut', 'groundnut', 'mungfali', 'सिकाई', 'सिंगदाना', 'गोटा', 'oil quality', 'મગફળી'];
+    } else if (q.contains('मक्का') || q.contains('maize') || q.contains('મકાઈ')) {
+      searchedCropName = 'मक्का'; cropDisplayName = 'मक्का'; cropDisplayNameEn = 'Maize'; keywords = ['मक्का', 'maize', 'makka', 'મકાઈ'];
     }
 
     if (searchedCropName.isNotEmpty) {
@@ -519,6 +582,9 @@ class AiService {
         if (isEnglishQuery) {
           return 'Currently, live market rates for $cropDisplayNameEn are not available in the backend API. Please contact our IVR Helpline at 7733901154 for live rates.';
         }
+        if (isGujarati) {
+          return 'હાલમાં $cropDisplayNameEn ના લાઈવ મંડી ભાવ ઉપલબ્ધ નથી. તાજા ભાવ માટે અમારી IVR હેલ્પલાઈન 7733901154 પર કોલ કરો.';
+        }
         if (isBhojpuri) {
           return 'अभी $cropDisplayName के लाइव मंडी भाव उपलब्ध नईखे। ताजा भाव खातिर हमार IVR हेल्पलाइन 7733901154 पर कॉल करीं।';
         }
@@ -533,6 +599,9 @@ class AiService {
       if (isEnglishQuery) {
         return 'Today\'s live rate for $cropDisplayNameEn is ₹$priceDisplay/quintal on Apna Godam. Do you want to buy or sell?';
       }
+      if (isGujarati) {
+        return 'આજે $cropDisplayNameEn નો લાઈવ ભાવ ₹$priceDisplay/ક્વિન્ટલ છે. તમે ખરીદવા કે વેચવા માંગો છો?';
+      }
       if (isBhojpuri) {
         return 'आज $cropDisplayName के लाइव भाव ₹$priceDisplay/क्विंटल बा। रउआ खरीदे के बा कि बेचे के बा?';
       }
@@ -545,6 +614,9 @@ class AiService {
     // ── 8. UNKNOWN / OUT-OF-SCOPE QUERY FALLBACK TO IVR HELPLINE (7733901154) ──
     if (isEnglishQuery) {
       return 'Sorry, I do not have information on this out-of-scope question. Please contact our IVR Helpline at 7733901154 for assistance.';
+    }
+    if (isGujarati) {
+      return 'માફ કરશો, આ પ્રશ્નની માહિતી મારી પાસે નથી. વધુ માહિતી માટે અમારી IVR હેલ્પલાઇન 7733901154 પર કોલ કરો.';
     }
     if (isBhojpuri) {
       return 'क्षमा करीं, हमरा ई सवाल के जानकारी नईखे। अधिक जानकारी खातिर हमार IVR हेल्पलाइन 7733901154 पर कॉल करीं।';
@@ -566,6 +638,7 @@ class AiService {
     return '''CRITICAL LANGUAGE ROUTING RULE:
 1. DETECT THE USER'S EXACT SPOKEN LANGUAGE AND RESPOND IN THAT SAME LANGUAGE:
    - ENGLISH QUERY ("how make gatepass", "what is my name"): RESPOND 100% IN PURE ENGLISH!
+   - GUJARATI QUERY ("આજે ઘઉંનો ભાવ કેટલો છે"): RESPOND 100% IN PURE NATIVE GUJARATI!
    - BHOJPURI QUERY ("हमार नाम का बा"): RESPOND 100% IN PURE BHOJPURI!
    - HINDI QUERY ("मेरा नाम क्या है"): RESPOND 100% IN PURE SIMPLE HINDI!
    - MARWARI QUERY ("माहरो नाम कांई छै"): RESPOND 100% IN PURE RESPECTFUL MARWARI!
