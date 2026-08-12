@@ -317,6 +317,35 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       );
     }
 
+    // Extract Live User Profile details from SharedUtility
+    final sharedUtil = widget.ref.read(sharedUtilityProvider);
+    final isLoggedIn = sharedUtil.getLogin();
+    final userObj = sharedUtil.getUser();
+
+    final Map<String, dynamic> userProfileMap = {
+      'isLoggedIn': isLoggedIn,
+      'name': (userObj != null) ? ('${userObj.fname ?? ''} ${userObj.lname ?? ''}').trim() : '',
+      'email': userObj?.email ?? '',
+      'phone': userObj?.phone ?? '',
+      'address': (userObj != null) ? [
+        userObj.address,
+        userObj.village,
+        userObj.tehsil,
+        userObj.district,
+        userObj.city,
+        userObj.state,
+        userObj.pincode
+      ].where((e) => e != null && e.toString().trim().isNotEmpty).join(', ') : '',
+      'walletAmount': userObj?.tradePower ?? userObj?.power ?? userObj?.transferAmount ?? 0,
+      'firmName': userObj?.firmName ?? '',
+      'gstNumber': userObj?.gstNumber ?? '',
+      'aadharNo': userObj?.aadharNo ?? '',
+      'panNo': userObj?.pancardNo ?? '',
+      'bankName': userObj?.bankName ?? '',
+      'bankAccNo': userObj?.bankAccNo ?? '',
+      'kycVerified': sharedUtil.isKycComplete(),
+    };
+
     // Language Detection via Hugging Face API (Instant local pattern matching)
     final langResult = await HuggingFaceService.detectLanguageAndDialect(text: text);
     final isEnglish = langResult.languageCode == 'en';
@@ -329,10 +358,16 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
         marketData: _marketData,
         history: _chatHistory,
         isHindi: !isEnglish,
+        userProfile: userProfileMap,
       ).timeout(const Duration(milliseconds: 750));
     } catch (_) {
-      // Instant local Marwari dialect response fallback (<50ms response time)
-      aiReply = AiService.fallbackMarketResponse(text, _marketData, history: _chatHistory);
+      // Instant local dialect response fallback (<50ms response time)
+      aiReply = AiService.fallbackMarketResponse(
+        text,
+        _marketData,
+        history: _chatHistory,
+        userProfile: userProfileMap,
+      );
     }
 
     // Save in chat history memory

@@ -18,18 +18,23 @@ class AiService {
     'claude-3-5-haiku-latest',
   ];
 
-  /// Sends a farmer's question with live market data as context.
+  /// Sends a farmer's question with live market data and user profile context.
   static Future<String> askClaude({
     required String question,
     required String marketData,
     List<Map<String, String>>? history,
     bool isHindi = true,
+    Map<String, dynamic>? userProfile,
   }) async {
+    // Format profile context for system instructions
+    final profileContextStr = _buildProfileContextString(userProfile);
+    final fullContextData = '$marketData\n\n$profileContextStr';
+
     // 1. Try Hugging Face Inference API Model for regional dialect across all Indian languages
     try {
       final hfResult = await HuggingFaceService.queryHuggingFaceModel(
         prompt: question,
-        contextData: marketData,
+        contextData: fullContextData,
         history: history,
       );
       if (hfResult != null && hfResult.trim().isNotEmpty) {
@@ -41,7 +46,7 @@ class AiService {
 
     final systemPrompt = _buildSystemPrompt(
       question: question,
-      marketData: marketData,
+      marketData: fullContextData,
     );
 
     final List<Map<String, String>> messages = [];
@@ -77,14 +82,39 @@ class AiService {
       } catch (_) {}
     }
 
-    return fallbackMarketResponse(question, marketData, history: history);
+    return fallbackMarketResponse(
+      question,
+      marketData,
+      history: history,
+      userProfile: userProfile,
+    );
   }
 
-  /// Smart local answer generator covering ALL Roles, Actions, Charges, Objects, and IVR Fallback.
+  static String _buildProfileContextString(Map<String, dynamic>? userProfile) {
+    if (userProfile == null || userProfile['isLoggedIn'] != true) {
+      return 'USER LOGIN STATUS: Not Logged In';
+    }
+    return '''USER PROFILE DATA (AUTHENTICATED & LOGGED IN USER):
+• Name: ${userProfile['name'] ?? 'N/A'}
+• Phone Number: ${userProfile['phone'] ?? 'N/A'}
+• Email Address: ${userProfile['email'] ?? 'N/A'}
+• Address: ${userProfile['address'] ?? 'N/A'}
+• Wallet Amount / Trade Power: ₹${userProfile['walletAmount'] ?? 0}
+• Firm Name: ${userProfile['firmName'] ?? 'N/A'}
+• GST Number: ${userProfile['gstNumber'] ?? 'N/A'}
+• Aadhar Number: ${userProfile['aadharNo'] ?? 'N/A'}
+• PAN Number: ${userProfile['panNo'] ?? 'N/A'}
+• Bank Name: ${userProfile['bankName'] ?? 'N/A'}
+• Bank Account No: ${userProfile['bankAccNo'] ?? 'N/A'}
+• KYC Verification Status: ${userProfile['kycVerified'] == true ? 'Complete & Verified' : 'Pending'}''';
+  }
+
+  /// Smart local answer generator covering ALL Profile Queries, Roles, Actions, Charges, Objects, and IVR Fallback.
   static String fallbackMarketResponse(
     String question,
     String marketData, {
     List<Map<String, String>>? history,
+    Map<String, dynamic>? userProfile,
   }) {
     final q = question.toLowerCase().trim();
 
@@ -107,28 +137,133 @@ class AiService {
     final isMaithili = q.contains('अहाँ') || q.contains('की') || q.contains('कतबा') || q.contains('कोना') || q.contains('अछि');
     final isHindi = q.contains('क्या') || q.contains('कैसे') || q.contains('कितना') || q.contains('बनाएं') || q.contains('बताएं') || q.contains('बताओ');
 
-    // ── 0. PERSONAL DATA CONSENT & PROFILE ISOLATION RULE ──
+    // ── 0. DYNAMIC USER PROFILE QUERY ENGINE (NAME, EMAIL, NUMBER, ADDRESS, WALLET, STOCK) ──
+    final isLoggedIn = userProfile != null && userProfile['isLoggedIn'] == true;
+    final name = (userProfile != null && userProfile['name'] != null && userProfile['name'].toString().trim().isNotEmpty)
+        ? userProfile['name'].toString().trim()
+        : 'N/A';
+    final email = (userProfile != null && userProfile['email'] != null && userProfile['email'].toString().trim().isNotEmpty)
+        ? userProfile['email'].toString().trim()
+        : 'N/A';
+    final phone = (userProfile != null && userProfile['phone'] != null && userProfile['phone'].toString().trim().isNotEmpty)
+        ? userProfile['phone'].toString().trim()
+        : 'N/A';
+    final address = (userProfile != null && userProfile['address'] != null && userProfile['address'].toString().trim().isNotEmpty)
+        ? userProfile['address'].toString().trim()
+        : 'N/A';
+    final walletAmount = userProfile?['walletAmount'] ?? 0;
+
+    // Check specific name query
+    if (q.contains('नाम') || q.contains('name') || q.contains('मेरा नाम') || q.contains('माहरो नाम') || q.contains('हमार नाम')) {
+      if (!isLoggedIn) {
+        if (isEnglishQuery) return 'Please log in to your Apna Godam account to view your registered profile name.';
+        if (isBhojpuri) return 'अपना रजिस्टर्ड नाम देखे खातिर ऐप में लॉगिन करीं।';
+        if (isHindi) return 'अपना पंजीकृत नाम देखने के लिए कृपया ऐप में लॉगिन करें।';
+        return 'आपरो रजिस्टर्ड नाम देखण वास्ते ऐप में लॉगिन करो सा।';
+      }
+      if (isEnglishQuery) return 'Your registered name in Apna Godam is $name.';
+      if (isBhojpuri) return 'अपना गोदाम में रउआ रजिस्टर्ड नाम $name बा।';
+      if (isHindi) return 'अपना गोदाम में आपका पंजीकृत नाम $name है।';
+      return 'सा, अपना गोदाम में आपरो रजिस्टर्ड नाम $name छै सा।';
+    }
+
+    // Check specific email query
+    if (q.contains('ईमेल') || q.contains('इमेल') || q.contains('email')) {
+      if (!isLoggedIn) {
+        if (isEnglishQuery) return 'Please log in to view your registered email address.';
+        if (isBhojpuri) return 'अपना रजिस्टर्ड ईमेल देखे खातिर ऐप में लॉगिन करीं।';
+        if (isHindi) return 'अपना पंजीकृत ईमेल देखने के लिए कृपया ऐप में लॉगिन करें।';
+        return 'आपरी रजिस्टर्ड ईमेल देखण वास्ते ऐप में लॉगिन करो सा।';
+      }
+      if (isEnglishQuery) return 'Your registered email address is $email.';
+      if (isBhojpuri) return 'रउआ रजिस्टर्ड ईमेल $email बा।';
+      if (isHindi) return 'आपका पंजीकृत ईमेल $email है।';
+      return 'सा, आपरी रजिस्टर्ड ईमेल $email छै सा।';
+    }
+
+    // Check specific mobile/phone number query
+    if (q.contains('नंबर') || q.contains('नम्बर') || q.contains('मोबाइल') || q.contains('फोन') || q.contains('phone') || q.contains('number') || q.contains('mobile')) {
+      if (!isLoggedIn) {
+        if (isEnglishQuery) return 'Please log in to view your registered mobile number.';
+        if (isBhojpuri) return 'अपना रजिस्टर्ड नंबर देखे खातिर ऐप में लॉगिन करीं।';
+        if (isHindi) return 'अपना पंजीकृत मोबाइल नंबर देखने के लिए कृपया ऐप में लॉगिन करें।';
+        return 'आपरो रजिस्टर्ड मोबाइल नंबर देखण वास्ते ऐप में लॉगिन करो सा।';
+      }
+      if (isEnglishQuery) return 'Your registered mobile number is $phone.';
+      if (isBhojpuri) return 'रउआ रजिस्टर्ड मोबाइल नंबर $phone बा।';
+      if (isHindi) return 'आपका पंजीकृत मोबाइल नंबर $phone है।';
+      return 'सा, आपरो रजिस्टर्ड मोबाइल नंबर $phone छै सा।';
+    }
+
+    // Check specific address/location query
+    if (q.contains('पता') || q.contains('पतो') || q.contains('एड्रेस') || q.contains('address') || q.contains('location') || q.contains('गाँव') || q.contains('जिला')) {
+      if (!isLoggedIn) {
+        if (isEnglishQuery) return 'Please log in to view your registered address.';
+        if (isBhojpuri) return 'अपना दर्ज पता देखे खातिर ऐप में लॉगिन करीं।';
+        if (isHindi) return 'अपना दर्ज पता देखने के लिए कृपया ऐप में लॉगिन करें।';
+        return 'आपरो दर्ज पतो देखण वास्ते ऐप में लॉगिन करो सा।';
+      }
+      if (isEnglishQuery) return 'Your registered address is: $address.';
+      if (isBhojpuri) return 'रउआ दर्ज पता: $address बा।';
+      if (isHindi) return 'आपका दर्ज पता: $address है।';
+      return 'सा, आपरो दर्ज पतो: $address छै सा।';
+    }
+
+    // Check specific wallet amount / balance query
+    if (q.contains('वॉलेट') || q.contains('बैलेंस') || q.contains('balance') || q.contains('wallet') || q.contains('पैसा') || q.contains('रुपया') || q.contains('क्रेडिट')) {
+      if (!isLoggedIn) {
+        if (isEnglishQuery) return 'Please log in to view your wallet balance.';
+        if (isBhojpuri) return 'अपना वॉलेट बैलेंस देखे खातिर ऐप में लॉगिन करीं।';
+        if (isHindi) return 'अपना वॉलेट बैलेंस देखने के लिए कृपया ऐप में लॉगिन करें।';
+        return 'आपरो वॉलेट बैलेंस देखण वास्ते ऐप में लॉगिन करो सा।';
+      }
+      if (isEnglishQuery) return 'Your current wallet trade balance is ₹$walletAmount.';
+      if (isBhojpuri) return 'रउआ वॉलेट ट्रेड बैलेंस ₹$walletAmount बा।';
+      if (isHindi) return 'आपका वॉलेट ट्रेड बैलेंस ₹$walletAmount है।';
+      return 'सा, आपरो वॉलेट ट्रेड बैलेंस ₹$walletAmount छै सा।';
+    }
+
+    // Check specific stock/storage query
+    if (q.contains('स्टॉक') || q.contains('stock') || q.contains('जमा माल') || q.contains('बोरियां')) {
+      if (!isLoggedIn) {
+        if (isEnglishQuery) return 'Please log in to view your stored stock in Apna Godam.';
+        if (isBhojpuri) return 'अपना जमा माल अउर स्टॉक देखे खातिर ऐप में लॉगिन करीं।';
+        if (isHindi) return 'अपना जमा स्टॉक देखने के लिए कृपया ऐप में लॉगिन करें।';
+        return 'आपरो जमा स्टॉक देखण वास्ते ऐप में लॉगिन करो सा।';
+      }
+      if (isEnglishQuery) return 'Your stored crop stock details are available in the "My Stock" section of Apna Godam.';
+      if (isBhojpuri) return 'अपना गोदाम में रउआ जमा माल अउर स्टॉक के जानकारी "माय स्टॉक" सेक्शन में उपलब्ध बा।';
+      if (isHindi) return 'अपना गोदाम में आपके जमा स्टॉक की जानकारी "माय स्टॉक" सेक्शन में उपलब्ध है।';
+      return 'सा, अपना गोदाम में आपरे जमा स्टॉक री जानकारी "माय स्टॉक" सेक्शन में उपलब्ध छै सा।';
+    }
+
+    // Check general profile query
     if (q.contains('पर्सनल') ||
         q.contains('प्रोफाइल') ||
         q.contains('प्रोफ़ाइल') ||
         q.contains('माहरो अकाउंट') ||
         q.contains('मेरा अकाउंट') ||
-        q.contains('मेरा बैलेंस') ||
         q.contains('मेरा डिटेल') ||
         q.contains('profile') ||
         q.contains('personal') ||
-        q.contains('my account') ||
-        q.contains('my balance')) {
+        q.contains('my account')) {
+      if (!isLoggedIn) {
+        if (isEnglishQuery) return 'Please log in to view your authenticated personal profile.';
+        if (isBhojpuri) return 'अपना पर्सनल जानकारी देखे खातिर ऐप में लॉगिन करीं।';
+        if (isHindi) return 'अपनी व्यक्तिगत जानकारी (प्रोफाइल/बैलेंस) देखने के लिए कृपया ऐप में लॉगिन करें।';
+        return 'सा, आपरी पर्सनल जानकारी (प्रोफाइल/बैलेंस) देखण वास्ते ऐप में लॉगिन करो सा।';
+      }
+
       if (isEnglishQuery) {
-        return 'For security and privacy, accessing personal profile details requires OTP verification on your registered mobile number. Please log in to your authenticated account. (Data is shown ONLY for your own profile)';
+        return 'Here are your profile details:\n• Name: $name\n• Mobile: $phone\n• Email: $email\n• Address: $address\n• Wallet Balance: ₹$walletAmount';
       }
       if (isBhojpuri) {
-        return 'सुरक्षा अउर गोपनीयता खातिर पर्सनल जानकारी देखे खातिर रजिस्टर्ड मोबाइल नंबर पर OTP सत्यापन जरूरी बा। मेहरबानी कर के ऐप में लॉगिन करीं।';
+        return 'रउआ प्रोफाइल जानकारी:\n• नाम: $name\n• मोबाइल: $phone\n• ईमेल: $email\n• पता: $address\n• वॉलेट बैलेंस: ₹$walletAmount';
       }
       if (isHindi) {
-        return 'सुरक्षा और गोपनीयता कारणों से व्यक्तिगत जानकारी (प्रोफाइल/बैलेंस) देखने के लिए पंजीकृत मोबाइल नंबर और OTP सत्यापन आवश्यक है।';
+        return 'आपकी प्रोफाइल जानकारी:\n• नाम: $name\n• मोबाइल: $phone\n• ईमेल: $email\n• पता: $address\n• वॉलेट बैलेंस: ₹$walletAmount';
       }
-      return 'सा, आपरी पर्सनल जानकारी (प्रोफाइल/बैलेंस) देखण वास्ते आपरो रजिस्टर्ड मोबाइल नंबर अर OTP सत्यापन जरूरी छै। मेहरबानी कर ऐप में लॉगिन करो सा।';
+      return 'आपरी प्रोफाइल री जानकारी:\n• नाम: $name\n• मोबाइल: $phone\n• ईमेल: $email\n• पतो: $address\n• वॉलेट बैलेंस: ₹$walletAmount';
     }
 
     // ── 1. WEIGH SLIP / KATA PARCHI (कांटा पर्ची) ──
@@ -403,17 +538,15 @@ class AiService {
   }) {
     return '''CRITICAL LANGUAGE ROUTING RULE:
 1. DETECT THE USER'S EXACT SPOKEN LANGUAGE AND RESPOND IN THAT SAME LANGUAGE:
-   - ENGLISH QUERY ("how make gatepass", "what is kanta parchi"): RESPOND 100% IN PURE ENGLISH!
-   - BHOJPURI QUERY ("मूंगफली के भाव केतन बा"): RESPOND 100% IN PURE BHOJPURI!
-   - HINDI QUERY ("गेटपास कैसे बनाएं"): RESPOND 100% IN PURE SIMPLE HINDI!
-   - MARWARI QUERY ("गेटपास किया बणावा सा"): RESPOND 100% IN PURE RESPECTFUL MARWARI!
+   - ENGLISH QUERY ("how make gatepass", "what is my name"): RESPOND 100% IN PURE ENGLISH!
+   - BHOJPURI QUERY ("हमार नाम का बा"): RESPOND 100% IN PURE BHOJPURI!
+   - HINDI QUERY ("मेरा नाम क्या है"): RESPOND 100% IN PURE SIMPLE HINDI!
+   - MARWARI QUERY ("माहरो नाम कांई छै"): RESPOND 100% IN PURE RESPECTFUL MARWARI!
 
-2. LIVE BACKEND API PRICES ONLY:
-   - NEVER SHOW HARDCODED FAKE NUMBERS (60, 70, 75, 2469)!
-   - USE ONLY REAL LIVE RATES FROM BACKEND API (`$marketData`).
-   - IF BACKEND API HAS NO PRICE FOR THAT CROP, RESPOND WITH A POLITE MESSAGE DIRECTING THEM TO IVR HELPLINE AT 7733901154 IN THEIR RESPECTIVE LANGUAGE!
+2. USER PROFILE QUERIES:
+   If the user is logged in, answer questions about their name, email, mobile number, address, wallet amount, or stock using the provided USER PROFILE DATA.
 
-LIVE MARKET DATA:
+LIVE MARKET & PROFILE DATA:
 $marketData''';
   }
 }
