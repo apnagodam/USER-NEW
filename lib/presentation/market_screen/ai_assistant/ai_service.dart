@@ -103,7 +103,7 @@ class AiService {
     final isEnglishQuery = hasEnglishChars && !hasDevanagariChars && !isRomanMarwari;
 
     // Detect Dialects
-    final isBhojpuri = q.contains('का बा') || q.contains('केतना') || q.contains('कइसे') || q.contains('हमरा') || q.contains('रउआ') || q.contains('बाते');
+    final isBhojpuri = q.contains('का बा') || q.contains('केतना') || q.contains('कइसे') || q.contains('हमरा') || q.contains('हमार') || q.contains('रउआ') || q.contains('बाते') || q.contains('बा') || q.contains('करीं') || q.contains('बनी') || q.contains('बताईं');
     final isMaithili = q.contains('अहाँ') || q.contains('की') || q.contains('कतबा') || q.contains('कोना') || q.contains('अछि');
     final isHindi = q.contains('क्या') || q.contains('कैसे') || q.contains('कितना') || q.contains('बनाएं') || q.contains('बताएं');
 
