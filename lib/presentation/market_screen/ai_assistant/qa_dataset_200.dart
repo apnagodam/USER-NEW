@@ -726,5 +726,97 @@ class QaDataset200 {
       bho: 'हमार आधिकारिक IVR हेल्पलाइन नंबर 7733901154 बा। ऐप में कॉल बटन दबा के बात करीं!',
       guj: 'અમારી સત્તાવાર IVR હેલ્પલાઇન 7733901154 છે. એપ્લિકેશનમાં કોલ બટન દબાવીને વાત કરો!',
     ),
+
+    // ── MODULE 11: OPERATIONAL WORKFLOWS & WAREHOUSE MANAGEMENT (Q201–Q210) ──
+    // Q201: Outward Process Workflow
+    QaItem(
+      keywords: ['outward process', 'outward process in apna godam', 'outward flow', 'निकासी प्रक्रिया', 'निकासी का प्रोसेस', 'માલ નિકાસી પ્રક્રિયા'],
+      en: 'Customer Outward Request → Staff Verification → Stock Verification → Warehouse Processing → Dispatch/Loading → System Update → Customer Notification.',
+      hi: 'ग्राहक आउटवर्ड रिक्वेस्ट → स्टाफ सत्यापन → स्टॉक सत्यापन → गोदाम प्रोसेसिंग → लोडिंग/डिस्पैच → सिस्टम अपडेट → ग्राहक नोटिफिकेशन।',
+      mwr: 'ग्राहक आउटवर्ड रिक्वेस्ट → स्टाफ सत्यापन → माल रो तोल अर सत्यापन → लोडिंग अर रवानगी → ऐप में स्टॉक अपडेट → ग्राहक ने खबर।',
+      bho: 'ग्राहक आउटवर्ड रिक्वेस्ट → स्टाफ सत्यापन → स्टॉक जांच → प्रोसेसिंग → लोडिंग अउर रवानगी → ऐप में स्टॉक अपडेट → ग्राहक के खबर।',
+      guj: 'ગ્રાહક આઉટવર્ડ વિનંતી → સ્ટાફ ચકાસણી → સ્ટોક ચકાસણી → પ્રોસેસિંગ → લોડિંગ અને ડિસ્પેચ → સિસ્ટમ અપડેટ → ગ્રાહક નોટિફિકેશન.',
+    ),
+    // Q202: Warehouse Rent Calculation
+    QaItem(
+      keywords: ['how is rent charged', 'warehouse rent charged', 'rent calculation', 'godam kiraya', 'गोदाम किराया कैसे लगता है', 'किराया मासिक या दैनिक', 'ભાડું કેમ ગણાય'],
+      en: 'Warehouse rent can be charged on either a Monthly basis or Day-wise basis depending on warehouse, commodity, occupied space, and agreed commercial terms.',
+      hi: 'गोदाम का किराया सहमति के अनुसार मासिक (Monthly) या दैनिक (Day-wise) आधार पर लिया जाता है, जो स्थान, फसल और जगह के अनुसार तय होता है।',
+      mwr: 'गोदाम भाड़ो सहमति अनुसार महिना रो (Monthly) या दिन रो (Day-wise) लागै छै सा, जको माल अर जगां अनुसार तय होवै सा।',
+      bho: 'गोदाम के भाड़ा सहमति के हिसाब से महीना (Monthly) भा दिन (Day-wise) के हिसाब से लागू होला।',
+      guj: 'ગોડાઉનનું ભાડું માસિક (Monthly) અથવા દિવસ (Day-wise) મુજબ ગણાય છે.',
+    ),
+    // Q203: Stock Management (Dedicated vs Mixed)
+    QaItem(
+      keywords: ['how apna godam manage stock', 'manage stock', 'stock management', 'dedicated stock', 'mixed stock', 'स्टॉक प्रबंधन कैसे होता है', 'स्टॉक मैनेजमेंट'],
+      en: 'Apna Godam manages stock either as Dedicated Stock (stored separately for a specific customer) or Mixed/Shared Stock (stored in common area with separate digital records).',
+      hi: 'अपना गोदाम में स्टॉक दो तरह से होता है: डेडिकेटेड स्टॉक (ग्राहक का माल अलग रखा जाता है) या मिक्स्ड स्टॉक (एक साथ रखकर ऐप में अलग रिकॉर्ड रहता है)।',
+      mwr: 'अपना गोदाम मांय माल दो तरिया सूं राख्यो जावै सा: डेडिकेटेड (अलग ठोर) या मिक्स्ड (एक सागे राख ऐप मांय अलग हिसाब सा)।',
+      bho: 'अपना गोदाम में माल डेडिकेटेड (अलग रख के) चाहे मिक्स्ड (एक साथ रख के अलग हिसाब) से मैनेज होला।',
+      guj: 'અપના ગોડાઉનમાં ડેડિકેટેડ સ્ટોક (અલગ જગ્યાએ) અથવા મિક્સ્ડ સ્ટોક (એકસાથે પણ અલગ હિસાબ) તરીકે સ્ટોક સચવાય છે.',
+    ),
+    // Q204: Dedicated vs Mixed Stock Difference
+    QaItem(
+      keywords: ['difference between dedicated and mixed stock', 'dedicated vs mixed stock', 'डेडिकेटेड और मिक्स्ड स्टॉक में क्या अंतर है'],
+      en: 'Dedicated Stock: Goods stored separately in clearly identified physical location. Mixed Stock: Goods stored together, but system tracks separate digital quantities per customer.',
+      hi: 'डेडिकेटेड स्टॉक: ग्राहक का माल अलग निश्चित स्थान पर रखा जाता है। मिक्स्ड स्टॉक: माल एक साथ रखा जाता है लेकिन सिस्टम में हर ग्राहक का अलग हिसाब रहता है।',
+      mwr: 'डेडिकेटेड मांय माल अलग जगां पर राख्यो जावै छै। मिक्स्ड मांय माल सागे होवै छै पण ऐप में अलग खाता रो हिसाब होवै छै सा।',
+      bho: 'डेडिकेटेड में माल अलग रखल जाला; मिक्स्ड में माल साथे रख के ऐप में अलग हिसाब रहेला।',
+      guj: 'ડેડિકેટેડમાં માલ અલગ જગ્યાએ રખાય છે; મિક્સ્ડમાં માલ સાથે રાખીને સિસ્ટમમાં અલગ હિસાબ રખાય છે.',
+    ),
+    // Q205: Warehouse Locations
+    QaItem(
+      keywords: ['where are apna godam warehouses located', 'warehouse locations', 'godam location', 'गोदाम कहां कहां हैं', 'गोदाम की लोकेशन'],
+      en: 'Check available warehouses in the app! Tell me your required city, location, commodity & approximate quantity, and I can help identify suitable warehouse options on Apna Godam.',
+      hi: 'ऐप में उपलब्ध सभी गोदाम दिखते हैं। आप अपना शहर, स्थान, फसल और मात्रा बताएं, मैं आपके लिए सही गोदाम खोजने में मदद करूँगा।',
+      mwr: 'ऐप मांय सब गोदाम दिखे छै सा। आप आपरो शहर, जगां, फसल अर तोल बताओ सा, म्हाणी मदद सूं चौखो गोदाम मिल ज्यासी सा।',
+      bho: 'ऐप में सब गोदाम के लोकेशन दिखेला। रउआ आपन शहर, फसल अउर मात्रा बताईं, हम सही गोदाम खोज देब।',
+      guj: 'એપ્લિકેશનમાં તમામ ગોડાઉન લોકેશન ઉપલબ્ધ છે. તમારું શહેર, પાક અને જથ્થો જણાવો, હું યોગ્ય ગોડાઉન શોધી આપીશ.',
+    ),
+    // Q206: Acceptable Commodities
+    QaItem(
+      keywords: ['which commodities can be stored', 'accepted commodities', 'कौन सा अनाज जमा हो सकता है', 'फसल जमा'],
+      en: 'Commodity acceptance depends on warehouse facility & storage conditions. Please provide commodity name, quantity, packaging type & duration for warehouse team confirmation.',
+      hi: 'गोदाम की सुविधा के अनुसार फसल जमा होती है। कृपया फसल का नाम, मात्रा, पैकिंग प्रकार और भंडारण अवधि बताएं ताकि पुष्टि की जा सके।',
+      mwr: 'गोदाम री सुविधा अनुसार फसल जमा होवै सा। फसल रो नाम, तोल, पैकिंग अर टाइम बताओ सा।',
+      bho: 'गोदाम के सुविधा के हिसाब से फसल जमा होला। फसल के नाम, मात्रा अउर पैकिंग के जानकारी दीं।',
+      guj: 'ગોડાઉનની સુવિધા મુજબ અનાજ જમા થાય છે. પાકનું નામ, જથ્થો અને પેકિંગની વિગત આપો.',
+    ),
+    // Q207: Warehouse Capacity & Dimensions
+    QaItem(
+      keywords: ['warehouse dimensions', 'storage capacity available', 'गोदाम की क्षमता कितनी है', 'डायमेंशन'],
+      en: 'Warehouse capacity varies by location. For accurate matching, please provide required length, width, height/depth, total area, commodity & quantity.',
+      hi: 'गोदाम क्षमता स्थान अनुसार अलग होती है। सही जानकारी के लिए लंबाई, चौड़ाई, ऊंचाई/गहराई, कुल क्षेत्रफल, फसल और मात्रा विवरण दें।',
+      mwr: 'गोदाम री क्षमता जगां अनुसार अलग होवै छै सा। सही नाप वास्ते लंबाई, चौड़ाई, ऊंचाई अर तोल बताओ सा।',
+      bho: 'गोदाम के क्षमता जगह के हिसाब से होला। सही जानकारी खातिर लंबाई, चौड़ाई, गहराई अउर मात्रा बताईं।',
+      guj: 'ગોડાઉન ક્ષમતા લોકેશન મુજબ અલગ હોય છે. ચોક્કસ વિગત માટે લંબાઈ, પહોળાઈ, ઊંચાઈ અને જથ્થો જણાવો.',
+    ),
+    // Q208: Complete Inward Process Workflow
+    QaItem(
+      keywords: ['what is inward process in apna godam', 'inward process', 'inward flow', 'इनवर्ड प्रक्रिया क्या है', 'इनवर्ड का पूरा प्रोसेस'],
+      en: 'Customer Inward Request → Gate Entry ID → Staff Quality Check → Quality Updated in App → Customer Notification → Customer Acceptance → Unloading → Stock Updated.',
+      hi: 'ग्राहक इनवर्ड रिक्वेस्ट → गेट एंट्री आईडी → स्टाफ क्वालिटी जांच → ऐप में क्वालिटी अपडेट → ग्राहक को रिपोर्ट → ग्राहक स्वीकृति → अनलोडिंग → स्टॉक अपडेट।',
+      mwr: 'ग्राहक इनवर्ड रिक्वेस्ट → गेट एंट्री → लैब क्वालिटी जांच → ऐप में अपडेट → ग्राहक ने रिपोर्ट → ग्राहक अप्रूवल → अनलोडिंग → स्टॉक जमा सा।',
+      bho: 'ग्राहक इनवर्ड रिक्वेस्ट → गेट एंट्री → क्वालिटी जांच → ऐप में अपडेट → ग्राहक स्वीकृति → अनलोडिंग → स्टॉक अपडेट।',
+      guj: 'ગ્રાહક ઈનવર્ડ વિનંતી → ગેટ એન્ટ્રી → ક્વોલિટી ચેક → એપમાં અપડેટ → ગ્રાહક મંજૂરી → અનલોડિંગ → સ્ટોક અપડેટ.',
+    ),
+    // Q209: Required Storage Information
+    QaItem(
+      keywords: ['what information should be collected for warehouse storage', 'storage request info', 'गोदाम बुकिंग के लिए क्या जानकारी चाहिए'],
+      en: 'Required storage details: Customer name, contact no, commodity name, quantity/weight, packaging type, location, storage period, inward date & special needs.',
+      hi: 'गोदाम बुकिंग के लिए आवश्यक जानकारी: ग्राहक का नाम, संपर्क नंबर, फसल का नाम, मात्रा (क्विंटल), पैकिंग प्रकार, स्थान, भंडारण अवधि और इनवर्ड तारीख।',
+      mwr: 'गोदाम बुकिंग वास्ते: ग्राहक रो नाम, मोबाइल नंबर, फसल रो नाम, तोल, पैकिंग अर आवक तारीख चाहीजै सा।',
+      bho: 'गोदाम बुकिंग खातिर: ग्राहक के नाम, मोबाइल, फसल के नाम, मात्रा, पैकिंग अउर तारीख चाही।',
+      guj: 'ગોડાઉન બુકિંગ માટે: ગ્રાહકનું નામ, મોબાઇલ, પાકનું નામ, જથ્થો, પેકિંગ અને તારીખ જરૂરી છે.',
+    ),
+    // Q210: Quality Report & Acceptance
+    QaItem(
+      keywords: ['how customer gets quality information', 'quality report notification', 'क्वालिटी रिपोर्ट कैसे मिलती है', 'गुणवत्ता रिपोर्ट'],
+      en: 'During Inward, warehouse staff performs quality inspection & enters data in app. Customer receives notification, views the Quality Report, and accepts it before unloading.',
+      hi: 'इनवर्ड के समय स्टाफ क्वालिटी जांच कर ऐप में दर्ज करता है। ग्राहक को नोटिफिकेशन और रिपोर्ट मिलती है, जिसे रिव्यू कर ग्राहक अनलोडिंग से पहले स्वीकृति देता है।',
+      mwr: 'इनवर्ड टाइम स्टाफ लैब जांच कर ऐप में भरे छै सा। ग्राहक ने रिपोर्ट दिखे छै अर अप्रूवल मिला पछे ही अनलोडिंग होवै छै सा।',
+      bho: 'इनवर्ड के समय क्वालिटी जांच क के ऐप में डालल जाला। ग्राहक के रिपोर्ट मिलेला अउर स्वीकृति के बाद अनलोडिंग होला।',
+      guj: 'ઈનવર્ડ વખતે ક્વોલિટી ચકાસીને એપમાં રખાય છે. ગ્રાહક રિપોર્ટ જોઈ મંજૂરી આપે પછી જ અનલોડિંગ થાય છે.',
+    ),
   ];
 }
