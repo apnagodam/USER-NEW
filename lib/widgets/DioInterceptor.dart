@@ -37,51 +37,7 @@ class Diointerceptor extends InterceptorsWrapper {
 
   void _showProfileErrorDialog(String message) async {
     _safeStopAllLoaders();
-
-
-    getx.Get.defaultDialog(
-      title: "Error",
-      radius: 8,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            message,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: Adaptive.sp(17),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: ElevarmPrimaryButton.text(
-                  text: 'OK',
-                  buttonThemeData: ElevarmPrimaryButtonThemeData(
-                    primaryColor: Colors.red.shade700,
-                  ),
-                  onPressed: () {
-                    getx.Get.back();
-                  },
-                ),
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: ElevarmPrimaryButton.text(
-                  text: 'Contact IVR',
-                  buttonThemeData: ElevarmPrimaryButtonThemeData(
-                    primaryColor: ColorConstant.maingreen,
-                  ),
-                  onPressed: () => CallLaunch('tel:+917733901154'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    showErrorAlertDialog(getx.Get.context, message);
   }
 
   @override
@@ -100,22 +56,43 @@ class Diointerceptor extends InterceptorsWrapper {
       'long': ref.watch(sharedUtilityProvider).getPosition().longitude,
     };
 
-    // Increment loader count
-  if (!options.path.contains('user_api/sbt-contract-note-list') &&
-    !options.path.contains('user_api/apna_u_sell_buy_list') &&
-    !options.path.contains('user_api/apna_u_stack_buy_sell_list') &&
-    !options.path.contains('user_api/mark-delivery') &&
-    !options.path.contains('user_api/match-order-list') &&
-    !options.path.contains('sbt_trade_save') &&
-    !options.path.contains('check_user_wallet') &&
-    !options.path.contains('sbt_api')) {
-  _loaderCount++;
-  if (_loaderCount == 1) {
-    if (options.method.toLowerCase() == 'post') {
-      ProgressDialogUtils.showProgressDialog();
+    // Increment loader count only for POST requests that need it
+    final isPost = options.method.toLowerCase() == 'post';
+    final isExcluded = options.path.contains('user_api/sbt-contract-note-list') ||
+        options.path.contains('user_api/apna_u_sell_buy_list') ||
+        options.path.contains('user_api/apna_u_stack_buy_sell_list') ||
+        options.path.contains('user_api/user_terminal_list') ||
+        options.path.contains('user_api/user_commodity_list') ||
+        options.path.contains('user_api/user_stack_list') ||
+        options.path.contains('user_api/user_stack_settlement_list') ||
+        options.path.contains('user_api/default_get_stack_want_to_sell_list') ||
+        options.path.contains('user_api/get_stack_want_to_sell_list') ||
+        options.path.contains('user_api/user_stack_want_to_sell_list') ||
+        options.path.contains('user_api/user_sbt_terms') ||
+        options.path.contains('user_api/get_stack_sell_terms') ||
+        options.path.contains('user_api/get_broker_buyer_list') ||
+        options.path.contains('user_api/get_rise_by_me_invoice') ||
+        options.path.contains('user_api/get_clpl_pdf_data') ||
+        options.path.contains('user_api/get_address_from_pincode') ||
+        options.path.contains('user_api/get_') ||
+        options.path.contains('user_api/mark-delivery') ||
+        options.path.contains('user_api/match-order-list') ||
+        options.path.contains('apna_u_loan_request') ||
+        options.path.contains('sbt_trade_save') ||
+        options.path.contains('check_user_wallet') ||
+        options.path.contains('v1_apna_send_otp') ||
+        options.path.contains('send_otp') ||
+        options.path.contains('v1_apna_verify_otp') ||
+        options.path.contains('verify_otp') ||
+        options.path.contains('sbt_api');
+
+    if (isPost && !isExcluded) {
+      options.extra['show_loader'] = true;
+      _loaderCount++;
+      if (_loaderCount == 1) {
+        ProgressDialogUtils.showProgressDialog();
+      }
     }
-  }
-}
 
     handler.next(options);
   }
@@ -123,7 +100,9 @@ class Diointerceptor extends InterceptorsWrapper {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     stopWatch.stop();
-    _decrementLoader();
+    if (response.requestOptions.extra['show_loader'] == true) {
+      _decrementLoader();
+    }
 
     final data = response.data;
     final status = data['status'].toString();
@@ -144,6 +123,8 @@ class Diointerceptor extends InterceptorsWrapper {
       !response.requestOptions.path.contains('sbt_trade_save') &&
       !response.requestOptions.path.contains('check_user_wallet') &&
       !response.requestOptions.path.contains('sbt_api') &&
+      !response.requestOptions.path.contains('apna_u_bid_by_buyer') &&
+      !response.requestOptions.path.contains('wbt_update_sell_price') &&
       !response.requestOptions.path.contains('v1_apna_send_otp') &&
       !response.requestOptions.path.contains('send_otp')) {
     _showProfileErrorDialog(
@@ -158,13 +139,15 @@ class Diointerceptor extends InterceptorsWrapper {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     stopWatch.stop();
-    _decrementLoader();
+    if (err.requestOptions.extra['show_loader'] == true) {
+      _decrementLoader();
+    }
 
     final errorMessage = err.message ?? "Something went wrong.";
 
     if (!(err.type == DioExceptionType.badResponse &&
         err.requestOptions.path.contains('apna_u_user_details'))) {
-      Fluttertoast.showToast(msg: errorMessage, toastLength: Toast.LENGTH_LONG);
+      showErrorAlertDialog(getx.Get.context, errorMessage);
     }
 
     handler.next(err);

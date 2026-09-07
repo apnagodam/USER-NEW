@@ -52,6 +52,9 @@ class Datum {
   dynamic taxRate;
   dynamic loadCharge;
   dynamic dealtype;
+  dynamic clientSecurityType;
+  dynamic hairCut;
+  dynamic tradelimit;
 
   Datum(
       {this.amount,
@@ -68,18 +71,23 @@ class Datum {
       this.uniqueTradeId,
       this.taxRate,
       this.loadCharge,
-      this.dealtype});
+      this.dealtype,
+      this.clientSecurityType,
+      this.hairCut,
+      this.tradelimit});
 
   factory Datum.fromMap(Map<String, dynamic> json) => Datum(
       amount: json["amount"],
       pfAmount: json['pf_amount'],
       commodityName: json["commodity_name"],
-      date: json["date"] == null ? null : DateTime.parse(json["date"]),
+      date: json["date"] == null
+          ? null
+          : DateTime.tryParse(json["date"].toString()),
       gatepass: json["gatepass"],
       warehouseName: json["warehouse_name"],
       createdAt: json["created_at"] == null
           ? null
-          : DateTime.parse(json["created_at"]),
+          : DateTime.tryParse(json["created_at"].toString()),
       districtId: json["district_id"],
       price: json["price"],
       qty: json["qty"],
@@ -87,18 +95,23 @@ class Datum {
       uniqueTradeId: json["unique_trade_id"],
       taxRate: json['taxrate'],
       loadCharge: json['load_charge'],
-      dealtype: json['dealtype']);
+      dealtype: json['dealtype'],
+      clientSecurityType: json['client_security_type'],
+      hairCut: json['hairCut'] ?? json['hair_cut'],
+      tradelimit: json['tradelimit'] ?? json['trade_limit']);
 
   Map<String, dynamic> toMap() => {
         "amount": amount,
         "pf_amount": pfAmount,
         "commodity_name": commodityName,
-        "date":
-            "${date!.year.toString().padLeft(4, '0')}-${date!.month.toString().padLeft(2, '0')}-${date!.day.toString().padLeft(2, '0')}",
+        "date": date is DateTime
+            ? "${date!.year.toString().padLeft(4, '0')}-${date!.month.toString().padLeft(2, '0')}-${date!.day.toString().padLeft(2, '0')}"
+            : date?.toString(),
         "gatepass": gatepass,
         "warehouse_name": warehouseName,
-        "created_at":
-            "${createdAt!.year.toString().padLeft(4, '0')}-${createdAt!.month.toString().padLeft(2, '0')}-${createdAt!.day.toString().padLeft(2, '0')}",
+        "created_at": createdAt is DateTime
+            ? "${createdAt!.year.toString().padLeft(4, '0')}-${createdAt!.month.toString().padLeft(2, '0')}-${createdAt!.day.toString().padLeft(2, '0')}"
+            : createdAt?.toString(),
         "district_id": districtId,
         "price": price,
         "qty": qty,
@@ -106,6 +119,9 @@ class Datum {
         "unique_trade_id": uniqueTradeId,
         "taxrate": taxRate,
         "load_charge": loadCharge,
-        "dealtype": dealtype
+        "dealtype": dealtype,
+        "client_security_type": clientSecurityType,
+        "hairCut": hairCut,
+        "tradelimit": tradelimit,
       };
 }

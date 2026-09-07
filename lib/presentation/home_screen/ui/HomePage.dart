@@ -187,7 +187,7 @@ class _HomepageState extends ConsumerState<Homepage> {
 
   Future<void> _initializeHomePage() async {
     try {
-      if (ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn) {
+      if (ref.read(authProvider).value == AuthStatus.loggedIn) {
         await _fetchProfiles();
       }
       await _fetchHomeData();
@@ -249,7 +249,7 @@ class _HomepageState extends ConsumerState<Homepage> {
     final deviceInfo = DeviceInfoPlugin();
     final androidInfo = await deviceInfo.androidInfo;
 
-    if (ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn) {
+    if (ref.read(authProvider).value == AuthStatus.loggedIn) {
       final userData = await ref.watch(userDetailsProvider.future);
       if (userData.userDetails != null) {
         await _updateDeviceId(androidInfo.id, userData);
@@ -1031,13 +1031,22 @@ class _HomepageState extends ConsumerState<Homepage> {
           onPressed: () async {
             // Get.to(Profilingregistration());
           },
-          child: Text(
-            ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn
-                ? ref.watch(sharedUtilityProvider).isKycComplete()
-                    ? AppLocalizations.of(context)!.dashboard
-                    : AppLocalizations.of(context)!.msgKycupdate
-                : AppLocalizations.of(context)!.dashboard,
-            style: AppStyle.lblmoneybtn,
+          child: Builder(
+            builder: (context) {
+              final isLoggedIn = ref.watch(authProvider).value == AuthStatus.loggedIn;
+              final userAsync = ref.watch(userDetailsProvider);
+              final isKycDone = (userAsync.valueOrNull?.userDetails?.verifiedAccount?.toString() != "0" &&
+                                 userAsync.valueOrNull?.userDetails?.verifiedAccount != null) ||
+                                ref.watch(sharedUtilityProvider).isKycComplete();
+              return Text(
+                isLoggedIn
+                    ? (isKycDone
+                        ? AppLocalizations.of(context)!.dashboard
+                        : AppLocalizations.of(context)!.msgKycupdate)
+                    : AppLocalizations.of(context)!.dashboard,
+                style: AppStyle.lblmoneybtn,
+              );
+            },
           ),
         ),
         actions: [
@@ -1057,12 +1066,12 @@ class _HomepageState extends ConsumerState<Homepage> {
           //     ),
           //   ),
           // ),
-          ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn
+          ref.watch(authProvider).value == AuthStatus.loggedIn
               ? IconButton(
                   onPressed: () {
                     Get.to(Profile());
                   },
-                  icon: ref.watch(authProvider.notifier).loginStatus ==
+                  icon: ref.watch(authProvider).value ==
                           AuthStatus.loggedOut
                       ? CircleAvatar(
                           child: Icon(
@@ -1108,9 +1117,9 @@ class _HomepageState extends ConsumerState<Homepage> {
                     style: TextStyle(
                       color: ColorConstant.maingreen,
                       fontSize: Adaptive.sp(15),
+                    ),
                   ),
-                ),
-          )],
+                )],
       ),
       drawer: const AppDrawer(),
       body: SafeArea(
@@ -1265,7 +1274,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                     _buildGridItem(
                       context,
                       onTap: () {
-                        if (ref.watch(authProvider.notifier).loginStatus ==
+                        if (ref.read(authProvider).value ==
                             AuthStatus.loggedIn) {
                           Get.to(StackInward(isAppbarVisible: true));
                         } else {
@@ -1283,7 +1292,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                     _buildGridItem(
                       context,
                       onTap: () {
-                        if (ref.watch(authProvider.notifier).loginStatus ==
+                        if (ref.read(authProvider).value ==
                             AuthStatus.loggedIn) {
                           Get.to(StackOutward(isAppBarVisible: true));
                         } else {
@@ -1301,7 +1310,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                     _buildGridItem(
                       context,
                       onTap: () {
-                        if (ref.watch(authProvider.notifier).loginStatus ==
+                        if (ref.read(authProvider).value ==
                             AuthStatus.loggedIn) {
                           Get.to(Warehousebookings(isAppBarVisible: true));
                         } else {
@@ -1319,7 +1328,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                     _buildGridItem(
                       context,
                       onTap: () {
-                        if (ref.watch(authProvider.notifier).loginStatus ==
+                        if (ref.read(authProvider).value ==
                             AuthStatus.loggedIn) {
                           Get.to(RepaymentScreen());
                         } else {

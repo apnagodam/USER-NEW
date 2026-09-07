@@ -37,11 +37,9 @@ class ProgressDialogUtils {
 
   ///common method for hiding progress dialog
   static void hideProgressDialog() {
-    if (isProgressDialogOpen) {
-      isProgressDialogOpen = false;
-      if (Get.isDialogOpen ?? false) {
-        Get.back(canPop: false);
-      }
+    isProgressDialogOpen = false;
+    if (Get.isDialogOpen ?? false) {
+      Get.back();
     }
   }
 }

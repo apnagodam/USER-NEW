@@ -522,14 +522,16 @@ class SellerList extends ConsumerWidget {
                                                                                       1 ||
                                                                                   sellWeight <
                                                                                       1) {
-                                                                                context.errorToast(
+                                                                                showErrorAlertDialog(
+                                                                                  context,
                                                                                   AppLocalizations.of(
                                                                                     context,
                                                                                   )!.pleaseInputValidValue,
                                                                                 );
                                                                               } else {
+                                                                                context.showLoader();
                                                                                 ref
-                                                                                    .watch(
+                                                                                    .read(
                                                                                       updateSbtProvider(
                                                                                         productId:
                                                                                             "${data?.productId}",
@@ -549,28 +551,31 @@ class SellerList extends ConsumerWidget {
                                                                                     )
                                                                                     .then(
                                                                                       (
-                                                                                        value,
+                                                                                        res,
                                                                                       ) {
-                                                                                        ref.invalidate(
-                                                                                          getBuyerSellerListProvider,
-                                                                                        );
-
-                                                                                        ref.invalidate(
-                                                                                          getSbtCommodityProvider,
-                                                                                        );
-
-                                                                                        ref.invalidate(
-                                                                                          matchedOrdersProvider,
-                                                                                        );
-
-                                                                                        if (value['status'].toString() ==
+                                                                                        context.hideloader();
+                                                                                        if (res['status'].toString() ==
                                                                                             "1") {
-                                                                                          context.successToast(
-                                                                                            value['message'],
+                                                                                          ref.invalidate(
+                                                                                            getBuyerSellerListProvider,
                                                                                           );
+
+                                                                                          ref.invalidate(
+                                                                                            getSbtCommodityProvider,
+                                                                                          );
+
+                                                                                          ref.invalidate(
+                                                                                            matchedOrdersProvider,
+                                                                                          );
+
                                                                                           Get.back();
+                                                                                          Get.rawSnackbar(
+                                                                                            message: "${res['message']}",
+                                                                                            duration: const Duration(seconds: 2),
+                                                                                            backgroundColor: ColorConstant.maingreen,
+                                                                                          );
                                                                                         } else {
-                                                                                          showErrorAlertDialog(context, value['message']);
+                                                                                          showErrorAlertDialog(context, res['message']);
                                                                                         }
                                                                                       },
                                                                                     )
@@ -578,7 +583,10 @@ class SellerList extends ConsumerWidget {
                                                                                       (
                                                                                         e,
                                                                                         s,
-                                                                                      ) {},
+                                                                                      ) {
+                                                                                        context.hideloader();
+                                                                                        showErrorAlertDialog(context, "An error occurred: $e");
+                                                                                      },
                                                                                     );
                                                                               }
                                                                             },

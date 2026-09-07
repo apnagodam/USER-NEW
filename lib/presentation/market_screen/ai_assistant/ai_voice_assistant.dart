@@ -11,6 +11,7 @@ import 'package:apnagodam/core/utils/color_constant.dart';
 import 'package:apnagodam/core/utils/helper.dart';
 import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'ai_service.dart';
+import 'exotel_call_dialog.dart';
 import 'hugging_face_service.dart';
 import 'market_data_fetcher.dart';
 
@@ -486,29 +487,49 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                     fontSize: Adaptive.sp(15),
                     fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Row(
                   children: [
                     Container(
-                      width: 8,
-                      height: 8,
+                      width: 7,
+                      height: 7,
                       decoration: const BoxDecoration(
                         color: Colors.greenAccent,
                         shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Hugging Face AI active • 8 भाषाएँ (मारवाड़ी, भोजपुरी...)',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white70,
-                        fontSize: Adaptive.sp(11),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        'AI सक्रिय • मारवाड़ी, हिन्दी, English',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white70,
+                          fontSize: Adaptive.sp(11),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
               ],
             ),
+          ),
+          // Exotel AI Phone Call Button
+          IconButton(
+            onPressed: () {
+              _tts.stop();
+              _speech.stop();
+              showExotelCallDialog(
+                context,
+                ref: widget.ref,
+                initialQuery: _spokenText.isNotEmpty ? _spokenText : null,
+              );
+            },
+            icon: const Icon(Icons.phone_in_talk_rounded, color: Colors.amber),
+            tooltip: 'AI से फोन पर बात करें (Exotel Call)',
           ),
           // Auto voice chat toggle
           IconButton(
@@ -812,6 +833,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
   // ── Quick Suggestions Pills ──
   Widget _buildQuickSuggestions() {
     final suggestions = [
+      '📞 AI से फोन पर बात करें (Call)',
       '🌾 जौ का भाव क्या है?',
       '📋 कांटा पर्ची क्या है?',
       '👤 कांटा मैन का कार्य क्या है?',
@@ -829,19 +851,32 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final s = suggestions[index];
+          final isCallChip = index == 0;
           return ActionChip(
             label: Text(s),
             labelStyle: GoogleFonts.poppins(
               fontSize: 11.5,
-              fontWeight: FontWeight.w500,
-              color: Colors.green.shade900,
+              fontWeight: FontWeight.w600,
+              color: isCallChip ? Colors.white : Colors.green.shade900,
             ),
-            backgroundColor: Colors.white,
+            backgroundColor: isCallChip ? const Color(0xFF275135) : Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
-              side: BorderSide(color: Colors.green.shade300),
+              side: BorderSide(color: isCallChip ? Colors.amber : Colors.green.shade300),
             ),
-            onPressed: () => _submitMessage(s.replaceAll(RegExp(r'^[^\s]+\s*'), '')),
+            onPressed: () {
+              if (isCallChip) {
+                _tts.stop();
+                _speech.stop();
+                showExotelCallDialog(
+                  context,
+                  ref: widget.ref,
+                  initialQuery: _spokenText.isNotEmpty ? _spokenText : null,
+                );
+              } else {
+                _submitMessage(s.replaceAll(RegExp(r'^[^\s]+\s*'), ''));
+              }
+            },
           );
         },
       ),

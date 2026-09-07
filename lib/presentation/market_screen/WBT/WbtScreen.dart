@@ -902,7 +902,7 @@ class StackSellScreen extends ConsumerWidget {
                                             TextSpan(
                                               text: 'Best Buyer: ',
                                               style: TextStyle(
-                                                fontSize: Adaptive.sp(12),
+                                                fontSize: Adaptive.sp(14),
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.bold,
                                               ),
@@ -925,7 +925,7 @@ class StackSellScreen extends ConsumerWidget {
                                               TextSpan(
                                                 text: 'My Price: ',
                                                 style: TextStyle(
-                                                  fontSize: Adaptive.sp(12),
+                                                  fontSize: Adaptive.sp(14),
                                                   color: Colors.white,
                                                   fontWeight: FontWeight.bold,
                                                 ),
@@ -947,7 +947,7 @@ class StackSellScreen extends ConsumerWidget {
                                             TextSpan(
                                               text: 'Seller: ',
                                               style: TextStyle(
-                                                fontSize: Adaptive.sp(12),
+                                                fontSize: Adaptive.sp(14),
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.bold,
                                               ),

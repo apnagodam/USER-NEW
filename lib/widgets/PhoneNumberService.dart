@@ -7,8 +7,7 @@ class PhoneNumberService {
     try {
       final String? phoneNumber = await platform.invokeMethod('getPhoneNumber');
       return phoneNumber;
-    } on PlatformException catch (e) {
-      print("Failed to get phone number: '${e.message}'.");
+    } catch (e) {
       return null;
     }
   }

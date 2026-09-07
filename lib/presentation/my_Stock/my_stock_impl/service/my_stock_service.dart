@@ -17,8 +17,12 @@ Future<List<Datum>> myStock(MyStockRef ref,
       'user_api/apna_u_get_inventories',
       queryParameters: {'limit': limit, 'page': page, 'search': search});
 
-  ref.watch(listOfBanks.notifier).state =
-      stockResponseModelFromMap(jsonEncode(response.data)).banks ?? [];
+  try {
+    Future.microtask(() {
+      ref.read(listOfBanks.notifier).state =
+          stockResponseModelFromMap(jsonEncode(response.data)).banks ?? [];
+    });
+  } catch (_) {}
 
   return stockResponseModelFromMap(jsonEncode(response.data))
           .inventories

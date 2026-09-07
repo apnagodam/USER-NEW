@@ -332,12 +332,17 @@ class _RepaymentScreenState extends ConsumerState<RepaymentScreen> {
                               primary: true,
                               children: [
                                 Container(
-                                  decoration: MatrixDecoration(
-                                    lineColor: ColorConstant.maingreen,
-                                    backgroundColor: Colors.white,
-                                    radius: Radius.circular(20),
-                                    lineCount: 50,
-                                    lineWidth: 1,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.06),
+                                        blurRadius: 8,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                    border: Border.all(color: Colors.grey.shade300),
                                   ),
                                   child: ColumnSuper(
                                     children: [
@@ -393,26 +398,26 @@ class _RepaymentScreenState extends ConsumerState<RepaymentScreen> {
                                                 ],
                                               ),
                                             ),
-                                            Column(
-                                              children: [
-                                                Text(
-                                                  AppLocalizations.of(
-                                                    context,
-                                                  )!
-                                                      .msgPendingamount,
-                                                  // softWrap: true,
-                                                  textAlign: TextAlign.center,
-                                                  style: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold,
-                                                    fontSize: Adaptive.sp(
-                                                      16,
-                                                    ),
-                                                    color: Colors.black,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
+                                            // Column(
+                                            //   children: [
+                                            //     Text(
+                                            //       AppLocalizations.of(
+                                            //         context,
+                                            //       )!
+                                            //           .msgPendingamount,
+                                            //       // softWrap: true,
+                                            //       textAlign: TextAlign.center,
+                                            //       style: TextStyle(
+                                            //         fontWeight:
+                                            //             FontWeight.bold,
+                                            //         fontSize: Adaptive.sp(
+                                            //           16,
+                                            //         ),
+                                            //         color: Colors.black,
+                                            //       ),
+                                            //     ),
+                                            //   ],
+                                            // ),
                                           ],
                                         ),
                                       ),
@@ -447,28 +452,28 @@ class _RepaymentScreenState extends ConsumerState<RepaymentScreen> {
                                               color: Colors.black,
                                             ),
                                           ),
-                                          Text(
-                                            currencyFormat.format(
-                                              double.parse(
-                                                        (userData.userDetails
-                                                                    ?.power ??
-                                                                0.00)
-                                                            .toString(),
-                                                      ) -
-                                                      double.parse(
-                                                        data.settlement
-                                                                ?.outstanding ??
-                                                            "0.0",
-                                                      ) ??
-                                                  0,
-                                            ),
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: Adaptive.sp(16),
-                                              color: Colors.black,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
+                                          // Text(
+                                          //   currencyFormat.format(
+                                          //     double.parse(
+                                          //               (userData.userDetails
+                                          //                           ?.power ??
+                                          //                       0.00)
+                                          //                   .toString(),
+                                          //             ) -
+                                          //             double.parse(
+                                          //               data.settlement
+                                          //                       ?.outstanding ??
+                                          //                   "0.0",
+                                          //             ) ??
+                                          //         0,
+                                          //   ),
+                                          //   style: TextStyle(
+                                          //     fontWeight: FontWeight.bold,
+                                          //     fontSize: Adaptive.sp(16),
+                                          //     color: Colors.black,
+                                          //   ),
+                                          //   textAlign: TextAlign.center,
+                                          // ),
                                         ],
                                       ),
                                       Divider(
@@ -1785,12 +1790,17 @@ class _RepaymentScreenState extends ConsumerState<RepaymentScreen> {
                 children: [
                   Container(
                     child: Container(
-                      decoration: MatrixDecoration(
-                        lineColor: ColorConstant.maingreen,
-                        backgroundColor: Colors.white,
-                        radius: Radius.circular(20),
-                        lineCount: 50,
-                        lineWidth: 1,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.grey.shade300),
                       ),
                       child: ColumnSuper(
                         children: [

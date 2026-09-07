@@ -516,7 +516,9 @@ class _StackBookingState extends ConsumerState<StackBooking> {
                                         ref,
                                         child,
                                       ) => ElevarmDraggableBottomSheet(
-                                        initialChildSize: 1,
+                                        initialChildSize: 0.6,
+                                        minChildSize: 0.4,
+                                        maxChildSize: 1.0,
                                         title:
                                             AppLocalizations.of(
                                               context,
@@ -676,9 +678,9 @@ class _StackBookingState extends ConsumerState<StackBooking> {
                                                                 crossAxisCount:
                                                                     3,
                                                                 mainAxisSpacing:
-                                                                    0,
+                                                                    10,
                                                                 childAspectRatio:
-                                                                    3 / 4,
+                                                                    0.72,
                                                                 crossAxisSpacing:
                                                                     10,
                                                               ),

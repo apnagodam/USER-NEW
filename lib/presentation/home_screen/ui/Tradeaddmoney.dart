@@ -196,7 +196,7 @@ class _TradeAddMoneyState extends ConsumerState<TradeAddMoney> {
         .then((value) {
       ProgressDialogUtils.hideProgressDialog();
       if (value['status'] == "1") {
-        Get.to(AddSummaryScreen(type: '1'));
+        Get.to(AddSummaryScreen(type: '2'));
       } else {
         errorBottomSheet(
           context,

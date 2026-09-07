@@ -237,7 +237,7 @@ class _TradeState extends ConsumerState<Trade> with SingleTickerProviderStateMix
         centerTitle: true,
         backgroundColor: ColorConstant.maingreen,
         actions: [
-          if (ref.watch(authProvider.notifier).loginStatus !=
+          if (ref.watch(authProvider).value !=
               AuthStatus.loggedIn)
             Padding(
               padding: const EdgeInsets.only(right: 12),

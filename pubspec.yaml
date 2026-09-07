@@ -132,6 +132,8 @@ dependencies:
   flutter_tts: ^4.0.2
 
 dependency_overrides:
+  otp_autofill:
+    path: packages/otp_autofill
   elevarm_ui:
     path: packages/elevarm_ui
   file_support:

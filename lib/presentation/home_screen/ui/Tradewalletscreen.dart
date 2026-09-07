@@ -61,7 +61,7 @@ class _TradewalletscreenState extends ConsumerState<Tradewalletscreen>
             Padding(
               padding: EdgeInsets.all(10),
               child: Container(
-                height: 52,
+                height: 55,
                 decoration: BoxDecoration(
                     color: Colors.grey.withOpacity(0.18),
                     borderRadius: BorderRadius.circular(10.0),
@@ -82,7 +82,7 @@ class _TradewalletscreenState extends ConsumerState<Tradewalletscreen>
                     labelColor: Colors.white,
                     indicatorSize: TabBarIndicatorSize.tab,
                     labelStyle: TextStyle(
-                      fontSize: Adaptive.sp(17),
+                      fontSize: Adaptive.sp(15),
                       fontWeight: FontWeight.bold,
                     ),
                     unselectedLabelColor: Colors.black87,
@@ -102,6 +102,7 @@ class _TradewalletscreenState extends ConsumerState<Tradewalletscreen>
                         child: Text(
                           AppLocalizations.of(context)!.msgAddmoney,
                           textAlign: TextAlign.center,
+
                         ),
                       ),
                       Tab(

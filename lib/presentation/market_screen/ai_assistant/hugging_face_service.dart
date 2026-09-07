@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../../../core/config/app_config.dart';
+import 'package:apnagodam/core/config/app_config.dart';
 
 /// Language and Dialect Detection Result Model supporting ALL Indian Languages & Dialects:
 /// Marwari, Hindi, English, Bhojpuri, Maithili, Magahi, Angika, Bajika, Punjabi, Gujarati,

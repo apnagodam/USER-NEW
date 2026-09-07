@@ -740,7 +740,7 @@ extension AppLocalizationsExtras on AppLocalizations {
   String get kycProfile => 'KYC Profile';
   String get pickUp => 'Pick up';
   String get drop => 'Drop';
-  String get purchaseOrderTechniqueSystem => 'Purchase Order Technique System';
+  String get purchaseOrderTechniqueSystem => 'Purchase Order';
   String get createPurchaseOrder => 'Create purchase order';
   String get otherTrades => 'Other trades';
   String get buySell => 'Buy / Sell';

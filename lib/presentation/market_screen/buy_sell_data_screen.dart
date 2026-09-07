@@ -1259,8 +1259,9 @@ class _BuyerListSBTState extends ConsumerState<BuyerListSBT> {
                                                                         AppStyle
                                                                             .buttonStyle,
                                                                     onPressed: () async {
+                                                                      context.showLoader();
                                                                       ref
-                                                                          .watch(
+                                                                          .read(
                                                                             updateSbtProvider(
                                                                               productId:
                                                                                   "${widget.data?.productId}",
@@ -1271,14 +1272,14 @@ class _BuyerListSBTState extends ConsumerState<BuyerListSBT> {
                                                                               district_id:
                                                                                   "${widget.data?.districtId}",
                                                                               qty: ref
-                                                                                  .watch(
+                                                                                  .read(
                                                                                     updateWeightProvider,
                                                                                   )
                                                                                   .toStringAsFixed(
                                                                                     0,
                                                                                   ),
                                                                               price: ref
-                                                                                  .watch(
+                                                                                  .read(
                                                                                     updatePriceProvider,
                                                                                   )
                                                                                   .toStringAsFixed(
@@ -1289,8 +1290,9 @@ class _BuyerListSBTState extends ConsumerState<BuyerListSBT> {
                                                                             ).future,
                                                                           )
                                                                           .then((
-                                                                            value,
+                                                                            res,
                                                                           ) {
+                                                                            context.hideloader();
                                                                             ref.invalidate(
                                                                               getBuyerSellerListProvider,
                                                                             );
@@ -1309,12 +1311,12 @@ class _BuyerListSBTState extends ConsumerState<BuyerListSBT> {
                                                                               closeOverlays:
                                                                                   true,
                                                                             );
-                                                                            if (value['status'].toString() ==
+                                                                            if (res['status'].toString() ==
                                                                                 "1") {
                                                                               Get.rawSnackbar(
                                                                                 message:
-                                                                                    "${value['message']}",
-                                                                                duration: Duration(
+                                                                                    "${res['message']}",
+                                                                                duration: const Duration(
                                                                                   seconds:
                                                                                       2,
                                                                                 ),
@@ -1322,14 +1324,17 @@ class _BuyerListSBTState extends ConsumerState<BuyerListSBT> {
                                                                                     ColorConstant.maingreen,
                                                                               );
                                                                             } else {
-                                                                              showErrorAlertDialog(context, value['message']);
+                                                                              showErrorAlertDialog(context, res['message']);
                                                                             }
                                                                           })
                                                                           .onError(
                                                                             (
                                                                               e,
                                                                               s,
-                                                                            ) {},
+                                                                            ) {
+                                                                              context.hideloader();
+                                                                              showErrorAlertDialog(context, "An error occurred: $e");
+                                                                            },
                                                                           );
                                                                     },
                                                                     child: Text(

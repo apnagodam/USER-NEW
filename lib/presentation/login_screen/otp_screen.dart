@@ -109,33 +109,22 @@ class _OtpscreenState extends ConsumerState<Otpscreen> {
   }
 
   Future<void> _fetchPhoneNumber() async {
-    String? phoneNumber = await PhoneNumberService.getPhoneNumber();
-    if (phoneNumber != null) {
-      setState(() {
-        widget.phoneNumber = phoneNumber; // Update the phone number
-      });
-      print("User's phone number: $phoneNumber");
-    } else {
-      print("Unable to fetch phone number.");
-    }
+    try {
+      String? phoneNumber = await PhoneNumberService.getPhoneNumber();
+      if (phoneNumber != null && mounted) {
+        setState(() {
+          widget.phoneNumber = phoneNumber;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _checkPermissions() async {
-    // Check SMS permissions
-    if (await Permission.sms.isGranted) {
-      print("SMS permission granted");
-    } else {
-      // Request SMS permission
-      final status = await Permission.sms.request();
-      if (status.isGranted) {
-        print("SMS permission granted after request");
-      } else if (status.isDenied) {
-      } else if (status.isPermanentlyDenied) {
-        if (GetPlatform.isAndroid) {
-          await openAppSettings();
-        }
+    try {
+      if (await Permission.sms.isGranted) {
+        debugPrint("SMS permission granted");
       }
-    }
+    } catch (_) {}
   }
 
   @override
@@ -148,11 +137,12 @@ class _OtpscreenState extends ConsumerState<Otpscreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           Center(
             child: Padding(
-              padding: EdgeInsets.only(top: 50.0),
+              padding: EdgeInsets.only(top: 15.0),
               child: Image.asset(
                 ImageConstant.mainlogopng,
                 fit: BoxFit.cover,

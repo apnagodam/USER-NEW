@@ -33,25 +33,39 @@ class _SummarydetailsState extends ConsumerState<Summarydetails> {
         children: [
           ref.watch(holdSummaryProvider(type: widget.type)).when(
               data: (data) {
-                if (widget.type?.toLowerCase() == "sbt") {
+                final typeClean = widget.type?.toLowerCase().replaceAll(' ', '').replaceAll('_', '') ?? '';
+                if (typeClean == "sbt") {
                   Future.delayed(Duration(seconds: 1)).then((_) {
-                    ref.watch(totalAmountProvider.notifier).state = double.parse(
+                    if (!mounted) return;
+                    ref.read(totalAmountProvider.notifier).state = double.parse(
                         "${data.data?.fold<double>(0, (previous, current) => previous + double.parse("${current.amount ?? 0.0}"))}");
                   });
 
                   return FittedBox(child: sbtLayout(ref, data));
-                } else if (widget.type?.toLowerCase() == "manditax") {
+                } else if (typeClean == "manditax") {
                   Future.delayed(Duration(seconds: 1)).then((_) {
-                    ref.watch(totalAmountProvider.notifier).state = double.parse(
+                    if (!mounted) return;
+                    ref.read(totalAmountProvider.notifier).state = double.parse(
                         "${data.data?.fold<double>(0, (previous, current) => previous + double.parse("${current.amount ?? 0.0}"))}");
                   });
 
                   return FittedBox(
                     child: mandiTaxLayout(ref, data),
                   );
+                } else if (typeClean == "securitymargin") {
+                  Future.delayed(Duration(seconds: 1)).then((_) {
+                    if (!mounted) return;
+                    ref.read(totalAmountProvider.notifier).state = double.parse(
+                        "${data.data?.fold<double>(0, (previous, current) => previous + double.parse("${current.amount ?? 0.0}"))}");
+                  });
+
+                  return FittedBox(
+                    child: securityMarginLayout(ref, data),
+                  );
                 } else {
                   Future.delayed(Duration(seconds: 1)).then((_) {
-                    ref.watch(totalAmountProvider.notifier).state = double.parse(
+                    if (!mounted) return;
+                    ref.read(totalAmountProvider.notifier).state = double.parse(
                         "${data.data?.fold<double>(0, (previous, current) => previous + double.parse("${current.amount ?? 0.0}"))}");
                   });
 
@@ -85,6 +99,120 @@ class _SummarydetailsState extends ConsumerState<Summarydetails> {
       ),
     );
   }
+
+  securityMarginLayout(WidgetRef ref, HoldSummaryModel data) => DataTable(
+      headingRowColor:
+          WidgetStateProperty.resolveWith((states) => ColorConstant.maingreen),
+      showBottomBorder: true,
+      border: TableBorder.all(color: Colors.grey),
+      columns: [
+        DataColumn(
+          label: Align(
+              alignment: Alignment.center,
+              child: Text(
+                "Security Type",
+                maxLines: 2,
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: Adaptive.sp(17.5)),
+                textAlign: TextAlign.center,
+              )),
+        ),
+        DataColumn(
+            label: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  AppLocalizations.of(context)!.paymentAmount,
+                  maxLines: 2,
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: Adaptive.sp(17.5)),
+                  textAlign: TextAlign.center,
+                ))),
+        DataColumn(
+            label: Align(
+          alignment: Alignment.center,
+          child: Text(
+            "Haircut",
+            maxLines: 2,
+            style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: Adaptive.sp(17.5)),
+            textAlign: TextAlign.center,
+          ),
+        )),
+        DataColumn(
+            label: Align(
+          alignment: Alignment.center,
+          child: Text(
+            "Trade Limit",
+            maxLines: 2,
+            style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: Adaptive.sp(17.5)),
+            textAlign: TextAlign.center,
+          ),
+        )),
+      ],
+      rows: List.generate(
+          data.data?.length ?? 0,
+          (index) {
+            final item = data.data?[index];
+            return DataRow(
+                color: WidgetStateProperty.resolveWith((states) {
+                  if (index % 2 == 0) {
+                    return Colors.white;
+                  } else {
+                    return Colors.grey.withOpacity(0.3);
+                  }
+                }),
+                cells: [
+                  DataCell(Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      "${item?.clientSecurityType ?? item?.type ?? "-"}",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: Adaptive.sp(17.5)),
+                      textAlign: TextAlign.center,
+                    ),
+                  )),
+                  DataCell(Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      "\u{20B9}${item?.amount ?? "0"}",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: Adaptive.sp(17.5)),
+                      textAlign: TextAlign.center,
+                    ),
+                  )),
+                  DataCell(Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      "${item?.hairCut ?? "0"}%",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: Adaptive.sp(17.5)),
+                      textAlign: TextAlign.center,
+                    ),
+                  )),
+                  DataCell(Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      "\u{20B9}${item?.tradelimit ?? "0"}",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: Adaptive.sp(17.5)),
+                      textAlign: TextAlign.center,
+                    ),
+                  )),
+                ]);
+          }));
 
   chargesLayout(WidgetRef ref, HoldSummaryModel data) => DataTable(
       headingRowColor:
@@ -163,7 +291,7 @@ class _SummarydetailsState extends ConsumerState<Summarydetails> {
                     DataCell(Align(
                       alignment: Alignment.center,
                       child: Text(
-                        "${data.data?[index].gatepass}",
+                        "${data.data?[index].gatepass ?? "-"}",
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: Adaptive.sp(16)),
@@ -174,7 +302,7 @@ class _SummarydetailsState extends ConsumerState<Summarydetails> {
                       alignment: Alignment.center,
                       child: Text.rich(
                         TextSpan(
-                            text: "${data.data?[index].commodityName}",
+                            text: "${data.data?[index].commodityName ?? "-"}",
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: Adaptive.sp(16))),
@@ -184,7 +312,7 @@ class _SummarydetailsState extends ConsumerState<Summarydetails> {
                     DataCell(Align(
                       alignment: Alignment.center,
                       child: Text(
-                          "${(data.data?[index].warehouseName ?? "").length > 12 ? (data.data?[index].warehouseName ?? "").substring(0, 12) : data.data?[index].warehouseName.toString()}",
+                          "${(data.data?[index].warehouseName ?? "").length > 12 ? (data.data?[index].warehouseName ?? "").substring(0, 12) : (data.data?[index].warehouseName ?? "-")}",
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: Adaptive.sp(16))),

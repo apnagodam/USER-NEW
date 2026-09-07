@@ -1,6 +1,10 @@
 import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/presentation/LP_list_screen/service/LpService.dart';
+import 'package:apnagodam/presentation/dashboard/service/dashboard_service.dart';
+import 'package:apnagodam/presentation/home_screen/service/home_screen_service.dart';
 import 'package:apnagodam/presentation/login_screen/login_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -16,44 +20,37 @@ enum AuthStatus {
 @Riverpod(keepAlive: true)
 class Auth extends _$Auth {
   @override
-  FutureOr<AuthStatus> build() async {
-    final prefs = await SharedPreferences.getInstance();
+  FutureOr<AuthStatus> build() {
     final token = ref.watch(sharedPreferencesProvider).getString('token');
-
-    if (token?.isNotEmpty ?? false) {
-      state = const AsyncData(AuthStatus.loggedIn);
+    if (token != null && token.isNotEmpty) {
+      return AuthStatus.loggedIn;
     }
-    if (loginStatus == AuthStatus.loggedOut) {
-      Get.to(LoginScreen());
-    }
-    return token?.isNotEmpty ?? false
-        ? AuthStatus.loggedIn
-        : AuthStatus.loggedOut;
+    return AuthStatus.loggedOut;
   }
 
   Future<void> login(String token) async {
-    await ref.watch(sharedPreferencesProvider).setString('token', token);
+    await ref.read(sharedPreferencesProvider).setString('token', token);
+    await ref.read(sharedPreferencesProvider).setBool('isLogin', true);
+    ref.read(sharedUtilityProvider).setToken(token);
 
-    await ref.watch(sharedPreferencesProvider).setBool('isLogin', true);
-    ref.watch(sharedUtilityProvider).setToken(token);
-
-    Future.delayed(Duration(seconds: 1));
+    state = const AsyncData(AuthStatus.loggedIn);
 
     Fluttertoast.showToast(
       msg: "Login successful",
       toastLength: Toast.LENGTH_LONG,
       backgroundColor: ColorConstant.maingreen,
     );
-    state = const AsyncData(AuthStatus.loggedIn);
 
-    //   ref.invalidate(userDetailsProvider);
-    // Get.back(
-    //   closeOverlays: true,
-    // );
-    // Update the auth state to logged in
-    Future.delayed(Duration(seconds: 1));
-
-    print(ref.watch(authProvider));
+    // Invalidate and refresh userDetails and all key providers immediately so KYC, user data, and UI update without delay
+    try {
+      ref.invalidate(userDetailsProvider);
+      ref.invalidate(homeDataProvider);
+      ref.invalidate(allBookingsProvider);
+      ref.invalidate(warehouseBookingsProvider);
+      ref.invalidate(matchedOrdersProvider);
+    } catch (e) {
+      debugPrint("Error refreshing providers on login: $e");
+    }
   }
 
   Future<void> logout() async {
@@ -61,14 +58,22 @@ class Auth extends _$Auth {
     await prefs.remove('token');
     await prefs.setBool("isLogin", false);
     await prefs.clear();
-    // Get.to(LoginScreen());
-    ref.watch(sharedUtilityProvider).setToken('');
-
-    ref.watch(sharedPreferencesProvider).clear();
+    ref.read(sharedUtilityProvider).setToken('');
+    ref.read(sharedPreferencesProvider).clear();
 
     state = const AsyncData(AuthStatus.loggedOut);
+
+    try {
+      ref.invalidate(userDetailsProvider);
+      ref.invalidate(homeDataProvider);
+      ref.invalidate(allBookingsProvider);
+      ref.invalidate(warehouseBookingsProvider);
+      ref.invalidate(matchedOrdersProvider);
+    } catch (e) {
+      debugPrint("Error invalidating providers on logout: $e");
+    }
   }
 
-  // Optional helper for quick access
-  get loginStatus => state.value;
+  // Helper for quick access
+  AuthStatus? get loginStatus => state.value;
 }

@@ -514,16 +514,17 @@ class BuyerList extends ConsumerWidget {
                                                                       child: ElevatedButton(
                                                                         style:
                                                                             AppStyle.buttonStyle,
-                                                                       onPressed: () async {
+                                                                        onPressed: () async {
   var price = double.tryParse(buyPriceController.text) ?? 0.0;
   var weight = double.tryParse(buyWeightController.text) ?? 0.0;
   
   if (price < 1 || weight < 1) {
-    context.errorToast(
+    showErrorAlertDialog(
+      context,
       AppLocalizations.of(context)!.pleaseInputValidValue,
     );
   } else {
-    // ✅ Use ref.read instead of ref.watch
+    context.showLoader();
     ref
         .read(
           updateSbtProvider(
@@ -536,22 +537,26 @@ class BuyerList extends ConsumerWidget {
             type: "1",
           ).future,
         )
-        .then((value) {
-          if (value['status'].toString() == "1") {
+        .then((res) {
+          context.hideloader();
+          if (res['status'].toString() == "1") {
             ref.invalidate(getBuyerSellerListProvider);
             ref.invalidate(getSbtCommodityProvider);
             ref.invalidate(matchedOrdersProvider);
             Get.back();
             Get.rawSnackbar(
-              message: "${value['message']}",
-              duration: Duration(seconds: 10),
+              message: "${res['message']}",
+              duration: const Duration(seconds: 2),
               backgroundColor: ColorConstant.maingreen,
             );
           } else {
-            showErrorAlertDialog(context, value['message']);
+            showErrorAlertDialog(context, res['message']);
           }
         })
-        .onError((e, s) {});
+        .onError((e, s) {
+          context.hideloader();
+          showErrorAlertDialog(context, "An error occurred: $e");
+        });
   }
 },
                                                                         child: Text(

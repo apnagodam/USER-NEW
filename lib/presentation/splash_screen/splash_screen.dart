@@ -29,8 +29,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
       // Language is already initialized in main.dart, no need to update here
       requestLocationPermission();
-      Future.delayed(Duration(seconds: 1));
-      Get.offAll(() => DashboardScreen());
+      await Future.delayed(const Duration(seconds: 1));
+      Get.offAll(() => const DashboardScreen());
     });
   }
 

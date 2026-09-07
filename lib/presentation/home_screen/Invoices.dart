@@ -948,7 +948,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
         backgroundColor: ColorConstant.maingreen,
         centerTitle: true,
         actions: [
-          if (ref.watch(authProvider.notifier).loginStatus !=
+          if (ref.watch(authProvider).value !=
               AuthStatus.loggedIn)
             Center(
               child: Column(

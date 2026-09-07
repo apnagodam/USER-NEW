@@ -127,7 +127,7 @@ class _SbtHoldSummaryState extends ConsumerState<SbtHoldSummary> {
                                           "\u{20B9} ${element.amount}",
                                           style: TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              fontSize: Adaptive.sp(16)),
+                                              fontSize: Adaptive.sp(15)),
                                         )),
                                         DataCell(InkWell(
                                           child: Text(

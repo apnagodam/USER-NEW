@@ -509,7 +509,7 @@ class _DispatchrequestslistingState
                                               context.errorToast(
                                                 'Enter Grn Number',
                                               );
-                                            } else if (ref.watch(
+                                            } else if (ref.read(
                                                   _kantaImageProvider,
                                                 ) ==
                                                 null) {
@@ -517,21 +517,36 @@ class _DispatchrequestslistingState
                                                 'Select Kanta Image',
                                               );
                                             } else {
-                                              ref.watch(
-                                                editDispatchRequestProvider(
-                                                  id:
-                                                      data.data?[index].id
-                                                          .toString(),
-                                                  grnNumber:
-                                                      _grnController.text,
-                                                  kantaParchiImage: ref.watch(
-                                                    _kantaImageProvider,
-                                                  ),
-                                                  grnImage: ref.watch(
-                                                    _grnImageProvider,
-                                                  ),
-                                                ),
-                                              );
+                                              ref
+                                                  .read(
+                                                    editDispatchRequestProvider(
+                                                      id:
+                                                          data.data?[index].id
+                                                              .toString(),
+                                                      grnNumber:
+                                                          _grnController.text,
+                                                      kantaParchiImage: ref.read(
+                                                        _kantaImageProvider,
+                                                      ),
+                                                      grnImage: ref.read(
+                                                        _grnImageProvider,
+                                                      ),
+                                                    ).future,
+                                                  )
+                                                  .then((value) {
+                                                if (value['status'].toString() ==
+                                                    "1") {
+                                                  ref.invalidate(
+                                                    dispatchListingProvider(
+                                                      sbtOrderId: widget.orderId,
+                                                    ),
+                                                  );
+                                                  ref.invalidate(
+                                                    dispatchListingNewProvider,
+                                                  );
+                                                  Get.back();
+                                                }
+                                              });
                                             }
                                           },
                                           buttonThemeData:
@@ -559,7 +574,7 @@ class _DispatchrequestslistingState
                                           text: 'Reject Request',
                                           onPressed: () {
                                             ref
-                                                .watch(
+                                                .read(
                                                   deleteDispatchRequestProvider(
                                                     id:
                                                         data.data?[index].id
@@ -567,11 +582,20 @@ class _DispatchrequestslistingState
                                                     sbtOrderId: widget.orderId,
                                                   ).future,
                                                 )
-                                                .then((_) {
-                                                  ref.invalidate(
-                                                    dispatchListingProvider,
-                                                  );
-                                                });
+                                                .then((value) {
+                                              if (value['status'].toString() ==
+                                                  "1") {
+                                                ref.invalidate(
+                                                  dispatchListingProvider(
+                                                    sbtOrderId: widget.orderId,
+                                                  ),
+                                                );
+                                                ref.invalidate(
+                                                  dispatchListingNewProvider,
+                                                );
+                                                Get.back();
+                                              }
+                                            });
                                           },
                                           buttonThemeData:
                                               ElevarmPrimaryButtonThemeData(

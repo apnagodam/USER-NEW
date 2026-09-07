@@ -92,7 +92,7 @@ class Wallet extends ConsumerWidget {
                   Padding(
                     padding: EdgeInsets.all(10), // Increased padding
                     child: Container(
-                      height: 52,
+                      height: 55,
                       decoration: BoxDecoration(
                           color: Colors.grey.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(10.0),
@@ -113,7 +113,7 @@ class Wallet extends ConsumerWidget {
                           labelColor: Colors.white,
                           indicatorSize: TabBarIndicatorSize.tab,
                           labelStyle: TextStyle(
-                            fontSize: Adaptive.sp(17),
+                            fontSize: Adaptive.sp(15),
                             fontWeight: FontWeight.bold,
                           ),
                           unselectedLabelColor: Colors.black87,

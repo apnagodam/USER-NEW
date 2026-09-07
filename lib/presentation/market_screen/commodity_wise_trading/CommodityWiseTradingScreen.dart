@@ -874,7 +874,7 @@ class _CommoditywisetradingscreenState
                                                                                                                 _handleBuyOption(dataList, mainIndex, bottomsheetContext);
                                                                                                               }
                                                                                                             } else {
-                                                                                                              Fluttertoast.showToast(msg: 'Quantity should be greater than 0!', toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red);
+                                                                                                              showErrorAlertDialog(context, 'Quantity should be greater than 0!');
                                                                                                             }
                                                                                                           }
                                                                                                         },
@@ -1110,7 +1110,9 @@ class _CommoditywisetradingscreenState
                                                                                                                         title: 'Are you sure?',
                                                                                                                         subtitle: 'Commodity Price: ${ref.watch(sellPrice)}\nCommodity Weight: ${ref.watch(sellWeight)} in Quintal',
                                                                                                                         onPositiveButton: () {
+                                                                                                                          context.showLoader();
                                                                                                                           ref.watch(postSbtProvider(productId: "${dataList[mainIndex ?? 0].productId}", commodityId: "${dataList[mainIndex ?? 0].commodityId}", district_id: "${dataList[mainIndex ?? 0].districtId}", qty: "${ref.watch(sellWeight)}", price: "${ref.watch(sellPrice)}", type: "2").future).then((value) async {
+                                                                                                                            context.hideloader();
                                                                                                                             Navigator.of(sheetContext).pop();
                                                                                                                             ref.invalidate(getBuyerSellerListProvider);
 
@@ -1122,13 +1124,14 @@ class _CommoditywisetradingscreenState
 
                                                                                                                               Fluttertoast.showToast(msg: value['message'], toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.green);
                                                                                                                             } else {
-                                                                                                                              if (value['message'].toString().contains('User don\'t have suffcient balance.')) {
-                                                                                                                                Fluttertoast.showToast(msg: value['message'], toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red);
-                                                                                                                              }
+                                                                                                                              showErrorAlertDialog(context, value['message']);
                                                                                                                             }
 
                                                                                                                             ref.invalidate(matchedOrdersProvider);
-                                                                                                                          }).onError((e, s) {});
+                                                                                                                          }).onError((e, s) {
+                                                                                                                            context.hideloader();
+                                                                                                                            showErrorAlertDialog(context, "An error occurred: $e");
+                                                                                                                          });
                                                                                                                         },
                                                                                                                         onNegativeButton: () {
                                                                                                                           Get.back();
@@ -1139,7 +1142,7 @@ class _CommoditywisetradingscreenState
                                                                                                                     .show(context);
                                                                                                               }
                                                                                                             } else {
-                                                                                                              Fluttertoast.showToast(msg: 'Quantity should be greater than 0!', toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red);
+                                                                                                              showErrorAlertDialog(context, 'Quantity should be greater than 0!');
                                                                                                             }
                                                                                                           }
                                                                                                         },
@@ -3066,6 +3069,7 @@ class _CommoditywisetradingscreenState
             subtitle:
                 'Commodity Price: ${ref.watch(buyPrice)}\nCommodity Weight: ${ref.watch(buyWeight)} in Quintal',
             onPositiveButton: () {
+              bottomsheetContext.showLoader();
               ref
                   .watch(checkForUserWalletProvider(
                 districtId: dataList[mainIndex ?? 0].districtId.toString(),
@@ -3093,6 +3097,7 @@ class _CommoditywisetradingscreenState
                               loanType: null)
                           .future)
                       .then((value) {
+                    bottomsheetContext.hideloader();
                     if (value['status'].toString() == "1") {
                       Navigator.of(bottomsheetContext).pop();
 
@@ -3103,8 +3108,12 @@ class _CommoditywisetradingscreenState
                     } else {
                       showErrorAlertDialog(context, value['message']);
                     }
-                  }).onError((e, s) {});
+                  }).onError((e, s) {
+                    bottomsheetContext.hideloader();
+                    showErrorAlertDialog(context, "An error occurred: $e");
+                  });
                 } else {
+                  bottomsheetContext.hideloader();
                   if (value['error_type'].toString().toLowerCase() ==
                           "wallet" ||
                       value['error_type'].toString().toLowerCase() ==
@@ -3282,12 +3291,7 @@ class _CommoditywisetradingscreenState
                                                 await LaunchApp.openApp(
                                                     androidPackageName:
                                                         'com.swfl.swfl');
-                                                Fluttertoast.showToast(
-                                                    msg: value['message'],
-                                                    toastLength:
-                                                        Toast.LENGTH_LONG,
-                                                    backgroundColor:
-                                                        Colors.red);
+                                                showErrorAlertDialog(context, value['message']);
                                                 Get.back(
                                                     canPop: true,
                                                     closeOverlays: true);
@@ -3409,7 +3413,7 @@ class _CommoditywisetradingscreenState
                                                                                     child: ElevatedButton(
                                                                                       onPressed: () {
                                                                                         if (ref.watch(selectedIndex) == null) {
-                                                                                          Fluttertoast.showToast(msg: "Please select a Scheme!");
+                                                                                          showErrorAlertDialog(context, AppLocalizations.of(context)!.pleaseSelectScheme);
                                                                                         } else {
                                                                                           ref.watch(postSbtProvider(productId: "${dataList[mainIndex ?? 0].productId}", commodityId: "${dataList[mainIndex ?? 0].commodityId}", district_id: "${dataList[mainIndex ?? 0].districtId}", qty: "${ref.watch(buyWeight)}", price: "${ref.watch(buyPrice)}", type: "1", loanType: "2", schemeId: "${value['data']['schemes'][ref.watch(selectedIndex)]['id']}").future).then((value) {
                                                                                             if (value['status'].toString() == "0") {
@@ -3451,15 +3455,9 @@ class _CommoditywisetradingscreenState
                                 ),
                               ));
                     }
-                    Fluttertoast.showToast(
-                        msg: value['message'],
-                        toastLength: Toast.LENGTH_LONG,
-                        backgroundColor: Colors.red);
+                    showErrorAlertDialog(context, value['message']);
                   } else {
-                    Fluttertoast.showToast(
-                        msg: value['message'],
-                        toastLength: Toast.LENGTH_LONG,
-                        backgroundColor: Colors.red);
+                    showErrorAlertDialog(context, value['message']);
                   }
                 }
               }).onError((e, s) {});

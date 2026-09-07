@@ -1,6 +1,7 @@
 import 'package:apnagodam/auth_provider/AuthProvider.dart';
 import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'package:apnagodam/core/utils/color_constant.dart';
+import 'package:apnagodam/core/utils/helper.dart';
 import 'package:apnagodam/core/utils/no_data_found_widget.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
 import 'package:apnagodam/extensions/extensions.dart';
@@ -625,13 +626,9 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                           );
                                                                                         }
                                                                                       } else {
-                                                                                        Fluttertoast.showToast(
-                                                                                          msg:
-                                                                                              'Quantity should be greater than 0!',
-                                                                                          toastLength:
-                                                                                              Toast.LENGTH_LONG,
-                                                                                          backgroundColor:
-                                                                                              Colors.red,
+                                                                                        showErrorAlertDialog(
+                                                                                          context,
+                                                                                          'Quantity should be greater than 0!',
                                                                                         );
                                                                                       }
                                                                                     }
@@ -1297,18 +1294,10 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                                                 Colors.green,
                                                                                                           );
                                                                                                         } else {
-                                                                                                          if (value['message'].toString().contains(
-                                                                                                            'User don\'t have suffcient balance.',
-                                                                                                          )) {
-                                                                                                            Fluttertoast.showToast(
-                                                                                                              msg:
-                                                                                                                  value['message'],
-                                                                                                              toastLength:
-                                                                                                                  Toast.LENGTH_LONG,
-                                                                                                              backgroundColor:
-                                                                                                                  Colors.red,
-                                                                                                            );
-                                                                                                          }
+                                                                                                          showErrorAlertDialog(
+                                                                                                            context,
+                                                                                                            value['message'] ?? 'Failed to place order',
+                                                                                                          );
                                                                                                         }
 
                                                                                                         ref.invalidate(
@@ -1339,13 +1328,9 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                             );
                                                                                           }
                                                                                         } else {
-                                                                                          Fluttertoast.showToast(
-                                                                                            msg:
-                                                                                                'Quantity should be greater than 0!',
-                                                                                            toastLength:
-                                                                                                Toast.LENGTH_LONG,
-                                                                                            backgroundColor:
-                                                                                                Colors.red,
+                                                                                          showErrorAlertDialog(
+                                                                                            context,
+                                                                                            'Quantity should be greater than 0!',
                                                                                           );
                                                                                         }
                                                                                       }
@@ -3452,9 +3437,9 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                           selectedIndex,
                                                                                         ) ==
                                                                                         null) {
-                                                                                      Fluttertoast.showToast(
-                                                                                        msg:
-                                                                                            "Please select a Scheme!",
+                                                                                      showErrorAlertDialog(
+                                                                                        context,
+                                                                                        "Please select a Scheme!",
                                                                                       );
                                                                                     } else {
                                                                                       context.showLoader();

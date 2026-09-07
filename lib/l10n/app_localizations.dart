@@ -6901,7 +6901,7 @@ abstract class AppLocalizations {
   /// No description provided for @purchaseOrderTechniqueSystem.
   ///
   /// In en, this message translates to:
-  /// **'Purchase Order Technique System'**
+  /// **'Purchase Order'**
   String get purchaseOrderTechniqueSystem;
 
   /// No description provided for @qualityClaimPerQtl.

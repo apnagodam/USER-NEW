@@ -12,8 +12,8 @@ import '../../core/utils/theme/app_style.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
 
 class AddSummaryScreen extends ConsumerWidget {
-  AddSummaryScreen({super.key, required this.type});
-  String type = "1";
+  final String type;
+  const AddSummaryScreen({super.key, required this.type});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
@@ -255,7 +255,7 @@ class AddSummaryScreen extends ConsumerWidget {
                   Container(child: Text(e.toString() + s.toString())),
               loading: () => defaultLoader()),
           onRefresh: () async {
-            return Future(() => ref.invalidate(addMoneySummaryProvider));
+            ref.invalidate(getSummaryProvider(type: type));
           }),
     );
   }

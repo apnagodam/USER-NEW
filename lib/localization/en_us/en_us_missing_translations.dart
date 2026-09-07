@@ -297,7 +297,7 @@ final Map<String, String> enUsMissing = {
   'profiling': 'Profiling',
   'proprietor': 'Proprietor',
   'purchaseOrder2': 'Purchase Order',
-  'purchaseOrderTechniqueSystem': 'Purchase Order Technique System',
+  'purchaseOrderTechniqueSystem': 'Purchase Order',
   'qualityClaimPerQtl': 'Quality Claim Per Qtl',
   'qualityCondition3': 'Quality Condition',
   'qualityConsent': 'Quality Consent',

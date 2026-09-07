@@ -429,6 +429,9 @@ class _BookwarehousescreenState extends ConsumerState<Bookwarehousescreen> {
                   Consumer(
                     builder:
                         (context, ref, child) => ElevarmDraggableBottomSheet(
+                          initialChildSize: 0.6,
+                          minChildSize: 0.4,
+                          maxChildSize: 1.0,
                           title: AppLocalizations.of(context)!.bookAstock,
                           onPressedClose: () => Get.back(),
                           children: [
@@ -464,13 +467,17 @@ class _BookwarehousescreenState extends ConsumerState<Bookwarehousescreen> {
                                     }
                                     return (data.data ?? []).isEmpty
                                         ? Container(child: noStockData(context))
-                                        : SizedBox(
-                                          height:
-                                              MediaQuery.of(
-                                                context,
-                                              ).size.height,
+                                        : Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom:
+                                                MediaQuery.of(
+                                                  context,
+                                                ).padding.bottom +
+                                                20,
+                                            left: 5,
+                                            right: 5,
+                                          ),
                                           child: Column(
-                                            // mainAxisAlignment: MainAxisAlignment.center,
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Padding(
@@ -541,31 +548,34 @@ class _BookwarehousescreenState extends ConsumerState<Bookwarehousescreen> {
                                                 ),
                                               ),
                                               SizedBox(height: 15),
-                                              Expanded(
-                                                // height: MediaQuery.of(context).size.height*0.4,
-                                                child: GridView.builder(
-                                                  padding: Pad(all: 0),
-                                                  gridDelegate:
-                                                      SliverGridDelegateWithFixedCrossAxisCount(
-                                                        crossAxisCount: 3,
-                                                        mainAxisSpacing: 0,
-                                                        childAspectRatio: 3 / 4,
-                                                        crossAxisSpacing: 10,
+                                              GridView.builder(
+                                                shrinkWrap: true,
+                                                physics:
+                                                    const NeverScrollableScrollPhysics(),
+                                                padding: const EdgeInsets.only(
+                                                  bottom: 20,
+                                                ),
+                                                gridDelegate:
+                                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                                      crossAxisCount: 3,
+                                                      mainAxisSpacing: 10,
+                                                      childAspectRatio: 0.72,
+                                                      crossAxisSpacing: 10,
+                                                    ),
+                                                itemCount:
+                                                    data.data == null
+                                                        ? 0
+                                                        : data.data?.length,
+                                                itemBuilder:
+                                                    (
+                                                      context,
+                                                      index,
+                                                    ) => InkWell(
+                                                      child: StackBookCard(
+                                                        stack:
+                                                            data.data![index],
                                                       ),
-                                                  itemCount:
-                                                      data.data == null
-                                                          ? 0
-                                                          : data.data?.length,
-                                                  itemBuilder:
-                                                      (
-                                                        context,
-                                                        index,
-                                                      ) => InkWell(
-                                                        child: StackBookCard(
-                                                          stack:
-                                                              data.data![index],
-                                                        ),
-                                                        onTap: () {
+                                                      onTap: () {
                                                           StackbookDialog(
                                                             context,
                                                             stackNumber:
@@ -658,7 +668,7 @@ class _BookwarehousescreenState extends ConsumerState<Bookwarehousescreen> {
                                                         },
                                                       ),
                                                 ),
-                                              ),
+
                                             ],
                                           ),
                                         );

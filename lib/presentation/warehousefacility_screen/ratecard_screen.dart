@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/utils/color_constant.dart';
+import '../../core/utils/helper.dart';
 import '../../core/utils/theme/app_style.dart';
 import '../dashboard/dashboard_screen.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
@@ -85,7 +86,7 @@ class _RateCardState extends ConsumerState<RateCard> {
 
   getData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    username = prefs.getString("firstname")!;
+    username = prefs.getString("firstname") ?? "";
   }
 
   @override
@@ -95,9 +96,15 @@ class _RateCardState extends ConsumerState<RateCard> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(dedicatedProvider.notifier).state =
           widget.stacktype == "Dedicated";
-      // set localized default safely after frame (context available)
-      ref.read(dateProvider.notifier).state =
-          AppLocalizations.of(context)!.selectDate2;
+      if (widget.lockInDate != null &&
+          widget.lockInDate!.isNotEmpty &&
+          widget.lockInDate != "null" &&
+          widget.lockInDate != AppLocalizations.of(context)!.selectDate2) {
+        ref.read(dateProvider.notifier).state = widget.lockInDate!;
+      } else {
+        ref.read(dateProvider.notifier).state =
+            AppLocalizations.of(context)!.selectDate2;
+      }
     });
   }
 
@@ -486,7 +493,7 @@ class _RateCardState extends ConsumerState<RateCard> {
                                 height: 30,
                                 child: Center(
                                   child: Text(
-                                    AppLocalizations.of(context)!.termCond,
+                                    AppLocalizations.of(context)!.conditions,
                                     style: AppStyle.lbltermncon,
                                   ),
                                 ),
@@ -503,9 +510,30 @@ class _RateCardState extends ConsumerState<RateCard> {
                               SizedBox(
                                 height: 30,
                                 child: Center(
-                                  child: Icon(
-                                    Icons.check_box,
-                                    color: Colors.grey,
+                                  child: Checkbox(
+                                    activeColor: ColorConstant.maingreen,
+                                    checkColor: Colors.white,
+                                    value: warehouseRent &&
+                                        labour &&
+                                        lockIn &&
+                                        (!ref.watch(dedicatedProvider)
+                                            ? (wsa &&
+                                                entryLoad &&
+                                                exitLoad)
+                                            : true),
+                                    onChanged: (val) {
+                                      final newVal = val ?? false;
+                                      setState(() {
+                                        warehouseRent = newVal;
+                                        labour = newVal;
+                                        lockIn = newVal;
+                                        if (!ref.read(dedicatedProvider)) {
+                                          wsa = newVal;
+                                          entryLoad = newVal;
+                                          exitLoad = newVal;
+                                        }
+                                      });
+                                    },
                                   ),
                                 ),
                               ),
@@ -603,7 +631,7 @@ class _RateCardState extends ConsumerState<RateCard> {
                                 height: 50,
                                 child: Center(
                                   child: Text(
-                                    "₹ ${widget.labourCharge} per bag"
+                                    "₹ ${widget.labourCharge} per Qtl"
                                         .tr
                                         .tr,
                                     style: TextStyle(
@@ -1091,13 +1119,15 @@ class _RateCardState extends ConsumerState<RateCard> {
                                               ),
                                               lastDate: DateTime(2101),
                                             ).then((value) {
-                                              ref
-                                                  .watch(
-                                                    dateProvider.notifier,
-                                                  )
-                                                  .state = DateFormat(
-                                                'dd-MM-yyyy',
-                                              ).format(value!).toString();
+                                              if (value != null) {
+                                                ref
+                                                    .read(
+                                                      dateProvider.notifier,
+                                                    )
+                                                    .state = DateFormat(
+                                                  'dd-MM-yyyy',
+                                                ).format(value).toString();
+                                              }
                                             });
                                           },
                                           style: AppStyle.buttonStyle,
@@ -1174,10 +1204,12 @@ class _RateCardState extends ConsumerState<RateCard> {
                                         ),
                                         lastDate: DateTime(2101),
                                       ).then((value) {
-                                        ref.watch(dateProvider.notifier).state =
-                                            DateFormat(
-                                          'dd-MM-yyyy',
-                                        ).format(value!).toString();
+                                        if (value != null) {
+                                          ref.read(dateProvider.notifier).state =
+                                              DateFormat(
+                                            'dd-MM-yyyy',
+                                          ).format(value).toString();
+                                        }
                                       });
                                     },
                                     style: AppStyle.buttonStyle,
@@ -1293,14 +1325,27 @@ class _RateCardState extends ConsumerState<RateCard> {
                                               padding: EdgeInsets.all(
                                                 padding,
                                               ),
-                                              child: Text(
-                                                'Accept',
-                                                style: TextStyle(
-                                                  fontSize: fontSize,
-                                                  color:
-                                                      ColorConstant.maingreen,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
+                                              child: Checkbox(
+                                                activeColor:
+                                                    ColorConstant.maingreen,
+                                                checkColor: Colors.white,
+                                                value: condition1 &&
+                                                    condition2 &&
+                                                    condition3 &&
+                                                    condition4 &&
+                                                    condition5 &&
+                                                    condition6,
+                                                onChanged: (val) {
+                                                  final newVal = val ?? false;
+                                                  setState(() {
+                                                    condition1 = newVal;
+                                                    condition2 = newVal;
+                                                    condition3 = newVal;
+                                                    condition4 = newVal;
+                                                    condition5 = newVal;
+                                                    condition6 = newVal;
+                                                  });
+                                                },
                                               ),
                                             ),
                                           ),
@@ -1613,334 +1658,159 @@ class _RateCardState extends ConsumerState<RateCard> {
                       children: [
                         InkWell(
                           onTap: () async {
-                            if (!ref.read(dedicatedProvider)) {
-                              if (warehouseRent &&
-                                  labour &&
-                                  wsa &&
-                                  entryLoad &&
-                                  exitLoad &&
-                                  lockIn &&
-                                  termsAndConditions &&
-                                  condition1 &&
-                                  condition2 &&
-                                  condition3 &&
-                                  condition4 &&
-                                  condition5 &&
-                                  condition6) {
-                                await ref
-                                    .watch(warehouseFacilityprovider)
-                                    .createStackRequest(
-                                      stackType: widget.stacktype,
-                                      requestWeight: widget.requestedWeight,
-                                      inOutStatus: "IN",
-                                      stackNum: widget.stackNumber,
-                                      stackRowId: widget.stackRowId,
-                                      commodityId: widget.commodityId,
-                                      lockInMonth: ref
-                                          .watch(dateProvider.notifier)
-                                          .state,
-                                      warehouseRent: widget.whRentData,
-                                    )
-                                    .then((value) async {
-                                  if (value.status.toString() == "3") {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      builder: (bottomsheetContext) =>
-                                          ElevarmDraggableBottomSheet(
-                                        title: "Login to Continue",
-                                        onPressedClose: () => Get.back(),
-                                        children: [
-                                          LoginBottomSheet(),
-                                        ],
-                                      ),
-                                    );
-                                  } else if (value.status.toString() == "0") {
-                                    Get.rawSnackbar(
-                                      message: value.message,
-                                      duration: Duration(seconds: 2),
-                                      backgroundColor: ColorConstant.red500,
-                                    );
-                                  } else if (value.status.toString() == "1") {
-                                    ref
-                                        .watch(
-                                          warehouseFacilityprovider,
-                                        )
-                                        .getRateCard(
-                                          widget.stackRowId,
-                                          value.data.toString(),
-                                          widget.terminalId,
-                                          widget.commodityId,
-                                          "I) 12% If LTV 60%  II) 15% If LTV 90%",
-                                          "1%+GST",
-                                          widget.labourCharge,
-                                          widget.whRentData,
-                                          wsaCharge: widget.wsaCharge ?? "0.0",
-                                          entryLoadChard:
-                                              widget.entryLoadCharge ?? "0.0",
-                                          exitLoadCharge:
-                                              widget.exitLoadCharge ?? "0.0",
-                                          lockInMonth: widget.lockIn ?? "0.0",
-                                        )
-                                        .then((value) async {
-                                      if (value != null) {
-                                        if (value['status'] == "1") {
-                                          ref.invalidate(
-                                            selectedValueProvider,
-                                          );
-                                          ref.invalidate(
-                                            dateProvider,
-                                          );
-                                          ref.invalidate(
-                                            dedicatedProvider,
-                                          );
-                                          ref.invalidate(
-                                            lockInDedicated,
-                                          );
-                                          ref.invalidate(lockInMix);
-                                          Get.offAll(
-                                            () => DashboardScreen(),
-                                          );
-                                          Get.rawSnackbar(
-                                            message: value['message'],
-                                            duration: Duration(
-                                              seconds: 2,
-                                            ),
-                                            backgroundColor:
-                                                ColorConstant.maingreen,
-                                          );
-                                        }
-                                        if (value['status'] == "0") {
-                                          Get.rawSnackbar(
-                                            message: value['message'],
-                                            duration: Duration(
-                                              seconds: 2,
-                                            ),
-                                            backgroundColor:
-                                                ColorConstant.red500,
-                                          );
-                                        }
-                                        if (value['status'] == "3") {
-                                          showBottomSheet(
-                                            context: context,
-                                            builder: (
-                                              bottomsheetContext,
-                                            ) =>
-                                                ElevarmDraggableBottomSheet(
-                                              title: AppLocalizations.of(
-                                                context,
-                                              )!
-                                                  .loginToContinue3,
-                                              onPressedClose: () => Get.back(),
-                                              children: [
-                                                LoginBottomSheet(),
-                                              ],
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    });
-                                  }
-                                });
-                              } else {
-                                Get.rawSnackbar(
-                                  message: AppLocalizations.of(
-                                    context,
-                                  )!
-                                      .pleaseSelectAllAboveConditions2,
-                                  duration: Duration(seconds: 2),
-                                  backgroundColor: ColorConstant.red500,
-                                );
-                              }
-                            } else {
-                              if (ref.watch(dateProvider.notifier).state !=
-                                      AppLocalizations.of(
-                                        context,
-                                      )!
-                                          .selectDate2 &&
-                                  ref.watch(dateProvider).isNotEmpty) {
-                                if (warehouseRent &&
+                            final isDedicated = ref.read(dedicatedProvider);
+                            final currentDate = ref.read(dateProvider).trim();
+                            final defaultSelectDate =
+                                AppLocalizations.of(context)!.selectDate2.trim();
+
+                            if (currentDate.isEmpty ||
+                                currentDate == defaultSelectDate ||
+                                currentDate == "Select Date") {
+                              showErrorAlertDialog(
+                                context,
+                                "Please select commodity arrival date",
+                              );
+                              return;
+                            }
+
+                            final isTable1Valid = isDedicated
+                                ? (warehouseRent && labour && lockIn)
+                                : (warehouseRent &&
                                     labour &&
-                                    lockIn &&
-                                    termsAndConditions &&
-                                    condition1 &&
-                                    condition2 &&
-                                    condition3 &&
-                                    condition4 &&
-                                    condition5 &&
-                                    condition6) {
-                                  await ref
-                                      .watch(warehouseFacilityprovider)
-                                      .createStackRequest(
-                                        stackType: widget.stacktype,
-                                        requestWeight: widget.requestedWeight,
-                                        inOutStatus: "IN",
-                                        stackNum: widget.stackNumber,
-                                        stackRowId: widget.stackRowId,
-                                        commodityId: widget.commodityId,
-                                        lockInMonth: ref
-                                            .watch(
-                                              dateProvider.notifier,
-                                            )
-                                            .state,
-                                        warehouseRent: widget.whRentData,
-                                      )
-                                      .then((value) async {
-                                    if (value.status == "3") {
-                                      showBottomSheet(
+                                    wsa &&
+                                    entryLoad &&
+                                    exitLoad &&
+                                    lockIn);
+
+                            final isConditionsValid = condition1 &&
+                                condition2 &&
+                                condition3 &&
+                                condition4 &&
+                                condition5 &&
+                                condition6;
+
+                            if (!isTable1Valid ||
+                                !isConditionsValid ||
+                                !termsAndConditions) {
+                              showErrorAlertDialog(
+                                context,
+                                AppLocalizations.of(context)!
+                                    .pleaseSelectAllAboveConditions2,
+                              );
+                              return;
+                            }
+
+                            try {
+                              final value = await ref
+                                  .read(warehouseFacilityprovider)
+                                  .createStackRequest(
+                                    stackType: widget.stacktype,
+                                    requestWeight: widget.requestedWeight,
+                                    inOutStatus: "IN",
+                                    stackNum: widget.stackNumber,
+                                    stackRowId: widget.stackRowId,
+                                    commodityId: widget.commodityId,
+                                    lockInMonth: currentDate,
+                                    warehouseRent: widget.whRentData,
+                                  );
+
+                              if (value.status.toString() == "3") {
+                                if (context.mounted) {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    builder: (bottomsheetContext) =>
+                                        ElevarmDraggableBottomSheet(
+                                      title: AppLocalizations.of(context)!
+                                          .loginToContinue3,
+                                      onPressedClose: () => Get.back(),
+                                      children: const [
+                                        LoginBottomSheet(),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                return;
+                              }
+
+                              if (value.status.toString() == "0") {
+                                if (context.mounted) {
+                                  showErrorAlertDialog(
+                                    context,
+                                    value.message ??
+                                        "Failed to book stack. Please try again.",
+                                  );
+                                }
+                                return;
+                              }
+
+                              if (value.status.toString() == "1") {
+                                final rateCardRes = await ref
+                                    .read(warehouseFacilityprovider)
+                                    .getRateCard(
+                                      widget.stackRowId,
+                                      value.data.toString(),
+                                      widget.terminalId,
+                                      widget.commodityId,
+                                      "I) 12% If LTV 60%  II) 15% If LTV 90%",
+                                      "1%+GST",
+                                      widget.labourCharge,
+                                      widget.whRentData,
+                                      wsaCharge: widget.wsaCharge ?? "0.0",
+                                      entryLoadChard:
+                                          widget.entryLoadCharge ?? "0.0",
+                                      exitLoadCharge:
+                                          widget.exitLoadCharge ?? "0.0",
+                                      lockInMonth: widget.lockIn ?? "0.0",
+                                    );
+
+                                if (rateCardRes != null) {
+                                  if (rateCardRes['status'].toString() == "1") {
+                                    ref.invalidate(selectedValueProvider);
+                                    ref.invalidate(dateProvider);
+                                    ref.invalidate(dedicatedProvider);
+                                    ref.invalidate(lockInDedicated);
+                                    ref.invalidate(lockInMix);
+                                    Get.offAll(() => DashboardScreen());
+                                    Get.rawSnackbar(
+                                      message: rateCardRes['message'] ??
+                                          "Stack booked successfully",
+                                      duration: const Duration(seconds: 2),
+                                      backgroundColor: ColorConstant.maingreen,
+                                    );
+                                  } else if (rateCardRes['status'].toString() ==
+                                      "0") {
+                                    if (context.mounted) {
+                                      showErrorAlertDialog(
+                                        context,
+                                        rateCardRes['message'] ??
+                                            "Failed to update rate card.",
+                                      );
+                                    }
+                                  } else if (rateCardRes['status'].toString() ==
+                                      "3") {
+                                    if (context.mounted) {
+                                      showModalBottomSheet(
                                         context: context,
-                                        builder: (
-                                          bottomsheetContext,
-                                        ) =>
+                                        builder: (bottomsheetContext) =>
                                             ElevarmDraggableBottomSheet(
-                                          title: AppLocalizations.of(
-                                            context,
-                                          )!
+                                          title: AppLocalizations.of(context)!
                                               .loginToContinue3,
                                           onPressedClose: () => Get.back(),
-                                          children: [
+                                          children: const [
                                             LoginBottomSheet(),
                                           ],
                                         ),
                                       );
-                                    } else if (value.status == "1") {
-                                      ref
-                                          .watch(
-                                            warehouseFacilityprovider,
-                                          )
-                                          .getRateCard(
-                                            widget.stackRowId,
-                                            value.data.toString(),
-                                            widget.terminalId,
-                                            widget.commodityId,
-                                            "I) 12% If LTV 60%  II) 15% If LTV 90%",
-                                            "1%+GST",
-                                            widget.labourCharge,
-                                            widget.whRentData,
-                                            wsaCharge:
-                                                widget.wsaCharge ?? "0.0",
-                                            entryLoadChard:
-                                                widget.entryLoadCharge ?? "0.0",
-                                            exitLoadCharge:
-                                                widget.exitLoadCharge ?? "0.0",
-                                            lockInMonth: widget.lockIn ?? "0.0",
-                                          )
-                                          .then((value) async {
-                                        if (value != null) {
-                                          if (value['status'] == "1") {
-                                            ref.invalidate(
-                                              selectedValueProvider,
-                                            );
-                                            ref.invalidate(
-                                              dateProvider,
-                                            );
-                                            ref.invalidate(
-                                              dedicatedProvider,
-                                            );
-                                            ref.invalidate(
-                                              lockInDedicated,
-                                            );
-                                            ref.invalidate(
-                                              lockInMix,
-                                            );
-                                            Get.offAll(
-                                              () => DashboardScreen(),
-                                            );
-                                            Get.rawSnackbar(
-                                              message: value['message'],
-                                              duration: Duration(
-                                                seconds: 2,
-                                              ),
-                                              backgroundColor:
-                                                  ColorConstant.maingreen,
-                                            );
-                                          }
-                                          if (value['status'] == "0") {
-                                            Get.rawSnackbar(
-                                              message: value['message'],
-                                              duration: Duration(
-                                                seconds: 2,
-                                              ),
-                                              backgroundColor:
-                                                  ColorConstant.red500,
-                                            );
-                                          }
-                                          if (value['status'] == "3") {
-                                            showBottomSheet(
-                                              context: context,
-                                              builder: (
-                                                bottomsheetContext,
-                                              ) =>
-                                                  ElevarmDraggableBottomSheet(
-                                                title: AppLocalizations.of(
-                                                  context,
-                                                )!
-                                                    .loginToContinue3,
-                                                onPressedClose: () =>
-                                                    Get.back(),
-                                                children: [
-                                                  LoginBottomSheet(),
-                                                ],
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      });
                                     }
-                                  });
-
-                                  // cont
-                                  //     .apanaCreateStackRequest(
-                                  //         cont.wareHouseStackTypeName,
-                                  //         widget.requestedWeight,
-                                  //         "IN",
-                                  //         widget.stackNumber,
-                                  //         widget.stackRowId,
-                                  //         cont.wareHouseCommidityId,
-                                  //         "",
-                                  //         ref.watch(dateProvider.notifier).state,
-                                  //         widget.whRentData)
-                                  //     .then((value) {
-                                  //   ref.watch(dedicatedProvider.notifier).state =
-                                  //       true;
-                                  //   ref
-                                  //       .watch(selectedValueProvider.notifier)
-                                  //       .state = "Select Stack Type";
-                                  //   cont
-                                  //       .apanaURateCard(
-                                  //           widget.stackRowId,
-                                  //           widget.stackRequestId,
-                                  //           cont.wareHouseTerminalId,
-                                  //           cont.wareHouseCommidityId,
-                                  //           "I) 12% If LTV 60%  II) 15% If LTV 90%",
-                                  //           "1%+GST",
-                                  //           widget.labourCharge,
-                                  //           widget.whRentData,
-                                  //           wsaCharge: widget.wsaCharge ?? "0.0",
-                                  //           entryLoadChard:
-                                  //               widget.entryLoadCharge ?? "0.0",
-                                  //           exitLoadCharge:
-                                  //               widget.exitLoadCharge ?? "0.0",
-                                  //           lockInMonth: widget.lockIn ?? "0.0")
-                                  //       .then((value) {
-                                  //     Get.offAll(() => DashboardScreen());
-                                  //   });
-                                  // });
-                                } else {
-                                  Get.rawSnackbar(
-                                    message: AppLocalizations.of(
-                                      context,
-                                    )!
-                                        .pleaseSelectAllAboveConditions2,
-                                    duration: Duration(seconds: 2),
-                                    backgroundColor: ColorConstant.red500,
-                                  );
+                                  }
                                 }
-                              } else {
-                                Get.rawSnackbar(
-                                  message:
-                                      "please select commodity arrival date",
-                                  duration: Duration(seconds: 2),
-                                  backgroundColor: ColorConstant.red500,
+                              }
+                            } catch (e) {
+                              debugPrint("Error in ratecard submit: $e");
+                              if (context.mounted) {
+                                showErrorAlertDialog(
+                                  context,
+                                  "An error occurred: $e",
                                 );
                               }
                             }

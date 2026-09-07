@@ -61,7 +61,7 @@ class _MyWidgetState extends ConsumerState<HomeWalletScreen> {
               ])),
         ),
         actions: [
-          if (ref.watch(authProvider.notifier).loginStatus !=
+          if (ref.watch(authProvider).value !=
               AuthStatus.loggedIn)
             Center(
               child: Column(

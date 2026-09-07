@@ -96,14 +96,14 @@ class _MarkdeliveryscreenState extends ConsumerState<Markdeliveryscreen> {
                                                         horizontal: 10),
                                                 child: Row(
                                                   children: [
-                                                    Radio(
-                                                      value: ref
+                                                    Radio<SbtTerminalDatum>(
+                                                      value: terminalsData
+                                                          .data![index],
+                                                      groupValue: ref
                                                           .watch(terminalValue),
-                                                      groupValue: terminalsData
-                                                          .data?[index],
                                                       onChanged: (value) {
                                                         ref
-                                                            .watch(terminalValue
+                                                            .read(terminalValue
                                                                 .notifier)
                                                             .state = value;
 
@@ -125,7 +125,7 @@ class _MarkdeliveryscreenState extends ConsumerState<Markdeliveryscreen> {
                                               ),
                                             )),
                                     onChanged: (val) {
-                                      ref.watch(terminalValue.notifier).state =
+                                      ref.read(terminalValue.notifier).state =
                                           val;
                                       ref.invalidate(stacksValue);
                                     },
@@ -184,16 +184,16 @@ class _MarkdeliveryscreenState extends ConsumerState<Markdeliveryscreen> {
                                                                         10),
                                                                 child: Row(
                                                                   children: [
-                                                                    Radio(
-                                                                      value: ref
+                                                                    Radio<StacksListDatum>(
+                                                                      value:
+                                                                          stacksData
+                                                                              .data![index],
+                                                                      groupValue: ref
                                                                           .watch(
                                                                               stacksValue),
-                                                                      groupValue:
-                                                                          stacksData
-                                                                              .data?[index],
                                                                       onChanged:
                                                                           (value) {
-                                                                        ref.watch(stacksValue.notifier).state =
+                                                                        ref.read(stacksValue.notifier).state =
                                                                             value;
                                                                       },
                                                                       activeColor:
@@ -216,7 +216,7 @@ class _MarkdeliveryscreenState extends ConsumerState<Markdeliveryscreen> {
                                                             )),
                                                     onChanged: (val) {
                                                       ref
-                                                          .watch(stacksValue
+                                                          .read(stacksValue
                                                               .notifier)
                                                           .state = val;
                                                     },

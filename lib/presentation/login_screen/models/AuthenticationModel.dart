@@ -156,6 +156,12 @@ class UserDetailsAuth {
   dynamic partnerDirectorCount;
   dynamic isAadharVerified;
   dynamic isParent;
+  dynamic securityAmt;
+  dynamic bidPower;
+  dynamic bidUsePower;
+  dynamic bidHoldPower;
+  dynamic bidSecurePower;
+  dynamic bidUnsecurePower;
 
   UserDetailsAuth(
       {this.id,
@@ -235,7 +241,13 @@ class UserDetailsAuth {
       this.constitution,
       this.partnerDirectorCount,
       this.isAadharVerified,
-      this.isParent});
+      this.isParent,
+      this.securityAmt,
+      this.bidPower,
+      this.bidUsePower,
+      this.bidHoldPower,
+      this.bidSecurePower,
+      this.bidUnsecurePower});
 
   factory UserDetailsAuth.fromJson(String str) =>
       UserDetailsAuth.fromMap(json.decode(str));
@@ -320,7 +332,13 @@ class UserDetailsAuth {
       constitution: json['constitution'],
       partnerDirectorCount: json['partnerDirectorCount'],
       isAadharVerified: json['aadhar_verify'],
-      isParent: json['is_parent']);
+      isParent: json['is_parent'],
+      securityAmt: json['security_amt'],
+      bidPower: json['bid_power'],
+      bidUsePower: json['bid_use_power'],
+      bidHoldPower: json['bid_hold_power'],
+      bidSecurePower: json['bid_secure_power'],
+      bidUnsecurePower: json['bid_unsecure_power']);
 
   Map<String, dynamic> toMap() => {
         "id": id,
@@ -392,7 +410,7 @@ class UserDetailsAuth {
         "trade_terms": tradeTerms,
         "bnpl_terms": bnplTerms,
         "status": status,
-        "name_lock_status": nameLockStatus,
+        "nameLockStatus": nameLockStatus,
         "created_at": createdAt,
         "updated_at": updatedAt,
         "user_trade_status": userTradeStatus,
@@ -401,6 +419,12 @@ class UserDetailsAuth {
         "partnerDirectorCount": partnerDirectorCount,
         "aadhar_verify": isAadharVerified,
         "is_parent": isParent,
+        "security_amt": securityAmt,
+        "bid_power": bidPower,
+        "bid_use_power": bidUsePower,
+        "bid_hold_power": bidHoldPower,
+        "bid_secure_power": bidSecurePower,
+        "bid_unsecure_power": bidUnsecurePower,
       };
 }
 

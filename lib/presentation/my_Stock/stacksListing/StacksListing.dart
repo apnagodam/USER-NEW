@@ -30,6 +30,8 @@ import 'package:apnagodam/presentation/warehousefacility_screen/model/available_
 import 'package:apnagodam/l10n/app_localizations.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import '../../../core/utils/helper.dart';
+
 class Stackslisting extends ConsumerStatefulWidget {
   const Stackslisting({super.key});
   @override
@@ -87,7 +89,7 @@ class _StackslistingState extends ConsumerState<Stackslisting> {
                         items: (i, d) => data.data ?? [],
                         itemAsString: (StacksTerminalDatum? u) => u?.name ?? "",
                         onChanged: (StacksTerminalDatum? data) {
-                          ref.watch(terminalDropDownProvider.notifier).state =
+                          ref.read(terminalDropDownProvider.notifier).state =
                               data;
                         },
                         filterFn:
@@ -219,7 +221,7 @@ class _StackslistingState extends ConsumerState<Stackslisting> {
                         itemAsString:
                             (StacksCommodityDatum? u) => u?.name ?? "",
                         onChanged: (StacksCommodityDatum? data) {
-                          ref.watch(commodityDropDownProvider.notifier).state =
+                          ref.read(commodityDropDownProvider.notifier).state =
                               data;
                         },
                         filterFn:
@@ -371,6 +373,8 @@ class _StackslistingState extends ConsumerState<Stackslisting> {
                                           ],
                                         ),
                                         onTap: () {
+                                          priceController.clear();
+                                          ref.invalidate(_priceProvder);
                                           showModalBottomSheet(
                                             context: context,
                                             builder:
@@ -387,6 +391,7 @@ class _StackslistingState extends ConsumerState<Stackslisting> {
                                                         title:
                                                             '${AppLocalizations.of(context)!.wantToSell2} - ${ref.watch(commodityDropDownProvider)?.name}',
                                                         onPressedClose: () {
+                                                          priceController.clear();
                                                           ref.invalidate(
                                                             _priceProvder,
                                                           );
@@ -404,158 +409,164 @@ class _StackslistingState extends ConsumerState<Stackslisting> {
                                                             if (formKey
                                                                 .currentState!
                                                                 .validate()) {
-                                                              if (ref.watch(
-                                                                    _priceProvder,
-                                                                  ) ==
-                                                                  "0") {
-                                                                context.errorToast(
-                                                                  'Value can\'t be zero!'
-                                                                      .tr,
+                                                              final enteredPrice = priceController.text.trim();
+                                                              final priceVal = double.tryParse(enteredPrice) ?? 0.0;
+                                                              if (priceVal <= 0) {
+                                                                showErrorAlertDialog(
+                                                                  context,
+                                                                  'Value can\'t be zero!'.tr,
                                                                 );
-                                                              } else {
-                                                                var terms = await ref.watch(
-                                                                  stackSellTermsProvider(
-                                                                    stackId:
-                                                                        '${data.data![index].stackId}',
-                                                                  ).future,
-                                                                );
-                                                                showModalBottomSheet(
-                                                                  context:
-                                                                      context,
-                                                                  builder:
-                                                                      (
-                                                                        bottomsheetContext,
-                                                                      ) => ElevarmDraggableBottomSheet(
-                                                                        title:
-                                                                            AppLocalizations.of(
-                                                                              context,
-                                                                            )!.termsConditions2,
-                                                                        initialChildSize:
-                                                                            1,
-                                                                        onPressedClose:
-                                                                            () =>
-                                                                                Navigator.of(
-                                                                                  bottomsheetContext,
-                                                                                  rootNavigator:
-                                                                                      false,
-                                                                                ).pop(),
-                                                                        children: [
-                                                                          HtmlWidget(
-                                                                            terms['data'].toString(),
-                                                                          ),
-                                                                          Row(
-                                                                            children: [
-                                                                              Expanded(
-                                                                                child: ElevatedButton(
-                                                                                  style: ElevatedButton.styleFrom(
-                                                                                    backgroundColor:
-                                                                                        ColorConstant.red500,
-                                                                                    shape: RoundedRectangleBorder(
-                                                                                      borderRadius: BorderRadius.circular(
-                                                                                        8,
-                                                                                      ),
-                                                                                    ),
-                                                                                  ),
-                                                                                  onPressed: () {
-                                                                                    Navigator.of(
-                                                                                      bottomsheetContext,
-                                                                                      rootNavigator:
-                                                                                          false,
-                                                                                    ).pop();
-                                                                                  },
-                                                                                  child: Text(
-                                                                                    AppLocalizations.of(
-                                                                                      context,
-                                                                                    )!.cancel,
-                                                                                    style: TextStyle(
-                                                                                      color:
-                                                                                          Colors.white,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              SizedBox(
-                                                                                width:
-                                                                                    10,
-                                                                              ),
-                                                                              Expanded(
-                                                                                child: ElevatedButton(
-                                                                                  style: ElevatedButton.styleFrom(
-                                                                                    backgroundColor:
-                                                                                        ColorConstant.maingreen,
-                                                                                    shape: RoundedRectangleBorder(
-                                                                                      borderRadius: BorderRadius.circular(
-                                                                                        8,
-                                                                                      ),
-                                                                                    ),
-                                                                                  ),
-                                                                                  onPressed: () {
-                                                                                    ref
-                                                                                        .watch(
-                                                                                          stackWantToSellProvider(
-                                                                                            commodityId:
-                                                                                                '${ref.watch(commodityDropDownProvider)?.id}',
-                                                                                            price: ref.watch(
-                                                                                              _priceProvder,
-                                                                                            ),
-                                                                                            stackId:
-                                                                                                '${data.data![index].stackId}',
-                                                                                            terminalId:
-                                                                                                '${ref.watch(terminalDropDownProvider)?.id}',
-                                                                                          ).future,
-                                                                                        )
-                                                                                        .then(
-                                                                                          (
-                                                                                            value,
-                                                                                          ) {
-                                                                                            if (value['status'].toString() ==
-                                                                                                "1") {
-                                                                                              Navigator.of(
-                                                                                                bottomsheetContext,
-                                                                                                rootNavigator:
-                                                                                                    false,
-                                                                                              ).pop();
-                                                                                              Get.back();
-                                                                                              context.successToast(
-                                                                                                value['message'].toString(),
-                                                                                              );
-                                                                                              ref
-                                                                                                  .watch(
-                                                                                                    selectedIndex.notifier,
-                                                                                                  )
-                                                                                                  .state = 0;
-                                                                                            } else {
-                                                                                              context.errorToast(
-                                                                                                value['message'].toString(),
-                                                                                              );
-                                                                                              Navigator.of(
-                                                                                                bottomsheetContext,
-                                                                                                rootNavigator:
-                                                                                                    false,
-                                                                                              ).pop();
-                                                                                            }
-                                                                                          },
-                                                                                        );
-                                                                                  },
-                                                                                  child: Text(
-                                                                                    AppLocalizations.of(
-                                                                                      context,
-                                                                                    )!.agreeContinue2,
-                                                                                    style: TextStyle(
-                                                                                      color:
-                                                                                          Colors.white,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                  isScrollControlled:
-                                                                      true,
-                                                                );
+                                                                return;
                                                               }
+                                                              ref.read(_priceProvder.notifier).state = enteredPrice;
+
+                                                              var terms = await ref.read(
+                                                                stackSellTermsProvider(
+                                                                  stackId:
+                                                                      '${data.data![index].stackId}',
+                                                                ).future,
+                                                              );
+                                                              if (!context.mounted) return;
+                                                              showModalBottomSheet(
+                                                                context:
+                                                                    context,
+                                                                builder:
+                                                                    (
+                                                                      termsSheetContext,
+                                                                    ) => ElevarmDraggableBottomSheet(
+                                                                      title:
+                                                                          AppLocalizations.of(
+                                                                            context,
+                                                                          )!.termsConditions2,
+                                                                      initialChildSize:
+                                                                          1,
+                                                                      onPressedClose:
+                                                                          () =>
+                                                                              Navigator.of(
+                                                                                termsSheetContext,
+                                                                                rootNavigator:
+                                                                                    false,
+                                                                              ).pop(),
+                                                                      children: [
+                                                                        HtmlWidget(
+                                                                          terms['data'].toString(),
+                                                                        ),
+                                                                        Row(
+                                                                          children: [
+                                                                            Expanded(
+                                                                              child: ElevatedButton(
+                                                                                style: ElevatedButton.styleFrom(
+                                                                                  backgroundColor:
+                                                                                      ColorConstant.red500,
+                                                                                  shape: RoundedRectangleBorder(
+                                                                                    borderRadius: BorderRadius.circular(
+                                                                                      8,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                                onPressed: () {
+                                                                                  Navigator.of(
+                                                                                    termsSheetContext,
+                                                                                    rootNavigator:
+                                                                                        false,
+                                                                                  ).pop();
+                                                                                },
+                                                                                child: Text(
+                                                                                  AppLocalizations.of(
+                                                                                    context,
+                                                                                  )!.cancel,
+                                                                                  style: const TextStyle(
+                                                                                    color:
+                                                                                        Colors.white,
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width:
+                                                                                  10,
+                                                                            ),
+                                                                            Expanded(
+                                                                              child: ElevatedButton(
+                                                                                style: ElevatedButton.styleFrom(
+                                                                                  backgroundColor:
+                                                                                      ColorConstant.maingreen,
+                                                                                  shape: RoundedRectangleBorder(
+                                                                                    borderRadius: BorderRadius.circular(
+                                                                                      8,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                                onPressed: () async {
+                                                                                  try {
+                                                                                    context.showLoader();
+                                                                                    final value = await ref.read(
+                                                                                      stackWantToSellProvider(
+                                                                                        commodityId:
+                                                                                            '${ref.read(commodityDropDownProvider)?.id}',
+                                                                                        price: ref.read(
+                                                                                          _priceProvder,
+                                                                                        ),
+                                                                                        stackId:
+                                                                                            '${data.data![index].stackId}',
+                                                                                        terminalId:
+                                                                                            '${ref.read(terminalDropDownProvider)?.id}',
+                                                                                      ).future,
+                                                                                    );
+                                                                                    if (!context.mounted) return;
+                                                                                    context.hideloader();
+
+                                                                                    if (value['status'].toString() == "1") {
+                                                                                      Navigator.of(
+                                                                                        termsSheetContext,
+                                                                                        rootNavigator:
+                                                                                            false,
+                                                                                      ).pop();
+                                                                                      Get.back();
+                                                                                      ref.invalidate(myStockProvider);
+                                                                                      ref.invalidate(stackSellListProvider);
+                                                                                      context.successToast(
+                                                                                        value['message'].toString(),
+                                                                                      );
+                                                                                      ref
+                                                                                          .read(
+                                                                                            selectedIndex.notifier,
+                                                                                          )
+                                                                                          .state = 0;
+                                                                                    } else {
+                                                                                      showErrorAlertDialog(
+                                                                                        termsSheetContext,
+                                                                                        value['message']?.toString() ?? 'Something went wrong',
+                                                                                      );
+                                                                                    }
+                                                                                  } catch (e) {
+                                                                                    if (context.mounted) {
+                                                                                      context.hideloader();
+                                                                                      showErrorAlertDialog(
+                                                                                        termsSheetContext,
+                                                                                        'Error: $e',
+                                                                                      );
+                                                                                    }
+                                                                                  }
+                                                                                },
+                                                                                child: Text(
+                                                                                  AppLocalizations.of(
+                                                                                    context,
+                                                                                  )!.agreeContinue2,
+                                                                                  style: const TextStyle(
+                                                                                    color:
+                                                                                        Colors.white,
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                isScrollControlled:
+                                                                    true,
+                                                              );
                                                             }
                                                           },
                                                         ),
@@ -619,6 +630,7 @@ class _StackslistingState extends ConsumerState<Stackslisting> {
                                                           Form(
                                                             key: formKey,
                                                             child: CommonTextField(
+                                                              controller: priceController,
                                                               inputType:
                                                                   TextInputType
                                                                       .number,
@@ -634,19 +646,11 @@ class _StackslistingState extends ConsumerState<Stackslisting> {
                                                               onEditComplete: (
                                                                 value,
                                                               ) {
-                                                                if (value
-                                                                        .length >
-                                                                    3) {
-                                                                  debouncer.call(
-                                                                    () async {
-                                                                      ref
-                                                                          .watch(
-                                                                            _priceProvder.notifier,
-                                                                          )
-                                                                          .state = value;
-                                                                    },
-                                                                  );
-                                                                }
+                                                                ref
+                                                                    .read(
+                                                                      _priceProvder.notifier,
+                                                                    )
+                                                                    .state = value;
                                                               },
                                                             ),
                                                           ),
@@ -829,7 +833,7 @@ class _StackslistingState extends ConsumerState<Stackslisting> {
       items: (s, t) => [],
       itemAsString: (StacksTerminalDatum? u) => u?.name ?? "",
       onChanged: (StacksTerminalDatum? data) {
-        ref.watch(terminalDropDownProvider.notifier).state = data;
+        ref.read(terminalDropDownProvider.notifier).state = data;
       },
       filterFn:
           (user, filter) => user?.userFilterByCreationDate(filter) ?? false,

@@ -3471,7 +3471,7 @@ class AppLocalizationsKn extends AppLocalizations {
   String get purchaseOrder2 => 'Purchase Order';
 
   @override
-  String get purchaseOrderTechniqueSystem => 'Purchase Order Technique System';
+  String get purchaseOrderTechniqueSystem => 'Purchase Order';
 
   @override
   String get qualityClaimPerQtl => 'Quality Claim Per Qtl';

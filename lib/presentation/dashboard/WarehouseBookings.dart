@@ -27,7 +27,7 @@ class _WarehousebookingsState extends ConsumerState<Warehousebookings> {
       appBar:
           widget.isAppBarVisible == true
               ? AppBar(
-                title: Text(AppLocalizations.of(context)!.warehouseBookings2),
+                title: Text(AppLocalizations.of(context)!.qualityConsent),
                 flexibleSpace: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -60,7 +60,7 @@ class _WarehousebookingsState extends ConsumerState<Warehousebookings> {
       child: IntrinsicHeight(
         child: Row(
           children: [
-            _headerCell(AppLocalizations.of(context)!.truckDriver2),
+            _headerCell(AppLocalizations.of(context)!.msgTrucknynu),
             _verticalDivider(),
             _headerCell(AppLocalizations.of(context)!.msgGatepastwo),
             _verticalDivider(),

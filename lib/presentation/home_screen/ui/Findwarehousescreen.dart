@@ -250,7 +250,7 @@ class _FindwarehousescreenState extends ConsumerState<Findwarehousescreen>
                                     duration: const Duration(milliseconds: 250),
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
-                                      vertical: 8,
+                                      vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
                                       gradient:

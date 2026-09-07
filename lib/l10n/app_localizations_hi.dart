@@ -195,7 +195,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get msgPurchase => 'मेरी खरीद';
 
   @override
-  String get msgRepayment => 'पुनर्भुगतान';
+  String get msgRepayment => 'रीपेमेंट';
 
   @override
   String get msgMandiBhav => 'ऑनलाइन मंडी भाव ';
@@ -219,7 +219,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get msgMycommdodity => 'मेरा अनाज';
 
   @override
-  String get msgTerminalname => 'गोदाम  ';
+  String get msgTerminalname => 'टर्मिनल नाम';
 
   @override
   String get msgCommodity => 'अनाज';
@@ -469,19 +469,19 @@ class AppLocalizationsHi extends AppLocalizations {
   String get msgTerminal => 'गोदाम ';
 
   @override
-  String get mstOutstandingamount => 'बकाया राशि';
+  String get mstOutstandingamount => 'आउटस्टैंडिंग अमाउंट';
 
   @override
-  String get msgPendingamount => 'बकाया राशि';
+  String get msgPendingamount => 'पेंडिंग अमाउंट';
 
   @override
-  String get msgRealamount => 'गोदाम किराया ';
+  String get msgRealamount => 'रेंट अमाउंट';
 
   @override
-  String get msgLoanamount => 'बकाया ऋण ';
+  String get msgLoanamount => 'लोन अमाउंट';
 
   @override
-  String get msgInterestamount => 'बकाया ब्याज ';
+  String get msgInterestamount => 'इंटरेस्ट अमाउंट';
 
   @override
   String get msgHousename => 'गोदाम  नाम';
@@ -1761,7 +1761,7 @@ class AppLocalizationsHi extends AppLocalizations {
       '31 मार्च से पहले धान वेयरहाउस से उठाना अनिवार्य है।';
 
   @override
-  String get holdSummary => 'होल्ड रिपोर्ट';
+  String get holdSummary => 'होल्ड समरी';
 
   @override
   String get loadCharge => 'लोड शुल्क';
@@ -1773,7 +1773,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get entryLoad => 'एंट्री लोड';
 
   @override
-  String get purchaseOrderList => 'परचेज़ ऑर्डर सूची';
+  String get purchaseOrderList => 'परचेज आर्डर लिस्ट';
 
   @override
   String get poNo => 'परचेज ऑर्डर नं.';
@@ -2243,7 +2243,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get qtyQtl => 'मात्रा\n(क्विंटल)';
 
   @override
-  String get qualityVarianceCalculator => 'गुणवत्ता क्लेम निर्धारण ';
+  String get qualityVarianceCalculator => 'क्वालिटी वेरिएंस कैलकुलेटर';
 
   @override
   String get quantity => 'मात्रा';
@@ -2764,7 +2764,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get contactEmail => 'संपर्क ईमेल';
 
   @override
-  String get createPurchaseOrder => 'खरीद आदेश बनाएं';
+  String get createPurchaseOrder => 'क्रिएट परचेज आर्डर';
 
   @override
   String get createTripId2 => 'ट्रिप आईडी बनाएं';
@@ -3255,7 +3255,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get msgViewgraph3 => 'ग्राफ देखें';
 
   @override
-  String get mstOutstandingamount3 => 'बकाया राशि';
+  String get mstOutstandingamount3 => 'आउटस्टैंडिंग अमाउंट';
 
   @override
   String get myBusinessProfile => 'मेरा व्यापार प्रोफाइल';
@@ -3471,7 +3471,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get purchaseOrder2 => 'खरीद आदेश';
 
   @override
-  String get purchaseOrderTechniqueSystem => 'खरीद आदेश तकनीकी प्रणाली';
+  String get purchaseOrderTechniqueSystem => 'परचेज आर्डर';
 
   @override
   String get qualityClaimPerQtl => 'प्रति क्विंटल गुणवत्ता दावा';

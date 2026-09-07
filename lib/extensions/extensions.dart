@@ -1,4 +1,5 @@
 import 'package:apnagodam/core/utils/image_constant.dart';
+import 'package:apnagodam/core/utils/helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -51,11 +52,7 @@ extension DrivingLicenseValidator on String {
 }
 
 extension toast on BuildContext {
-  errorToast(String text) => Fluttertoast.showToast(
-      // optional if you use ToastificationWrapper
-      msg: text,
-      backgroundColor: Colors.red,
-      toastLength: Toast.LENGTH_LONG);
+  errorToast(String text) => showErrorAlertDialog(this, text);
 
   successToast(String text) => Fluttertoast.showToast(
       msg: text, backgroundColor: Colors.green, toastLength: Toast.LENGTH_LONG);

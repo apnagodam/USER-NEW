@@ -38,6 +38,17 @@ class Bidding extends ConsumerStatefulWidget {
 class _BiddingState extends ConsumerState<Bidding> {
   TextEditingController yourpricecontroller = TextEditingController();
 
+  void _refreshData() {
+    ref.invalidate(getBiddingDataProvider(
+        inventoryId: widget.sellerID?.toString(), status: widget.status));
+    if (widget.id != null) {
+      ref.invalidate(getBiddingDataProvider(
+          inventoryId: widget.id?.toString(), status: widget.status));
+    }
+    ref.invalidate(getMandiBhavProvider);
+    ref.invalidate(userDetailsProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,11 +60,23 @@ class _BiddingState extends ConsumerState<Bidding> {
           AppLocalizations.of(context)!.bidding,
         ),
         leadingWidth: 40,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: () {
+              _refreshData();
+              Fluttertoast.showToast(
+                msg: "Refreshing...",
+                backgroundColor: ColorConstant.maingreen,
+              );
+            },
+          ),
+        ],
       ),
       body: RefreshIndicator(
         color: ColorConstant.maingreen,
-        onRefresh: () {
-          return Future(() => ref.invalidate(getBiddingDataProvider));
+        onRefresh: () async {
+          _refreshData();
         },
         child: ref
             .watch(getBiddingDataProvider(
@@ -433,8 +456,8 @@ class _BiddingState extends ConsumerState<Bidding> {
                                                                onPressed: () {
                                                                  Get.back(); // Close dialog
                                                                  Get.back(); // Go back to list screen
-                                                                 ref.invalidate(getBiddingDataProvider(inventoryId: widget.id, status: widget.status));
-                                                                 ref.invalidate(getMandiBhavProvider);
+                                                                 _refreshData();
+                                                                 yourpricecontroller.clear();
                                                                },
                                                                child: Text(
                                                                  "OK",
@@ -444,8 +467,8 @@ class _BiddingState extends ConsumerState<Bidding> {
                                                            );
                                                          } else {
                                                            Get.back(); // Close sheet
-                                                           ref.invalidate(getBiddingDataProvider(inventoryId: widget.id, status: widget.status));
-                                                           ref.invalidate(getMandiBhavProvider);
+                                                           _refreshData();
+                                                           yourpricecontroller.clear();
                                                            String displayMsg = apiMsg;
                                                            if (isHindi && (apiMsg == "Your Bid Successfully Submitted." || apiMsg.isEmpty)) {
                                                              displayMsg = "आपकी बोली सफलतापूर्वक जमा हो गई है।";
@@ -454,32 +477,19 @@ class _BiddingState extends ConsumerState<Bidding> {
                                                          }
                                                        } else if (value.status ==
                                                            "0") {
-                                                         Get.back();
-                                                         Get.rawSnackbar(
-                                                           message:
-                                                               value.message,
-                                                           duration:
-                                                               const Duration(
-                                                                   seconds: 2),
-                                                           backgroundColor:
-                                                               ColorConstant
-                                                                   .red500,
-                                                         );
+                                                         showErrorAlertDialog(
+                                                            context,
+                                                            value.message ?? 'Failed to update bid',
+                                                          );
                                                        } else {
-                                                         Get.rawSnackbar(
-                                                           message:
-                                                               value.message,
-                                                           duration:
-                                                               const Duration(
-                                                                   seconds: 2),
-                                                           backgroundColor:
-                                                               ColorConstant
-                                                                   .red500,
-                                                         );
+                                                         showErrorAlertDialog(
+                                                            context,
+                                                            value.message ?? 'Failed to update bid',
+                                                          );
                                                        }
                                                      }).onError((e, s) {
-                                                       errorBottomSheet(
-                                                           context, "$e");
+                                                       showErrorAlertDialog(
+                                                            context, "$e");
                                                      });
                                                    } else {
                                                      await ref
@@ -525,8 +535,8 @@ class _BiddingState extends ConsumerState<Bidding> {
                                                                onPressed: () {
                                                                  Get.back(); // Close dialog
                                                                  Get.back(); // Go back to list screen
-                                                                 ref.invalidate(getBiddingDataProvider(inventoryId: widget.id, status: widget.status));
-                                                                 ref.invalidate(getMandiBhavProvider);
+                                                                 _refreshData();
+                                                                 yourpricecontroller.clear();
                                                                },
                                                                child: Text(
                                                                  "OK",
@@ -536,52 +546,37 @@ class _BiddingState extends ConsumerState<Bidding> {
                                                            );
                                                          } else {
                                                            Get.back(); // Close sheet
-                                                           ref.invalidate(getBiddingDataProvider(inventoryId: widget.id, status: widget.status));
-                                                           ref.invalidate(getMandiBhavProvider);
+                                                           _refreshData();
+                                                           yourpricecontroller.clear();
                                                            String displayMsg = apiMsg;
                                                            if (isHindi && (apiMsg == "Your Bid Successfully Submitted." || apiMsg.isEmpty)) {
                                                              displayMsg = "आपकी बोली सफलतापूर्वक जमा हो गई है।";
                                                            }
                                                            Fluttertoast.showToast(msg: displayMsg, toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.maingreen);
                                                          }
-                                                       } else if (value[
-                                                               'status'] ==
+                                                       } else if (value['status'].toString() ==
                                                            "0") {
-                                                         Fluttertoast.showToast(
-                                                             msg:
-                                                                 value['message']
-                                                                     .toString(),
-                                                             toastLength: Toast
-                                                                 .LENGTH_LONG,
-                                                             backgroundColor:
-                                                                 ColorConstant
-                                                                     .red500);
+                                                         showErrorAlertDialog(
+                                                            context,
+                                                            value['message'] ?? 'Failed to place bid',
+                                                          );
                                                        } else {
-                                                         Fluttertoast.showToast(
-                                                             msg:
-                                                                 value['message']
-                                                                     .toString(),
-                                                             toastLength: Toast
-                                                                 .LENGTH_LONG,
-                                                             backgroundColor:
-                                                                 ColorConstant
-                                                                     .red500);
+                                                         showErrorAlertDialog(
+                                                            context,
+                                                            value['message'] ?? 'Failed to place bid',
+                                                          );
                                                        }
                                                      }).onError((e, s) {
-                                                       errorBottomSheet(
-                                                           context, "$e");
+                                                       showErrorAlertDialog(
+                                                            context, "$e");
                                                      });
                                                   }
                                                 } else {
-                                                  Get.rawSnackbar(
-                                                      message:
-                                                          AppLocalizations.of(
-                                                                  context)!
-                                                              .bidError,
-                                                      duration: const Duration(
-                                                          seconds: 2),
-                                                      backgroundColor:
-                                                          ColorConstant.red500);
+                                                  showErrorAlertDialog(
+                                                      context,
+                                                      AppLocalizations.of(
+                                                              context)!
+                                                          .bidError);
                                                 }
                                               },
                                               child: Container(
@@ -1069,77 +1064,175 @@ class _BiddingState extends ConsumerState<Bidding> {
                                                                              () async {
                                                                            if (yourpricecontroller.text.isNotEmpty &&
                                                                                yourpricecontroller.text != "0.0") {
-                                                                             await ref
-                                                                                 .watch(addBidProvider(
-                                                                               inventoryId: data.inventoryInfo?.id.toString(),
-                                                                               price: yourpricecontroller.text,
-                                                                             ).future)
-                                                                                 .then((value) {
-                                                                                if (value['status'] == "1") {
-                                                                                  bool isHindi = Get.locale?.languageCode == 'hi' || Localizations.localeOf(context).languageCode == 'hi';
-                                                                                  String apiMsg = (value['message'] ?? "").toString();
-                                                                                  bool isDealCompleted = apiMsg.toLowerCase().contains("deal successfully completed") || apiMsg.toLowerCase().contains("congratulations");
-                                                                                  if (isDealCompleted) {
-                                                                                    Get.back(); // Close sheet FIRST
-                                                                                    String displayMsg = apiMsg;
-                                                                                    if (isHindi) {
-                                                                                      displayMsg = "बधाई हो! सौदा सफलतापूर्वक पूरा हुआ।";
-                                                                                    }
-                                                                                    Get.defaultDialog(
-                                                                                      barrierDismissible: false,
-                                                                                      title: "",
-                                                                                      titleStyle: const TextStyle(fontSize: 0),
-                                                                                      content: Column(
-                                                                                        children: [
-                                                                                          Icon(Icons.check_circle, color: ColorConstant.maingreen, size: 60),
-                                                                                          const SizedBox(height: 10),
-                                                                                          Text(
-                                                                                            displayMsg,
-                                                                                            textAlign: TextAlign.center,
-                                                                                            style: TextStyle(
-                                                                                              fontSize: Adaptive.sp(16),
-                                                                                              fontWeight: FontWeight.bold,
-                                                                                            ),
-                                                                                          ),
-                                                                                        ],
-                                                                                      ),
-                                                                                      confirm: ElevatedButton(
-                                                                                        style: AppStyle.buttonStyle,
-                                                                                        onPressed: () {
-                                                                                          Get.back(); // Close dialog
-                                                                                          Get.back(); // Go back to list screen
-                                                                                          ref.invalidate(getBiddingDataProvider(inventoryId: widget.id, status: widget.status));
-                                                                                          ref.invalidate(getMandiBhavProvider);
-                                                                                        },
-                                                                                        child: Text(
-                                                                                          "OK",
-                                                                                          style: TextStyle(color: Colors.white, fontSize: Adaptive.sp(16)),
-                                                                                        ),
-                                                                                      ),
-                                                                                    );
-                                                                                  } else {
-                                                                                    Get.back(); // Close sheet
-                                                                                    ref.invalidate(getBiddingDataProvider(inventoryId: widget.id, status: widget.status));
-                                                                                    ref.invalidate(getMandiBhavProvider);
-                                                                                    String displayMsg = apiMsg;
-                                                                                    if (isHindi && (apiMsg == "Your Bid Successfully Submitted." || apiMsg.isEmpty)) {
-                                                                                      displayMsg = "आपकी बोली सफलतापूर्वक जमा हो गई है।";
-                                                                                    }
-                                                                                    Fluttertoast.showToast(msg: displayMsg, toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.maingreen);
-                                                                                  }
-                                                                                } else if (value['status'] == "0") {
-                                                                                 Fluttertoast.showToast(msg: value['message'].toString(), toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.red500);
-                                                                               } else {
-                                                                                 Fluttertoast.showToast(msg: value['message'].toString(), toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.red500);
-                                                                               }
-                                                                             }).onError((e, s) {
-                                                                               errorBottomSheet(context, "$e");
-                                                                             });
+                                                                             if (ref
+                                                           .read(
+                                                               sharedUtilityProvider)
+                                                           .getUser()
+                                                           ?.userId
+                                                           .toString() ==
+                                                       widget.sellerID
+                                                           .toString()) {
+                                                     await ref
+                                                         .read(
+                                                             updateBidProvider(
+                                                       inventoryId: data
+                                                           .inventoryInfo?.id
+                                                           .toString(),
+                                                       price: yourpricecontroller
+                                                           .text,
+                                                     ).future)
+                                                         .then((value) {
+                                                        if (value.status.toString() == "1") {
+                                                          bool isHindi = Get.locale?.languageCode == 'hi' || Localizations.localeOf(context).languageCode == 'hi';
+                                                          String apiMsg = (value.message ?? "").toString();
+                                                          bool isDealCompleted = apiMsg.toLowerCase().contains("deal successfully completed") || apiMsg.toLowerCase().contains("congratulations");
+                                                          if (isDealCompleted) {
+                                                            Get.back(); // Close sheet FIRST
+                                                            String displayMsg = apiMsg;
+                                                            if (isHindi) {
+                                                              displayMsg = "बधाई हो! सौदा सफलतापूर्वक पूरा हुआ।";
+                                                            }
+                                                            Get.defaultDialog(
+                                                              barrierDismissible: false,
+                                                              title: "",
+                                                              titleStyle: const TextStyle(fontSize: 0),
+                                                              content: Column(
+                                                                children: [
+                                                                  Icon(Icons.check_circle, color: ColorConstant.maingreen, size: 60),
+                                                                  const SizedBox(height: 10),
+                                                                  Text(
+                                                                    displayMsg,
+                                                                    textAlign: TextAlign.center,
+                                                                    style: TextStyle(
+                                                                      fontSize: Adaptive.sp(16),
+                                                                      fontWeight: FontWeight.bold,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              confirm: ElevatedButton(
+                                                                style: AppStyle.buttonStyle,
+                                                                onPressed: () {
+                                                                  Get.back(); // Close dialog
+                                                                  Get.back(); // Go back to list screen
+                                                                  _refreshData();
+                                                                  yourpricecontroller.clear();
+                                                                },
+                                                                child: Text(
+                                                                  "OK",
+                                                                  style: TextStyle(color: Colors.white, fontSize: Adaptive.sp(16)),
+                                                                ),
+                                                              ),
+                                                            );
+                                                          } else {
+                                                            Get.back(); // Close sheet
+                                                            _refreshData();
+                                                            yourpricecontroller.clear();
+                                                            String displayMsg = apiMsg;
+                                                            if (isHindi && (apiMsg == "Your Bid Successfully Submitted." || apiMsg.isEmpty)) {
+                                                              displayMsg = "आपकी बोली सफलतापूर्वक जमा हो गई है।";
+                                                            }
+                                                            Fluttertoast.showToast(msg: displayMsg, toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.maingreen);
+                                                          }
+                                                        } else if (value.status.toString() ==
+                                                            "0") {
+                                                          showErrorAlertDialog(
+                                                             context,
+                                                             value.message ?? 'Failed to update bid',
+                                                           );
+                                                        } else {
+                                                          showErrorAlertDialog(
+                                                             context,
+                                                             value.message ?? 'Failed to update bid',
+                                                           );
+                                                        }
+                                                      }).onError((e, s) {
+                                                        showErrorAlertDialog(
+                                                             context, "$e");
+                                                      });
+                                                    } else {
+                                                      await ref
+                                                          .read(addBidProvider(
+                                                        inventoryId: data
+                                                            .inventoryInfo?.id
+                                                            .toString(),
+                                                        price: yourpricecontroller
+                                                            .text,
+                                                      ).future)
+                                                          .then((value) {
+                                                        if (value['status'].toString() ==
+                                                            "1") {
+                                                          bool isHindi = Get.locale?.languageCode == 'hi' || Localizations.localeOf(context).languageCode == 'hi';
+                                                          String apiMsg = (value['message'] ?? "").toString();
+                                                          bool isDealCompleted = apiMsg.toLowerCase().contains("deal successfully completed") || apiMsg.toLowerCase().contains("congratulations");
+                                                          if (isDealCompleted) {
+                                                            Get.back(); // Close sheet FIRST
+                                                            String displayMsg = apiMsg;
+                                                            if (isHindi) {
+                                                              displayMsg = "बधाई हो! सौदा सफलतापूर्वक पूरा हुआ।";
+                                                            }
+                                                            Get.defaultDialog(
+                                                              barrierDismissible: false,
+                                                              title: "",
+                                                              titleStyle: const TextStyle(fontSize: 0),
+                                                              content: Column(
+                                                                children: [
+                                                                  Icon(Icons.check_circle, color: ColorConstant.maingreen, size: 60),
+                                                                  const SizedBox(height: 10),
+                                                                  Text(
+                                                                    displayMsg,
+                                                                    textAlign: TextAlign.center,
+                                                                    style: TextStyle(
+                                                                      fontSize: Adaptive.sp(16),
+                                                                      fontWeight: FontWeight.bold,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              confirm: ElevatedButton(
+                                                                style: AppStyle.buttonStyle,
+                                                                onPressed: () {
+                                                                  Get.back(); // Close dialog
+                                                                  Get.back(); // Go back to list screen
+                                                                  _refreshData();
+                                                                  yourpricecontroller.clear();
+                                                                },
+                                                                child: Text(
+                                                                  "OK",
+                                                                  style: TextStyle(color: Colors.white, fontSize: Adaptive.sp(16)),
+                                                                ),
+                                                              ),
+                                                            );
+                                                          } else {
+                                                            Get.back(); // Close sheet
+                                                            _refreshData();
+                                                            yourpricecontroller.clear();
+                                                            String displayMsg = apiMsg;
+                                                            if (isHindi && (apiMsg == "Your Bid Successfully Submitted." || apiMsg.isEmpty)) {
+                                                              displayMsg = "आपकी बोली सफलतापूर्वक जमा हो गई है।";
+                                                            }
+                                                            Fluttertoast.showToast(msg: displayMsg, toastLength: Toast.LENGTH_LONG, backgroundColor: ColorConstant.maingreen);
+                                                          }
+                                                        } else if (value[
+                                                                'status'].toString() ==
+                                                            "0") {
+                                                          showErrorAlertDialog(
+                                                             context,
+                                                             value['message'] ?? 'Failed to place bid',
+                                                           );
+                                                        } else {
+                                                          showErrorAlertDialog(
+                                                             context,
+                                                             value['message'] ?? 'Failed to place bid',
+                                                           );
+                                                        }
+                                                      }).onError((e, s) {
+                                                        showErrorAlertDialog(
+                                                             context, "$e");
+                                                      });
+                                                    }
                                                                            } else {
-                                                                             Get.rawSnackbar(
-                                                                                 message: AppLocalizations.of(context)!.bidError,
-                                                                                 duration: const Duration(seconds: 2),
-                                                                                 backgroundColor: ColorConstant.red500);
+                                                                             showErrorAlertDialog(context, AppLocalizations.of(context)!.bidError);
                                                                            }
                                                                          },
                                                                         child:

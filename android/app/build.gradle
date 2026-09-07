@@ -61,7 +61,7 @@ android {
         release {
             keyAlias 'apnagodam'
             keyPassword 'apnagodam'
-            storeFile file('D:/ApnagodamUser-optimisations/keystoe_file.jks')
+            storeFile file("${rootDir}/../keystoe_file.jks")
             storePassword 'apnagodam'
             v1SigningEnabled true
             v2SigningEnabled true
@@ -69,7 +69,7 @@ android {
         debug {
             keyAlias 'apnagodam'
             keyPassword 'apnagodam'
-            storeFile file('D:/ApnagodamUser-optimisations/keystoe_file.jks')
+            storeFile file("${rootDir}/../keystoe_file.jks")
             storePassword 'apnagodam'
             v1SigningEnabled true
             v2SigningEnabled true

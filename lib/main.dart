@@ -16,6 +16,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -53,6 +54,45 @@ void notificationTapBackground(NotificationResponse response) {
 //   }
 // }
 
+Future<void> _initFCM() async {
+  try {
+    if (GetPlatform.isIOS) {
+      String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+      if (apnsToken == null) {
+        await Future.delayed(const Duration(seconds: 2));
+        apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+      }
+      if (apnsToken != null) {
+        await FirebaseMessaging.instance.subscribeToTopic('all');
+      }
+    } else {
+      await FirebaseMessaging.instance.subscribeToTopic('all');
+    }
+  } catch (e) {
+    debugPrint("FCM initialization error: $e");
+  }
+}
+
+Future<void> _checkAppUpdate() async {
+  if (Platform.isAndroid && !kDebugMode) {
+    try {
+      final updateInfo = await InAppUpdate.checkForUpdate();
+      if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable) {
+        if (updateInfo.immediateUpdateAllowed) {
+          await InAppUpdate.performImmediateUpdate();
+        } else if (updateInfo.flexibleUpdateAllowed) {
+          final result = await InAppUpdate.startFlexibleUpdate();
+          if (result == AppUpdateResult.success) {
+            await InAppUpdate.completeFlexibleUpdate();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("InAppUpdate error: $e");
+    }
+  }
+}
+
 void main() async {
   // HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,58 +100,29 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform, // No need to add this line
   );
 
-  try {
-    if (GetPlatform.isIOS) {
-      String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-      if (apnsToken == null) {
-        await Future.delayed(Duration(seconds: 2));
-        apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-      }
-      if (apnsToken != null) {
-        // Now safe to subscribe or get FCM token
-        await FirebaseMessaging.instance.subscribeToTopic('all');
-      }
-    } else {
-      await FirebaseMessaging.instance.subscribeToTopic('all');
-    }
-  } catch (e) {
-    print(e.toString());
-  }
+  _initFCM();
 
   FlutterError.onError = (errorDetails) {
-    FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    if (!kDebugMode) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    } else {
+      FlutterError.dumpErrorToConsole(errorDetails);
+    }
   };
   // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
   PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    if (!kDebugMode) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
+    } else {
+      debugPrint("Async error: $error");
+    }
     return true;
   };
 
   final sharedPreferences = await SharedPreferences.getInstance();
 
   ElevarmFontFamilies.init();
-  try {
-    InAppUpdate.checkForUpdate().then((updateInfo) {
-      if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable) {
-        if (updateInfo.immediateUpdateAllowed) {
-          // Perform immediate update
-          InAppUpdate.performImmediateUpdate().then((appUpdateResult) {
-            if (appUpdateResult == AppUpdateResult.success) {
-              //App Update successful
-            }
-          });
-        } else if (updateInfo.flexibleUpdateAllowed) {
-          //Perform flexible update
-          InAppUpdate.startFlexibleUpdate().then((appUpdateResult) {
-            if (appUpdateResult == AppUpdateResult.success) {
-              //App Update successful
-              InAppUpdate.completeFlexibleUpdate();
-            }
-          });
-        }
-      }
-    });
-  } catch (e) {}
+  _checkAppUpdate();
 
   // Get saved language code from SharedPreferences
   String? langCode = sharedPreferences.getString('lang');
@@ -164,7 +175,7 @@ class _MyAppState extends ConsumerState<MyApp> {
     final deviceInfo = DeviceInfoPlugin();
     final androidInfo = await deviceInfo.androidInfo;
 
-    if (ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn) {
+    if (ref.read(authProvider).value == AuthStatus.loggedIn) {
       final userData = await ref.watch(userDetailsProvider.future);
       if (userData.userDetails != null) {
         await _updateDeviceId(androidInfo.id, userData);

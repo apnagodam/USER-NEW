@@ -59,4 +59,14 @@ class SbtTerminalDatum {
         "id": id,
         "warehouse_name": warehouseName,
       };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SbtTerminalDatum &&
+          runtimeType == other.runtimeType &&
+          id.toString() == other.id.toString();
+
+  @override
+  int get hashCode => id.toString().hashCode;
 }

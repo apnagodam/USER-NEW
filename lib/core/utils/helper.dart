@@ -90,14 +90,22 @@ Future<void> SaveTOGalleryAndOpen(
   }
 }
 
-String formatErrorMessage(BuildContext context, dynamic rawMessage) {
+String formatErrorMessage(BuildContext? context, dynamic rawMessage) {
   if (rawMessage == null) return 'Something went wrong';
   String msg = rawMessage.toString();
 
   bool isHindi = false;
   try {
-    isHindi = (Localizations.localeOf(context).languageCode == 'hi');
+    if (context != null) {
+      isHindi = (Localizations.localeOf(context).languageCode == 'hi');
+    }
   } catch (_) {}
+
+  if (!isHindi) {
+    try {
+      isHindi = (getx.Get.locale?.languageCode == 'hi');
+    } catch (_) {}
+  }
 
   if (!isHindi) {
     return msg;
@@ -112,6 +120,17 @@ String formatErrorMessage(BuildContext context, dynamic rawMessage) {
     String minPrice = match.group(1) ?? '';
     String maxPrice = match.group(2) ?? '';
     return "आपके द्वारा दर्ज किया गया मूल्य इस जिले के लिए लागू नहीं है। कृपया ₹ $minPrice और ₹ $maxPrice के बीच का मूल्य दर्ज करें।";
+  }
+
+  RegExp commodityPriceRegex = RegExp(
+    r'Commodity price entered by you is not correct,?\s*please enter the correct price\.?\s*Minimum Price\s*:\s*([\d\.\,]+)\s*and\s*Maximum Price\s*:\s*([\d\.\,]+)',
+    caseSensitive: false,
+  );
+  var matchCommodity = commodityPriceRegex.firstMatch(msg);
+  if (matchCommodity != null) {
+    String minPrice = matchCommodity.group(1) ?? '';
+    String maxPrice = matchCommodity.group(2) ?? '';
+    return "आपके द्वारा दर्ज किया गया मूल्य सही नहीं है, कृपया सही मूल्य दर्ज करें। न्यूनतम मूल्य : $minPrice और अधिकतम मूल्य : $maxPrice";
   }
 
   if (msg.toLowerCase().contains("user don't have suffcient balance") ||
@@ -129,55 +148,118 @@ String formatErrorMessage(BuildContext context, dynamic rawMessage) {
   return msg;
 }
 
-void showErrorAlertDialog(BuildContext context, dynamic rawMessage, {VoidCallback? onOk}) {
+void showErrorAlertDialog(BuildContext? context, dynamic rawMessage, {VoidCallback? onOk}) {
   String message = formatErrorMessage(context, rawMessage);
 
-  getx.Get.defaultDialog(
-    title: "Error",
-    radius: 8,
-    barrierDismissible: false,
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          message,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: Adaptive.sp(17),
+  BuildContext? targetContext = context;
+  if (targetContext == null || !targetContext.mounted) {
+    targetContext = getx.Get.overlayContext ?? getx.Get.context;
+  }
+
+  if (targetContext != null && targetContext.mounted) {
+    showDialog(
+      context: targetContext,
+      barrierDismissible: false,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Center(
+          child: Text(
+            "Error",
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 10),
-        Row(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: ElevarmPrimaryButton.text(
-                text: 'OK',
-                buttonThemeData: ElevarmPrimaryButtonThemeData(
-                  primaryColor: Colors.red.shade700,
-                ),
-                onPressed: () {
-                  getx.Get.back();
-                  if (onOk != null) {
-                    onOk();
-                  }
-                },
+            Text(
+              message,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: Adaptive.sp(16),
               ),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(width: 5),
-            Expanded(
-              child: ElevarmPrimaryButton.text(
-                text: 'Contact IVR',
-                buttonThemeData: ElevarmPrimaryButtonThemeData(
-                  primaryColor: ColorConstant.maingreen,
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevarmPrimaryButton.text(
+                    text: 'OK',
+                    buttonThemeData: ElevarmPrimaryButtonThemeData(
+                      primaryColor: Colors.red.shade700,
+                    ),
+                    onPressed: () {
+                      Navigator.of(dialogCtx).pop();
+                      if (onOk != null) {
+                        onOk();
+                      }
+                    },
+                  ),
                 ),
-                onPressed: () => CallLaunch('tel:+917733901154'),
-              ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevarmPrimaryButton.text(
+                    text: 'Contact IVR',
+                    buttonThemeData: ElevarmPrimaryButtonThemeData(
+                      primaryColor: ColorConstant.maingreen,
+                    ),
+                    onPressed: () => CallLaunch('tel:+917733901154'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-      ],
-    ),
-  );
+      ),
+    );
+  } else {
+    getx.Get.defaultDialog(
+      title: "Error",
+      radius: 8,
+      barrierDismissible: false,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            message,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: Adaptive.sp(17),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: ElevarmPrimaryButton.text(
+                  text: 'OK',
+                  buttonThemeData: ElevarmPrimaryButtonThemeData(
+                    primaryColor: Colors.red.shade700,
+                  ),
+                  onPressed: () {
+                    getx.Get.back();
+                    if (onOk != null) {
+                      onOk();
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: ElevarmPrimaryButton.text(
+                  text: 'Contact IVR',
+                  buttonThemeData: ElevarmPrimaryButtonThemeData(
+                    primaryColor: ColorConstant.maingreen,
+                  ),
+                  onPressed: () => CallLaunch('tel:+917733901154'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 

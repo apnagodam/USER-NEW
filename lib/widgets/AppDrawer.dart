@@ -2,12 +2,12 @@ import 'package:apnagodam/auth_provider/AuthProvider.dart';
 import 'package:apnagodam/core/constants/constants.dart';
 import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'package:apnagodam/core/utils/color_constant.dart';
-import 'package:apnagodam/core/utils/helper.dart';
 import 'package:apnagodam/core/utils/image_constant.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
 import 'package:apnagodam/presentation/BusinessProfile/BusinessProfile.dart';
 import 'package:apnagodam/presentation/BusinessProfile/BusinessProfileListing.dart';
 import 'package:apnagodam/presentation/Feedback/Feedbackscreen.dart';
+import 'package:apnagodam/presentation/bid_power/bid_power_screen.dart';
 import 'package:apnagodam/presentation/GstProfile/GstListingScreen.dart';
 import 'package:apnagodam/presentation/GstProfile/GstProfileScreen.dart';
 import 'package:apnagodam/presentation/MandiTaxProfile/MandiTaxListingScreen.dart';
@@ -233,7 +233,7 @@ class AppDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoggedIn =
-        ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn;
+        ref.watch(authProvider).value == AuthStatus.loggedIn;
     final isHindi = Get.locale?.languageCode == 'hi';
 
     return Drawer(
@@ -345,26 +345,6 @@ class AppDrawer extends ConsumerWidget {
                                               ],
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: actionButton(
-                                              onTap: () => Get.to(
-                                                Wallet(
-                                                  isAppBarVisible: true,
-                                                ),
-                                              ),
-                                              icon: ImageConstant.wallet,
-                                              label: AppLocalizations.of(
-                                                context,
-                                              )!
-                                                  .wallet,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
                                         ],
                                       ),
                                     ],
@@ -571,7 +551,59 @@ class AppDrawer extends ConsumerWidget {
 
               if (isLoggedIn) const SizedBox(height: 10),
 
-              // 6. Profiling Expansion Tile
+              // 6. Bid Power
+              if (isLoggedIn)
+                InkWell(
+                  onTap: () {
+                    if (ref.watch(authProvider).value ==
+                        AuthStatus.loggedIn) {
+                      Get.to(const BidPowerScreen());
+                    } else {
+                      showLoginBottomsheet(context);
+                    }
+                  },
+                  onLongPress: () => _showFeatureInfo(
+                    context: context,
+                    titleHi: 'बिड पावर (Bid Power)',
+                    titleEn: 'Bid Power & Trade Limit',
+                    descHi:
+                        'अपनी उपलब्ध बिड पावर, उपयोग की गई लिमिट, सिक्योरिटी राशि देखें और नया बिड पावर अनुरोध सबमिट करें।',
+                    descEn:
+                        'View total available bid power, used/hold limits, security deposits, and manage trade limit requests.',
+                    icon: Icons.bolt_rounded,
+                    onOpen: () => Get.to(const BidPowerScreen()),
+                  ),
+                  child: Padding(
+                    padding: Pad(all: 10),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.bolt_rounded,
+                          size: 22,
+                          color: ColorConstant.maingreen,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            textAlign: TextAlign.start,
+                            Get.locale?.languageCode == 'hi'
+                                ? 'बिड पावर'
+                                : 'Bid Power',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: Adaptive.sp(16),
+                              color: ColorConstant.maingreen,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              if (isLoggedIn) const SizedBox(height: 10),
+
+              // 7. Profiling Expansion Tile
               if (isLoggedIn)
                 ExpansionTile(
                   tilePadding: Pad(left: 10),

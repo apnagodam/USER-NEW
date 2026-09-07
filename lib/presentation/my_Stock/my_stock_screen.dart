@@ -148,7 +148,8 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      var isLoggedIn = ref.watch(authProvider).value;
+      if (!mounted) return;
+      var isLoggedIn = ref.read(authProvider).value;
       if (isLoggedIn == AuthStatus.loggedIn) {
         _initializeStockData();
       }
@@ -158,6 +159,7 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
   }
 
   Future<void> _initializeStockData() async {
+    if (!mounted) return;
     ref.read(isLoading.notifier).state = true;
     ref.read(isPaginating.notifier).state = false;
     ref.read(hasMoreDataProvider.notifier).state = true;
@@ -165,16 +167,21 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
     ref.read(selectedLienTabIndex.notifier).state = 0;
 
     try {
+      ref.invalidate(myStockProvider);
       final value = await ref.read(
         myStockProvider(page: '0', search: '', limit: '$_pageSize').future,
       );
+      if (!mounted) return;
       ref.read(stockList.notifier).state = value;
       ref.read(hasMoreDataProvider.notifier).state = value.length >= _pageSize;
     } catch (e) {
+      if (!mounted) return;
       ref.read(hasMoreDataProvider.notifier).state = false;
       debugPrint("Error initializing stock data: $e");
     } finally {
-      ref.read(isLoading.notifier).state = false;
+      if (mounted) {
+        ref.read(isLoading.notifier).state = false;
+      }
     }
   }
 
@@ -185,6 +192,7 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
   }
 
   void _loadMoreData() async {
+    if (!mounted) return;
     if (ref.read(selectedTabIndex) != 1) return;
     if (ref.read(searchProvider).toString().isNotEmpty) return;
     if (ref.read(isLoading)) return;
@@ -195,6 +203,7 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
         _scrollController.position.maxScrollExtent - 100) {
       // Adding a small threshold (100 px) to trigger a bit earlier
       debouncerPaging.call(() async {
+        if (!mounted) return;
         final currentPage = ref.read(pageProvider);
         ref.read(isPaginating.notifier).state = true;
 
@@ -204,6 +213,7 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
             myStockProvider(page: '$nextPage', search: '', limit: '$_pageSize')
                 .future,
           );
+          if (!mounted) return;
 
           final existingList = ref.read(stockList);
           final existingIds = existingList
@@ -226,7 +236,9 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
         } catch (e) {
           debugPrint("Error loading more stock data: $e");
         } finally {
-          ref.read(isPaginating.notifier).state = false;
+          if (mounted) {
+            ref.read(isPaginating.notifier).state = false;
+          }
         }
       });
     }
@@ -234,6 +246,7 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
 
   void _handleSearch(String value) {
     debouncer.call(() async {
+      if (!mounted) return;
       if (value.isEmpty) {
         ref.read(searchProvider.notifier).state = '';
         await _initializeStockData();
@@ -247,14 +260,19 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
         final result = await ref.read(
           myStockProvider(search: value, page: '0', limit: '$_pageSize').future,
         );
+        if (!mounted) return;
         ref.read(stockList.notifier).state = result;
       } catch (e) {
         debugPrint("Search error: $e");
       } finally {
-        ref.read(isLoading.notifier).state = false;
+        if (mounted) {
+          ref.read(isLoading.notifier).state = false;
+        }
       }
 
-      ref.read(searchProvider.notifier).state = value;
+      if (mounted) {
+        ref.read(searchProvider.notifier).state = value;
+      }
     });
   }
 
@@ -495,33 +513,44 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
               ),
             ),
             Expanded(
-              child: Skeletonizer(
-                enabled: ref.watch(isLoading),
-                child: Builder(
-                  builder: (context) {
-                    final loadingInitial = ref.watch(isLoading);
-                    final paginating = ref.watch(isPaginating);
-                    final showingUnlien = ref.watch(selectedLienTabIndex) == 0;
-                    final filteredItems = loadingInitial
-                        ? <Map<String, dynamic>>[]
-                        : _getFilteredGatepassItems(isUnlien: showingUnlien);
+              child: RefreshIndicator(
+                color: ColorConstant.maingreen,
+                onRefresh: () async {
+                  await _initializeStockData();
+                },
+                child: Skeletonizer(
+                  enabled: ref.watch(isLoading),
+                  child: Builder(
+                    builder: (context) {
+                      final loadingInitial = ref.watch(isLoading);
+                      final paginating = ref.watch(isPaginating);
+                      final showingUnlien = ref.watch(selectedLienTabIndex) == 0;
+                      final filteredItems = loadingInitial
+                          ? <Map<String, dynamic>>[]
+                          : _getFilteredGatepassItems(isUnlien: showingUnlien);
 
-                    if (!loadingInitial && filteredItems.isEmpty) {
-                      return Center(
-                        child: Text(
-                          showingUnlien
-                              ? 'No Unlien stocks found'
-                              : 'No Lien stocks found',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black54,
+                      if (!loadingInitial && filteredItems.isEmpty) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Container(
+                            height: Get.height / 2,
+                            alignment: Alignment.center,
+                            child: Text(
+                              showingUnlien
+                                  ? 'No Unlien stocks found'
+                                  : 'No Lien stocks found',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black54,
+                              ),
+                            ),
                           ),
-                        ),
-                      );
-                    }
+                        );
+                      }
 
-                    return ListView.builder(
-                      controller: _scrollController,
+                      return ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        controller: _scrollController,
                       itemCount: loadingInitial
                           ? 3
                           : filteredItems.length + (paginating ? 1 : 0),
@@ -857,7 +886,7 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
                                                 itemIndex,
                                                 context,
                                                 item!,
-                                                ref.watch(listOfBanks),
+                                                ref.read(listOfBanks),
                                               );
                                             }
                                           },
@@ -914,7 +943,7 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
                                                   itemIndex,
                                                   context,
                                                   item!,
-                                                  ref.watch(listOfBanks),
+                                                  ref.read(listOfBanks),
                                                 );
                                               }
                                             },
@@ -1101,12 +1130,19 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
                 ),
               ),
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+
+  bool _isLienItem(Datum? item) {
+    final status = item?.financesStatus?.toString();
+    final checkLoanCount = item?.checkLoanCount?.toString();
+    return status == "2" || checkLoanCount == "1";
+  }
 
   bool _isUnlienItem(Datum? item) {
-    return item?.financesId == null || item?.financesStatus == null;
+    return !_isLienItem(item);
   }
 
   List<Map<String, dynamic>> _getFilteredGatepassItems({
@@ -1940,17 +1976,17 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
     List<Bank>? bankList,
   ) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (!ref.watch(sharedUtilityProvider).isKycComplete()) {
+    if (!ref.read(sharedUtilityProvider).isKycComplete()) {
       Get.to(KYC(kyctag: "bnpl"));
     } else {
       ref
-          .watch(
+          .read(
         checkLoanStatusProvider(inventoriesId: data.id.toString()).future,
       )
           .then((value) {
         if (value['data'] == null) {
           ref
-              .watch(
+              .read(
             checkLoanActionProvider(
               catName: data.catName.toString(),
               invId: data.id.toString(),
@@ -1993,6 +2029,12 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
           }).onError((e, s) {
             errorBottomSheet(context, "$e");
           });
+        } else {
+          Fluttertoast.showToast(
+            msg: (value['message'] ?? "Loan is already applied for this stock").toString(),
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: ColorConstant.red500,
+          );
         }
       }).onError((e, s) {
         errorBottomSheet(context, "$e");
@@ -2412,19 +2454,15 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
                           ).toString(),
                         ).future,
                       )
-                          .then((value) {
+                          .then((value) async {
                         if (value.status.toString() == "1") {
                           Get.rawSnackbar(
                             message: value.message.toString(),
                             duration: Duration(seconds: 10),
                             backgroundColor: ColorConstant.maingreen,
                           );
-                          ref
-                              .watch(stockList.notifier)
-                              .state[index]
-                              ?.sellQuantity = emandiSellWeightController.text;
-                          setState(() {});
                           Get.back(closeOverlays: true);
+                          await _initializeStockData();
                         } else {
                           Get.rawSnackbar(
                             message: value.message.toString(),
@@ -2445,7 +2483,7 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
           );
         } else {
           ref
-              .watch(
+              .read(
             apnaWantToSellProvider(
               inventoryId: data.id.toString(),
               price: emandiSellPriceController.text,
@@ -2462,17 +2500,15 @@ class _MyStockScreenState extends ConsumerState<MyStockScreen> {
               ).toString(),
             ).future,
           )
-              .then((value) {
+              .then((value) async {
             if (value.status.toString() == "1") {
               Get.rawSnackbar(
                 message: value.message.toString(),
                 duration: Duration(seconds: 10),
                 backgroundColor: ColorConstant.maingreen,
               );
-              ref.watch(stockList.notifier).state[index]?.sellQuantity =
-                  ref.watch(stockList.notifier).state[index]?.quantity;
-              setState(() {});
               Get.back(closeOverlays: true);
+              await _initializeStockData();
             } else {
               Get.rawSnackbar(
                 message: value.message.toString(),

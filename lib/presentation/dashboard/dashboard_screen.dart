@@ -58,9 +58,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
 
-        // If not on home tab, navigate to home tab first
-        if (ref.watch(selectedIndex) != 0) {
-          ref.watch(selectedIndex.notifier).state = 0;
+        // If not on home page tab (Tab 2), navigate to home page tab first
+        if (ref.watch(selectedIndex) != 2) {
+          ref.watch(selectedIndex.notifier).state = 2;
           return;
         }
 

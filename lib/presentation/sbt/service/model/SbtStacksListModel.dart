@@ -59,4 +59,15 @@ class StacksListDatum {
         "warehouse_id": warehouseId,
         "stack_no": stackNo,
       };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StacksListDatum &&
+          runtimeType == other.runtimeType &&
+          warehouseId.toString() == other.warehouseId.toString() &&
+          stackNo.toString() == other.stackNo.toString();
+
+  @override
+  int get hashCode => warehouseId.toString().hashCode ^ stackNo.toString().hashCode;
 }

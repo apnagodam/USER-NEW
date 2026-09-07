@@ -166,7 +166,7 @@ Future<Map<String, dynamic>> stackWantToSell(StackWantToSellRef ref,
 @riverpod
 Stream<StackSellListModel> stackSellList(StackSellListRef ref) async* {
   var response = await ref.watch(dioProvider).post(
-      ref.watch(authProvider.notifier).loginStatus == AuthStatus.loggedIn
+      ref.watch(authProvider).value == AuthStatus.loggedIn
           ? getStackSellListing
           : getDefaultStackSellListing);
   yield stackSellListModelFromMap(jsonEncode(response.data));
@@ -181,9 +181,9 @@ Stream<Map<String, dynamic>> stackOrderList(StackOrderListRef ref) async* {
 var dioProvider = Provider((ref) {
   var dio = Dio(BaseOptions(
       baseUrl: BASEURL,
-      connectTimeout: const Duration(minutes: 45),
-      receiveTimeout: const Duration(minutes: 45),
-      sendTimeout: const Duration(minutes: 45)))
+      connectTimeout: const Duration(seconds: 45),
+      receiveTimeout: const Duration(seconds: 45),
+      sendTimeout: const Duration(seconds: 45)))
     ..interceptors.addAll([
       Diointerceptor(ref),
       PrettyDioLogger(requestHeader: true, requestBody: true)
@@ -196,9 +196,9 @@ class DioInstance {
   Dio initDio() {
     var dio = Dio(BaseOptions(
         baseUrl: BASEURL,
-        connectTimeout: const Duration(minutes: 45),
-        receiveTimeout: const Duration(minutes: 45),
-        sendTimeout: const Duration(minutes: 45)));
+        connectTimeout: const Duration(seconds: 45),
+        receiveTimeout: const Duration(seconds: 45),
+        sendTimeout: const Duration(seconds: 45)));
 
     return dio;
   }
@@ -208,9 +208,9 @@ class DioInstance {
 Dio initDio(InitDioRef ref) {
   var dio = Dio(BaseOptions(
       baseUrl: BASEURL,
-      connectTimeout: const Duration(minutes: 45),
-      receiveTimeout: const Duration(minutes: 45),
-      sendTimeout: const Duration(minutes: 45)))
+      connectTimeout: const Duration(seconds: 45),
+      receiveTimeout: const Duration(seconds: 45),
+      sendTimeout: const Duration(seconds: 45)))
     ..interceptors.add(Diointerceptor(ref));
   // ..interceptors.add(PrettyDioLogger(
   //   responseHeader: false,

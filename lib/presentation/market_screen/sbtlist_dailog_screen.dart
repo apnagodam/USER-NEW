@@ -12,6 +12,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/utils/theme/app_style.dart';
+import '../../core/utils/helper.dart';
 import '../../widgets/CommonTextField.dart';
 import '../../widgets/dailogs/error.dart';
 import '../dashboard/model/buyer_seller_list_model.dart';
@@ -366,11 +367,10 @@ class _SbtdailogState extends ConsumerState<Sbtdailog> {
                       children: [LoginBottomSheet()],
                     ),
               );
-            } else if (value["status"] == 0) {
-              Get.rawSnackbar(
-                message: value["message"],
-                duration: Duration(seconds: 10),
-                backgroundColor: ColorConstant.maingreen,
+            } else if (value["status"] == 0 || value["status"] == "0") {
+              showErrorAlertDialog(
+                context,
+                value["message"] ?? "Failed",
               );
             } else {
               Get.rawSnackbar(

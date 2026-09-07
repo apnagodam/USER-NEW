@@ -3,6 +3,7 @@
 import 'package:apnagodam/core/utils/no_data_found_widget.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
 import 'package:apnagodam/presentation/commodity_finance/finance_bank_screen.dart';
+import 'package:apnagodam/presentation/commodity_finance/service/commodity_finance_service.dart';
 import 'package:apnagodam/presentation/dashboard/dashboard_screen.dart';
 import 'package:apnagodam/presentation/home_screen/service/home_screen_service.dart';
 import 'package:apnagodam/presentation/my_Stock/my_stock_impl/model/stock_response_model.dart';
@@ -20,6 +21,7 @@ import '../../core/utils/color_constant.dart';
 import '../../core/utils/progress_dialog_utils.dart';
 import '../../widgets/dailogs/error.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class LoanApply extends ConsumerStatefulWidget {
   final inventorryID;
@@ -52,7 +54,6 @@ class _Apply_for_loanState extends ConsumerState<LoanApply> {
 
   @override
   Widget build(BuildContext context) {
-    var bankList = widget.bankList.toList();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: ColorConstant.maingreen,
@@ -83,288 +84,26 @@ class _Apply_for_loanState extends ConsumerState<LoanApply> {
                       ),
                     ),
                   ),
-                  ListView.builder(
-                      shrinkWrap: true,
-                      primary: false,
-                      itemCount: bankList.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return Padding(
-                            padding: EdgeInsets.only(
-                                left: 5.0, right: 5.0, top: 10, bottom: 10.0),
-                            child: Container(
-                                foregroundDecoration: double.parse(
-                                            bankList[index]
-                                                .sanctionLimit
-                                                .toString()) >
-                                        0
-                                    ? RotatedCornerDecoration.withColor(
-                                        color: ColorConstant.maingreen,
-                                        badgePosition: BadgePosition.bottomEnd,
-                                        badgeCornerRadius: Radius.circular(8),
-                                        spanBaselineShift: 5,
-                                        spanHorizontalOffset: 2,
-                                        textDirection: TextDirection.ltr,
-                                        badgeShadow: BadgeShadow(
-                                            color: Colors.black, elevation: 4),
-                                        badgeSize: Size(
-                                            Adaptive.sp(35), Adaptive.sp(35)),
-                                        textSpan: TextSpan(
-                                          text: 'Sanctioned',
-                                          style: TextStyle(
-                                              fontSize: Adaptive.sp(16)),
-                                        ),
-                                      )
-                                    : null,
-                                padding: EdgeInsets.fromLTRB(5, 8, 8, 5),
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: ColorConstant.maingreen,
-                                    ),
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Colors.orangeAccent.shade100
-                                            .withOpacity(0.5),
-                                        Colors.orangeAccent.shade100
-                                            .withOpacity(0.7),
-                                        Colors.orangeAccent.shade100
-                                      ],
-                                    )),
-                                child: Column(
-                                  children: [
-                                    RowSuper(
-                                      children: [
-                                        Text(
-                                            AppLocalizations.of(context)!
-                                                .msgBankname,
-                                            style: TextStyle(
-                                                color: ColorConstant.maingreen,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: Adaptive.sp(16))),
-                                        Text("${bankList[index].bankName}",
-                                            style: TextStyle(
-                                                color: ColorConstant.maingreen,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: Adaptive.sp(16)))
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: 10,
-                                    ),
-                                    IntrinsicHeight(
-                                        child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                            child: ColumnSuper(
-                                          alignment: Alignment.centerLeft,
-                                          children: [
-                                            Text.rich(TextSpan(
-                                                text: AppLocalizations.of(
-                                                        context)!
-                                                    .msgProcessing,
-                                                style: AppStyle.bankliststl
-                                                    .copyWith(
-                                                        fontSize:
-                                                            Adaptive.sp(16)),
-                                                children: [
-                                                  TextSpan(
-                                                      text: bankList[index]
-                                                          .processingFee
-                                                          .toString())
-                                                ])),
-                                            Text.rich(TextSpan(
-                                                text: AppLocalizations.of(
-                                                        context)!
-                                                    .msgLoanpertotal,
-                                                style: AppStyle.bankliststl
-                                                    .copyWith(
-                                                        fontSize:
-                                                            Adaptive.sp(16)),
-                                                children: [
-                                                  TextSpan(
-                                                      text: bankList[index]
-                                                          .loanPerTotalAmount
-                                                          .toString())
-                                                ])),
-                                            Text.rich(TextSpan(
-                                                text: AppLocalizations.of(
-                                                        context)!
-                                                    .msgApr,
-                                                style: AppStyle.bankliststl
-                                                    .copyWith(
-                                                        fontSize:
-                                                            Adaptive.sp(16)),
-                                                children: [
-                                                  TextSpan(
-                                                      text: bankList[index]
-                                                          .apr
-                                                          .toString())
-                                                ])),
-                                            Text.rich(TextSpan(
-                                                text: AppLocalizations.of(
-                                                        context)!
-                                                    .msgTenor,
-                                                style: AppStyle.bankliststl
-                                                    .copyWith(
-                                                        fontSize:
-                                                            Adaptive.sp(16)),
-                                                children: [
-                                                  TextSpan(
-                                                      text: bankList[index]
-                                                          .tenor
-                                                          .toString())
-                                                ])),
-                                          ],
-                                        )),
-                                        Padding(
-                                          padding: EdgeInsets.only(right: 8.0),
-                                          child: VerticalDivider(
-                                            color: Colors.blueGrey,
-                                            thickness: 1,
-                                            width: 1,
-                                          ),
-                                        ),
-                                        Expanded(
-                                            child: ColumnSuper(
-                                          alignment: Alignment.centerLeft,
-                                          children: [
-                                            Text.rich(TextSpan(
-                                                text: AppLocalizations.of(
-                                                        context)!
-                                                    .msgInterestrate,
-                                                style: AppStyle.bankliststl
-                                                    .copyWith(
-                                                        fontSize:
-                                                            Adaptive.sp(16)),
-                                                children: [
-                                                  TextSpan(
-                                                      text: bankList[index]
-                                                          .interestRate
-                                                          .toString())
-                                                ])),
-                                            Text.rich(TextSpan(
-                                                text: AppLocalizations.of(
-                                                        context)!
-                                                    .msgDisbursement,
-                                                style: AppStyle.bankliststl
-                                                    .copyWith(
-                                                        fontSize:
-                                                            Adaptive.sp(16)),
-                                                children: [
-                                                  TextSpan(
-                                                      text: bankList[index]
-                                                          .loanPassDays
-                                                          .toString())
-                                                ])),
-                                            Text.rich(TextSpan(
-                                                text: AppLocalizations.of(
-                                                        context)!
-                                                    .msgSanctioned,
-                                                style: AppStyle.bankliststl
-                                                    .copyWith(
-                                                        fontSize:
-                                                            Adaptive.sp(16)),
-                                                children: [
-                                                  TextSpan(
-                                                      text: intl.NumberFormat
-                                                              .currency(
-                                                                  locale: 'HI',
-                                                                  symbol:
-                                                                      '\u{20B9}',
-                                                                  decimalDigits:
-                                                                      2)
-                                                          .format(num.parse(bankList[
-                                                                      index]
-                                                                  .sanctionLimit
-                                                                  .toString() ??
-                                                              "0.0")))
-                                                ])),
-                                          ],
-                                        )),
-                                        InkWell(
-                                          onTap: () {
-                                            ref
-                                                .watch(
-                                                    bankIndexProvider.notifier)
-                                                .state = index;
-                                            usebankId =
-                                                bankList[index].id.toString();
-                                            loanpertotalAmount = bankList[index]
-                                                .loanPerTotalAmount
-                                                .toString();
-                                            ref
-                                                .watch(bankIdProvider.notifier)
-                                                .state = bankList[
-                                                    index]
-                                                .id
-                                                .toString();
-
-                                            sanctionamunt = bankList[index]
-                                                .sanctionLimit
-                                                .toString();
-
-                                            approx_deal_amount = double.parse(
-                                                    widget.quantity
-                                                                .toString() ==
-                                                            ""
-                                                        ? "0.0"
-                                                        : widget.quantity) *
-                                                double.parse(
-                                                    widget.mandibav.isEmpty
-                                                        ? "0.0"
-                                                        : widget.mandibav);
-                                            approx_loan_amount = (double.parse(
-                                                        widget.quantity
-                                                                    .toString() ==
-                                                                ""
-                                                            ? "0.0"
-                                                            : widget.quantity) *
-                                                    double.parse(widget
-                                                            .mandibav.isEmpty
-                                                        ? "0.0"
-                                                        : widget.mandibav)) *
-                                                (double.parse(bankList[index]
-                                                                .loanPerTotalAmount
-                                                                .toString() ==
-                                                            ""
-                                                        ? "0.0"
-                                                        : bankList[index]
-                                                            .loanPerTotalAmount
-                                                            .toString()) /
-                                                    100);
-
-                                            setState(() {});
-                                          },
-                                          child: Container(
-                                            height: Adaptive.sp(17),
-                                            width: Adaptive.sp(17),
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                  color:
-                                                      ColorConstant.maingreen,
-                                                  width: 1.5),
-                                            ),
-                                            child: Center(
-                                                child: Icon(
-                                              Icons.check,
-                                              size: Adaptive.sp(16),
-                                              color: ref.watch(
-                                                          bankIndexProvider) ==
-                                                      index
-                                                  ? ColorConstant.maingreen
-                                                  : Colors.transparent,
-                                            )),
-                                          ),
-                                        )
-                                      ],
-                                    )),
-                                  ],
-                                )));
-                      }),
+                  if (widget.bankList.isNotEmpty)
+                    _buildBankList(widget.bankList)
+                  else
+                    ref.watch(financeBanksListProvider).when(
+                          data: (financeData) =>
+                              _buildBankList(financeData.banks ?? []),
+                          loading: () => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24.0),
+                            child: defaultLoader(),
+                          ),
+                          error: (e, s) => Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Center(
+                              child: Text(
+                                "Failed to load banks",
+                                style: TextStyle(color: ColorConstant.red500),
+                              ),
+                            ),
+                          ),
+                        ),
                   SizedBox(
                     height: 10,
                   ),
@@ -953,41 +692,51 @@ class _Apply_for_loanState extends ConsumerState<LoanApply> {
                                                 ],
                                               );
                                             });
-                                      } else {
-                                        SharedPreferences prefs =
-                                            await SharedPreferences
-                                                .getInstance();
+                                       } else {
+                                         if (usebankId == null) {
+                                           Fluttertoast.showToast(
+                                             msg: "Please select a bank",
+                                             backgroundColor: ColorConstant.red500,
+                                           );
+                                           return;
+                                         }
+                                             SharedPreferences prefs =
+                                             await SharedPreferences
+                                                 .getInstance();
 
-                                        ref
-                                            .watch(applyForLoanProvider(
-                                                    inventoryId:
-                                                        widget.inventorryID,
-                                                    bankId: usebankId,
-                                                    quantity: widget.quantity,
-                                                    loanAmount:
-                                                        loanpertotalAmount,
-                                                    disbursement: 'Own Account')
-                                                .future)
-                                            .then((value) {
-                                          if (value["status"] == "1") {
-                                            ref.invalidate(myStockProvider);
+                                         ProgressDialogUtils.showProgressDialog();
+                                         ref
+                                             .read(applyForLoanProvider(
+                                                     inventoryId:
+                                                         widget.inventorryID,
+                                                     bankId: usebankId,
+                                                     quantity: widget.quantity,
+                                                     loanAmount:
+                                                         loanpertotalAmount,
+                                                     disbursement: 'Own Account')
+                                                 .future)
+                                             .then((value) {
+                                           ProgressDialogUtils.hideProgressDialog();
+                                           if (value["status"] == "1") {
+                                             ref.invalidate(myStockProvider);
 
-                                            Get.rawSnackbar(
-                                                message: value["message"],
-                                                duration: Duration(seconds: 10),
-                                                backgroundColor:
-                                                    ColorConstant.maingreen);
-                                            Get.off(DashboardScreen());
-                                          } else {
-                                            Get.rawSnackbar(
-                                                message: value["message"],
-                                                duration: Duration(seconds: 10),
-                                                backgroundColor:
-                                                    ColorConstant.maingreen);
-                                          }
-                                        }).onError((e, s) {
-                                          errorBottomSheet(context, "$e");
-                                        });
+                                             Get.rawSnackbar(
+                                                 message: value["message"],
+                                                 duration: Duration(seconds: 4),
+                                                 backgroundColor:
+                                                     ColorConstant.maingreen);
+                                             Get.off(DashboardScreen());
+                                           } else {
+                                             Get.rawSnackbar(
+                                                 message: value["message"] ?? "Failed to apply for loan",
+                                                 duration: Duration(seconds: 4),
+                                                 backgroundColor:
+                                                     ColorConstant.red500);
+                                           }
+                                         }).catchError((e) {
+                                           ProgressDialogUtils.hideProgressDialog();
+                                           errorBottomSheet(context, "$e");
+                                         });
 
                                         // Get.to(ApplyLoanHtmlDataViewer(
                                         //   htmlData: financeData.view ?? "",
@@ -1032,6 +781,281 @@ class _Apply_for_loanState extends ConsumerState<LoanApply> {
           error: (e, s) => Container(),
           loading: () => defaultLoader()),
     );
+  }
+
+  Widget _buildBankList(List<dynamic> bankList) {
+    if (bankList.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 16.0),
+        child: Center(
+          child: Text(
+            "No banks available at the moment",
+            style: TextStyle(
+              fontSize: Adaptive.sp(16),
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ),
+      );
+    }
+    return ListView.builder(
+        shrinkWrap: true,
+        primary: false,
+        itemCount: bankList.length,
+        itemBuilder: (BuildContext context, int index) {
+          final bank = bankList[index];
+          final sanctionLimitVal =
+              double.tryParse(bank.sanctionLimit?.toString() ?? "0") ?? 0.0;
+          return Padding(
+              padding: EdgeInsets.only(
+                  left: 5.0, right: 5.0, top: 10, bottom: 10.0),
+              child: Container(
+                  foregroundDecoration: sanctionLimitVal > 0
+                      ? RotatedCornerDecoration.withColor(
+                          color: ColorConstant.maingreen,
+                          badgePosition: BadgePosition.bottomEnd,
+                          badgeCornerRadius: Radius.circular(8),
+                          spanBaselineShift: 5,
+                          spanHorizontalOffset: 2,
+                          textDirection: TextDirection.ltr,
+                          badgeShadow: BadgeShadow(
+                              color: Colors.black, elevation: 4),
+                          badgeSize: Size(
+                              Adaptive.sp(35), Adaptive.sp(35)),
+                          textSpan: TextSpan(
+                            text: 'Sanctioned',
+                            style: TextStyle(
+                                fontSize: Adaptive.sp(16)),
+                          ),
+                        )
+                      : null,
+                  padding: EdgeInsets.fromLTRB(5, 8, 8, 5),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: ColorConstant.maingreen,
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.orangeAccent.shade100
+                              .withOpacity(0.5),
+                          Colors.orangeAccent.shade100
+                              .withOpacity(0.7),
+                          Colors.orangeAccent.shade100
+                        ],
+                      )),
+                  child: Column(
+                    children: [
+                      RowSuper(
+                        children: [
+                          Text(
+                              AppLocalizations.of(context)!
+                                  .msgBankname,
+                              style: TextStyle(
+                                  color: ColorConstant.maingreen,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: Adaptive.sp(16))),
+                          Text("${bank.bankName ?? ''}",
+                              style: TextStyle(
+                                  color: ColorConstant.maingreen,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: Adaptive.sp(16)))
+                        ],
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      IntrinsicHeight(
+                          child: Row(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                              child: ColumnSuper(
+                            alignment: Alignment.centerLeft,
+                            children: [
+                              Text.rich(TextSpan(
+                                  text: AppLocalizations.of(
+                                          context)!
+                                      .msgProcessing,
+                                  style: AppStyle.bankliststl
+                                      .copyWith(
+                                          fontSize:
+                                              Adaptive.sp(16)),
+                                  children: [
+                                    TextSpan(
+                                        text: (bank.processingFee ?? '')
+                                            .toString())
+                                  ])),
+                              Text.rich(TextSpan(
+                                  text: AppLocalizations.of(
+                                          context)!
+                                      .msgLoanpertotal,
+                                  style: AppStyle.bankliststl
+                                      .copyWith(
+                                          fontSize:
+                                              Adaptive.sp(16)),
+                                  children: [
+                                    TextSpan(
+                                        text: (bank.loanPerTotalAmount ?? '')
+                                            .toString())
+                                  ])),
+                              Text.rich(TextSpan(
+                                  text: AppLocalizations.of(
+                                          context)!
+                                      .msgApr,
+                                  style: AppStyle.bankliststl
+                                      .copyWith(
+                                          fontSize:
+                                              Adaptive.sp(16)),
+                                  children: [
+                                    TextSpan(
+                                        text: (bank.apr ?? '')
+                                            .toString())
+                                  ])),
+                              Text.rich(TextSpan(
+                                  text: AppLocalizations.of(
+                                          context)!
+                                      .msgTenor,
+                                  style: AppStyle.bankliststl
+                                      .copyWith(
+                                          fontSize:
+                                              Adaptive.sp(16)),
+                                  children: [
+                                    TextSpan(
+                                        text: (bank.tenor ?? '')
+                                            .toString())
+                                  ])),
+                            ],
+                          )),
+                          Padding(
+                            padding: EdgeInsets.only(right: 8.0),
+                            child: VerticalDivider(
+                              color: Colors.blueGrey,
+                              thickness: 1,
+                              width: 1,
+                            ),
+                          ),
+                          Expanded(
+                              child: ColumnSuper(
+                            alignment: Alignment.centerLeft,
+                            children: [
+                              Text.rich(TextSpan(
+                                  text: AppLocalizations.of(
+                                          context)!
+                                      .msgInterestrate,
+                                  style: AppStyle.bankliststl
+                                      .copyWith(
+                                          fontSize:
+                                              Adaptive.sp(16)),
+                                  children: [
+                                    TextSpan(
+                                        text: (bank.interestRate ?? '')
+                                            .toString())
+                                  ])),
+                              Text.rich(TextSpan(
+                                  text: AppLocalizations.of(
+                                          context)!
+                                      .msgDisbursement,
+                                  style: AppStyle.bankliststl
+                                      .copyWith(
+                                          fontSize:
+                                              Adaptive.sp(16)),
+                                  children: [
+                                    TextSpan(
+                                        text: (bank.loanPassDays ?? '')
+                                            .toString())
+                                  ])),
+                              Text.rich(TextSpan(
+                                  text: AppLocalizations.of(
+                                          context)!
+                                      .msgSanctioned,
+                                  style: AppStyle.bankliststl
+                                      .copyWith(
+                                          fontSize:
+                                              Adaptive.sp(16)),
+                                  children: [
+                                    TextSpan(
+                                        text: intl.NumberFormat
+                                                .currency(
+                                                    locale: 'HI',
+                                                    symbol:
+                                                        '\u{20B9}',
+                                                    decimalDigits:
+                                                        2)
+                                            .format(num.tryParse(bank.sanctionLimit
+                                                        ?.toString() ??
+                                                    "0.0") ??
+                                                0.0))
+                                  ])),
+                            ],
+                          )),
+                          InkWell(
+                            onTap: () {
+                              ref
+                                  .read(
+                                      bankIndexProvider.notifier)
+                                  .state = index;
+                              usebankId =
+                                  bank.id.toString();
+                              loanpertotalAmount = (bank.loanPerTotalAmount ?? '')
+                                  .toString();
+                              ref
+                                  .read(bankIdProvider.notifier)
+                                  .state = bank.id
+                                  .toString();
+
+                              sanctionamunt = (bank.sanctionLimit ?? '')
+                                  .toString();
+
+                              double qty = double.tryParse(
+                                      widget.quantity?.toString() ??
+                                          "0") ??
+                                  0.0;
+                              double mb = double.tryParse(
+                                      widget.mandibav.toString().isEmpty
+                                          ? "0"
+                                          : widget.mandibav.toString()) ??
+                                  0.0;
+                              double loanPct = double.tryParse(
+                                      bank.loanPerTotalAmount?.toString() ??
+                                          "0") ??
+                                  0.0;
+
+                              approx_deal_amount = qty * mb;
+                              approx_loan_amount = (qty * mb) * (loanPct / 100);
+
+                              setState(() {});
+                            },
+                            child: Container(
+                              height: Adaptive.sp(17),
+                              width: Adaptive.sp(17),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color:
+                                        ColorConstant.maingreen,
+                                    width: 1.5),
+                              ),
+                              child: Center(
+                                  child: Icon(
+                                Icons.check,
+                                size: Adaptive.sp(16),
+                                color: ref.watch(
+                                            bankIndexProvider) ==
+                                        index
+                                    ? ColorConstant.maingreen
+                                    : Colors.transparent,
+                              )),
+                            ),
+                          )
+                        ],
+                      )),
+                    ],
+                  )));
+        });
   }
 
   var bankIdProvider = StateProvider<String?>((ref) => null);
