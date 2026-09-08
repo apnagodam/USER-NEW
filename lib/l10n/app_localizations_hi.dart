@@ -3903,6 +3903,12 @@ class AppLocalizationsHi extends AppLocalizations {
   String get poDetails => 'पीओ विवरण';
 
   @override
+  String get poEdit => 'PO Edit करे';
+
+  @override
+  String get poDelete => 'PO हटाये';
+
+  @override
   String get somethingwentwrongyoumay => 'कुछ गलत हो गया';
 
   @override

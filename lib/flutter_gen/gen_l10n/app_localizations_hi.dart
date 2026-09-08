@@ -3910,4 +3910,10 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get sellcommission => 'बिक्री कमीशन';
+
+  @override
+  String get poEdit => 'PO Edit करे';
+
+  @override
+  String get poDelete => 'PO हटाये';
 }

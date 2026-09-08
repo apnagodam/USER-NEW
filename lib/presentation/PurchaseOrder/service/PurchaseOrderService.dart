@@ -2,12 +2,61 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:apnagodam/core/constants/constants.dart';
+import 'package:apnagodam/presentation/PurchaseOrder/model/BrokerBuyerModel.dart';
 import 'package:apnagodam/presentation/PurchaseOrder/model/PurchaseOrdersListingModel.dart';
 import 'package:apnagodam/presentation/my_Stock/my_stock_impl/service/my_stock_impl.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'PurchaseOrderService.g.dart';
+
+// 1. Warehouse, Broker, Buyer provider (GET user_api/getWarehouseData)
+final getPoWarehouseDataProvider =
+    FutureProvider.autoDispose<PoWarehouseBrokerBuyerModel>((ref) async {
+  var response = await ref.watch(dioProvider).get(getPoWarehouseData);
+  final data = response.data;
+  return PoWarehouseBrokerBuyerModel.fromJson(
+      data is String ? jsonDecode(data) : Map<String, dynamic>.from(data));
+});
+
+// 2. Commodity provider by terminal_id (POST user_api/getCommodityData)
+final getPoCommodityDataProvider =
+    FutureProvider.autoDispose.family<PoCommodityListModel, String>(
+        (ref, terminalId) async {
+  FormData formData = FormData.fromMap({'terminal_id': terminalId});
+  var response =
+      await ref.watch(dioProvider).post(getPoCommodityData, data: formData);
+  final data = response.data;
+  return PoCommodityListModel.fromJson(
+      data is String ? jsonDecode(data) : Map<String, dynamic>.from(data));
+});
+
+// 3. Ship To provider by commodity_id (POST user_api/getShipToUserData)
+final getPoShipToUserDataProvider =
+    FutureProvider.autoDispose.family<PoShipToBuyerModel, String>(
+        (ref, commodityId) async {
+  FormData formData = FormData.fromMap({'commodity_id': commodityId});
+  var response =
+      await ref.watch(dioProvider).post(getPoShipToUserData, data: formData);
+  final data = response.data;
+  return PoShipToBuyerModel.fromJson(
+      data is String ? jsonDecode(data) : Map<String, dynamic>.from(data));
+});
+
+// 4. Factory List provider by shipToUserId (POST user_api/getFactoryList)
+final getPoFactoryListProvider =
+    FutureProvider.autoDispose.family<PoFactoryListModel, String>(
+        (ref, shipToUserId) async {
+  FormData formData = FormData.fromMap({
+    'shipToUserId': shipToUserId,
+    'ship_to_user_id': shipToUserId,
+  });
+  var response =
+      await ref.watch(dioProvider).post(getPoFactoryList, data: formData);
+  final data = response.data;
+  return PoFactoryListModel.fromJson(
+      data is String ? jsonDecode(data) : Map<String, dynamic>.from(data));
+});
 
 Future<Map<String, dynamic>> updatePurchaseOrder(Ref ref,
     {required String terminalId,
@@ -17,15 +66,15 @@ Future<Map<String, dynamic>> updatePurchaseOrder(Ref ref,
     required String date,
     required String expiryDate,
     required String poNumber,
-    String? broker,
-    required String buyerName,
-    String? shipTo,
-    String? factoryName,
+    String? brokerUser,
+    required String walletUser,
+    required String shipToBuyer,
+    required String factoryId,
     required String factoryAddress,
-    String? payment,
-    String? paymentDays,
+    required String paymentType,
+    required String paymentDays,
     required String qualityCondition,
-    String? tds,
+    String? tdsRate,
     String? gstNumber,
     String? phone,
     String? pincode,
@@ -38,24 +87,31 @@ Future<Map<String, dynamic>> updatePurchaseOrder(Ref ref,
     'date': date,
     'expiry_date': expiryDate,
     'po_number': poNumber,
-    'broker_user': broker ?? '',
-    'broker': broker ?? '',
-    'wallet_user': buyerName,
-    'buyer_name': buyerName,
-    'ship_to': shipTo ?? '',
-    'factory_name': factoryName ?? '',
+    'broker_user': brokerUser ?? '',
+    'broker': brokerUser ?? '',
+    'wallet_user': walletUser,
+    'buyer_name': walletUser,
+    'ship_to_buyer': shipToBuyer,
+    'ship_to': shipToBuyer,
+    'factory_id': factoryId,
+    'factory_name': factoryId,
     'factory_address': factoryAddress,
     'buyer_address': factoryAddress,
-    'payment': payment ?? '',
-    'payment_type': payment ?? '',
-    'payment_days': paymentDays ?? '',
+    'payment_type': paymentType,
+    'payment': paymentType,
+    'payment_days': paymentDays,
     'quality_condition': qualityCondition,
-    'tds': tds ?? '',
+    'tds_rate': (tdsRate != null && tdsRate.isNotEmpty) ? tdsRate : '0',
+    'tds': (tdsRate != null && tdsRate.isNotEmpty) ? tdsRate : '0',
     if (gstNumber != null && gstNumber.isNotEmpty) 'buyer_gstnumber': gstNumber,
     if (phone != null && phone.isNotEmpty) 'buyer_phone': phone,
     if (pincode != null && pincode.isNotEmpty) 'delivery_pincode': pincode,
-    'po_image': await MultipartFile.fromFile(poImage.path,
-        contentType: DioMediaType("image", "png"), filename: 'po_image.png'),
+    'po_image': await MultipartFile.fromFile(
+      poImage.path,
+      filename: poImage.path.split('/').last.isNotEmpty
+          ? poImage.path.split('/').last
+          : 'po_image.jpg',
+    ),
   });
   var response =
       await ref.watch(dioProvider).post(postPurchaseOrder, data: formData);
@@ -78,15 +134,15 @@ class PurchaseOrderService {
     required String date,
     required String expiryDate,
     required String poNumber,
-    String? broker,
-    required String buyerName,
-    String? shipTo,
-    String? factoryName,
+    String? brokerUser,
+    required String walletUser,
+    required String shipToBuyer,
+    required String factoryId,
     required String factoryAddress,
-    String? payment,
-    String? paymentDays,
+    required String paymentType,
+    required String paymentDays,
     required String qualityCondition,
-    String? tds,
+    String? tdsRate,
     String? gstNumber,
     String? phone,
     String? pincode,
@@ -101,15 +157,15 @@ class PurchaseOrderService {
       date: date,
       expiryDate: expiryDate,
       poNumber: poNumber,
-      broker: broker,
-      buyerName: buyerName,
-      shipTo: shipTo,
-      factoryName: factoryName,
+      brokerUser: brokerUser,
+      walletUser: walletUser,
+      shipToBuyer: shipToBuyer,
+      factoryId: factoryId,
       factoryAddress: factoryAddress,
-      payment: payment,
+      paymentType: paymentType,
       paymentDays: paymentDays,
       qualityCondition: qualityCondition,
-      tds: tds,
+      tdsRate: tdsRate,
       gstNumber: gstNumber,
       phone: phone,
       pincode: pincode,

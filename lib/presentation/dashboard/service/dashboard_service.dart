@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:apnagodam/presentation/dashboard/model/CaseIdStatusModel.dart';
 import 'package:apnagodam/presentation/dashboard/model/CustomerSupportModel.dart';
 import 'package:apnagodam/presentation/dashboard/model/base_response_model.dart';
@@ -16,6 +17,8 @@ import '../model/MatchedOrdersModel.dart';
 import '../model/bidding_response_model.dart';
 import '../model/buyer_seller_list_model.dart';
 import '../model/face_to_face_model.dart';
+import '../../../core/utils/SharedPrefs/SharedUtility.dart';
+import 'package:flutter/foundation.dart';
 import '../model/sbt_commodity_model.dart';
 part 'dashboard_service.g.dart';
 
@@ -38,7 +41,8 @@ Stream<BiddingResponseModel> getBiddingData(GetBiddingDataRef ref,
 Future<BaseResponseModel> updateBid(UpdateBidRef ref,
     {String? inventoryId, String? price}) async {
   var response = await ref.watch(dioProvider).post(WBT_UPDATE_SELL_PRICE,
-      queryParameters: {'inventory_id': inventoryId, 'price': price});
+      queryParameters: {'inventory_id': inventoryId, 'price': price},
+      options: Options(extra: {'show_loader': true}));
   return baseResponseModelFromMap(jsonEncode(response.data));
 }
 
@@ -50,14 +54,50 @@ Future<Map<String, dynamic>> addBid(AddBidRef ref,
         'inventory_id': inventoryId,
         'bid_price': price,
         'is_secure': '1'
-      });
+      },
+      options: Options(extra: {'show_loader': true}));
   return response.data;
 }
 
 @riverpod
 Future<SbtCommodityModel> getSbtCommodity(GetSbtCommodityRef ref) async {
-  var response = await ref.watch(dioProvider).get(SBT_COMMODITY_LIST);
-  return sbtCommodityModelFromMap(jsonEncode(response.data));
+  final prefs = ref.watch(sharedPreferencesProvider);
+  const cacheKey = 'cached_sbt_product_list';
+
+  // 1. Try to fetch live SBT product list
+  try {
+    var response = await ref.watch(dioProvider).get(SBT_COMMODITY_LIST);
+    if (response.data != null) {
+      final model = sbtCommodityModelFromMap(jsonEncode(response.data));
+      if (model.data != null && model.data!.isNotEmpty) {
+        // Save live response to cache
+        prefs.setString(cacheKey, jsonEncode(response.data));
+        return model;
+      }
+    }
+  } catch (e) {
+    debugPrint('getSbtCommodity GET error: $e');
+  }
+
+  // 2. If unauthenticated (e.g. status "0", "User not found!") or empty response, check cached data
+  final cachedJson = prefs.getString(cacheKey);
+  if (cachedJson != null && cachedJson.isNotEmpty) {
+    try {
+      final cachedModel = sbtCommodityModelFromMap(cachedJson);
+      if (cachedModel.data != null && cachedModel.data!.isNotEmpty) {
+        return cachedModel;
+      }
+    } catch (e) {
+      debugPrint('Error parsing cached SBT data: $e');
+    }
+  }
+
+  // 3. Fallback: Return official default SBT products list so guest users always see market data
+  return SbtCommodityModel(
+    status: "1",
+    message: "SBT Product List",
+    data: defaultSbtCommodityList,
+  );
 }
 
 @riverpod

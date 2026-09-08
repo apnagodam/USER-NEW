@@ -1891,53 +1891,19 @@ class _BidsscreenState extends ConsumerState<Bidsscreen> {
                                                                                     Get.back();
                                                                                     if (dataList[mainIndex].sbtType.toString() ==
                                                                                         "1") {
-                                                                                      showModalBottomSheet(
-                                                                                        context:
-                                                                                            context,
-                                                                                        builder:
-                                                                                            (
-                                                                                              bottomsheetContext,
-                                                                                            ) => ElevarmDraggableBottomSheet(
-                                                                                              title:
-                                                                                                  'Mark Delivery',
-                                                                                              onPressedClose:
-                                                                                                  () =>
-                                                                                                      Get.back(),
-                                                                                              initialChildSize:
-                                                                                                  1,
-                                                                                              children: [
-                                                                                                DeliveryMarking(
-                                                                                                  isScreen:
-                                                                                                      false,
-                                                                                                ),
-                                                                                              ],
-                                                                                            ),
-                                                                                        isScrollControlled:
-                                                                                            true,
+                                                                                      Get.to(
+                                                                                        DeliveryMarking(
+                                                                                          isScreen:
+                                                                                              true,
+                                                                                        ),
                                                                                       );
                                                                                     } else {
-                                                                                      showModalBottomSheet(
-                                                                                        context:
-                                                                                            context,
-                                                                                        builder:
-                                                                                            (
-                                                                                              bottomsheetContext,
-                                                                                            ) => ElevarmDraggableBottomSheet(
-                                                                                              title:
-                                                                                                  '',
-                                                                                              onPressedClose:
-                                                                                                  () =>
-                                                                                                      Get.back(),
-                                                                                              children: [
-                                                                                                Dispatchrequestslisting(
-                                                                                                  orderId:
-                                                                                                      data.tradeOrderData?[index].orderId ??
-                                                                                                      "",
-                                                                                                ),
-                                                                                              ],
-                                                                                            ),
-                                                                                        isScrollControlled:
-                                                                                            true,
+                                                                                      Get.to(
+                                                                                        Dispatchrequestslisting(
+                                                                                          orderId:
+                                                                                              data.tradeOrderData?[index].orderId ??
+                                                                                              "",
+                                                                                        ),
                                                                                       );
                                                                                     }
                                                                                   },

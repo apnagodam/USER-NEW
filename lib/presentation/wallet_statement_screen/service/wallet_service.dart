@@ -11,14 +11,13 @@ import '../../../core/constants/constants.dart';
 part 'wallet_service.g.dart';
 
 @riverpod
-@riverpod
 Stream<WalletTransactionListModel> getWalletList(GetWalletListRef ref,
     {required String walletType}) async* {
   
-  final fromDate = ref.watch(fromDateProvider); // ✅ keep watch for reactivity
-  final toDate = ref.watch(toDateProvider);     // ✅ keep watch for reactivity
+  final fromDate = ref.watch(fromDateProvider);
+  final toDate = ref.watch(toDateProvider);
 
-  var response = await ref.read(dioProvider).get(  // ✅ read, not watch
+  var response = await ref.read(dioProvider).get(
     WALLET_STATEMENT,
     queryParameters: {
       'from_date': fromDate,
@@ -29,8 +28,10 @@ Stream<WalletTransactionListModel> getWalletList(GetWalletListRef ref,
 
   final model = walletTransactionListModelFromMap(jsonEncode(response.data));
 
-  ref.read(openingBalance.notifier).state = model.openingBalance ?? 0.0; // ✅ read
-  ref.read(closingBalance.notifier).state = model.closingBalance ?? "0.0"; // ✅ read
+  ref.read(openingBalance.notifier).state =
+      num.tryParse(model.openingBalance?.toString() ?? '0')?.toDouble() ?? 0.0;
+  ref.read(closingBalance.notifier).state =
+      model.closingBalance?.toString() ?? "0.0";
 
   yield model;
 }

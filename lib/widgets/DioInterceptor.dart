@@ -47,13 +47,14 @@ class Diointerceptor extends InterceptorsWrapper {
   ) async {
     stopWatch.reset();
     stopWatch.start();
-    final langCode = ref.watch(appLanguageProvider);
+    final langCode = ref.read(appLanguageProvider);
+    final token = ref.read(sharedPreferencesProvider).getString('token');
+    final position = ref.read(sharedUtilityProvider).getPosition();
     options.headers = {
-      'Authorization':
-          ref.watch(sharedPreferencesProvider).getString('token') ?? "",
+      if (token != null && token.trim().isNotEmpty) 'Authorization': token,
       'lang': langCode,
-      'lat': ref.watch(sharedUtilityProvider).getPosition().latitude,
-      'long': ref.watch(sharedUtilityProvider).getPosition().longitude,
+      'lat': position.latitude,
+      'long': position.longitude,
     };
 
     // Increment loader count only for POST requests that need it
@@ -77,6 +78,15 @@ class Diointerceptor extends InterceptorsWrapper {
         options.path.contains('user_api/get_') ||
         options.path.contains('user_api/mark-delivery') ||
         options.path.contains('user_api/match-order-list') ||
+        options.path.contains('user_api/new-taja-bhav') ||
+        options.path.contains('new-taja-bhav') ||
+        options.path.contains('check_user') ||
+        options.path.contains('user_register') ||
+        options.path.contains('user_send_otp') ||
+        options.path.contains('user_verify_otp') ||
+        options.path.contains('buyer_stack_want_to_buy') ||
+        options.path.contains('seller_stack_sell_price_update') ||
+        options.path.contains('seller_stack_sell_price_delete') ||
         options.path.contains('apna_u_loan_request') ||
         options.path.contains('sbt_trade_save') ||
         options.path.contains('check_user_wallet') ||
@@ -105,15 +115,20 @@ class Diointerceptor extends InterceptorsWrapper {
     }
 
     final data = response.data;
-    final status = data['status'].toString();
+    final status = data is Map ? data['status']?.toString() : null;
 
     if (status == '3') {
-      ref.watch(authProvider.notifier).logout();
+      final isLogoutRequest =
+          response.requestOptions.path.contains('apna_user_logout') ||
+          response.requestOptions.path.contains('user_logout');
+      final isAuthLoggedIn =
+          ref.read(authProvider).value == AuthStatus.loggedIn;
+      if (isAuthLoggedIn && !isLogoutRequest) {
+        ref.read(authProvider.notifier).logout(showToast: false);
+      }
     }
-    if (!ref.watch(sharedUtilityProvider).isBusinessProfileActive()) {
-    } else if (!ref.watch(sharedUtilityProvider).isBusinessProfileActive()) {}
    if (status == '0') {
-  final msg = data['message']?.toString() ?? data['Message']?.toString() ?? "";
+  final msg = data is Map ? (data['message']?.toString() ?? data['Message']?.toString() ?? "") : "";
   if (msg != "OTP Expired !" &&
       !msg.toLowerCase().contains("user not found") &&
       !msg.toLowerCase().contains("no user found") &&
@@ -126,7 +141,13 @@ class Diointerceptor extends InterceptorsWrapper {
       !response.requestOptions.path.contains('apna_u_bid_by_buyer') &&
       !response.requestOptions.path.contains('wbt_update_sell_price') &&
       !response.requestOptions.path.contains('v1_apna_send_otp') &&
-      !response.requestOptions.path.contains('send_otp')) {
+      !response.requestOptions.path.contains('send_otp') &&
+      !response.requestOptions.path.contains('check_user') &&
+      !response.requestOptions.path.contains('user_register') &&
+      !response.requestOptions.path.contains('user_send_otp') &&
+      !response.requestOptions.path.contains('user_verify_otp') &&
+      !response.requestOptions.path.contains('verify_otp') &&
+      !response.requestOptions.path.contains('new-taja-bhav')) {
     _showProfileErrorDialog(
       msg.isNotEmpty ? msg : "Unknown error",
     );
@@ -143,10 +164,49 @@ class Diointerceptor extends InterceptorsWrapper {
       _decrementLoader();
     }
 
-    final errorMessage = err.message ?? "Something went wrong.";
+    String errorMessage = "Something went wrong. Please try again.";
+    if (err.response?.data is Map &&
+        (err.response?.data['message'] != null ||
+            err.response?.data['Message'] != null)) {
+      errorMessage =
+          (err.response?.data['message'] ?? err.response?.data['Message'])
+              .toString();
+    } else if (err.type == DioExceptionType.connectionTimeout ||
+        err.type == DioExceptionType.receiveTimeout ||
+        err.type == DioExceptionType.sendTimeout) {
+      errorMessage =
+          "Connection timed out. Please check your internet connection.";
+    } else if (err.type == DioExceptionType.connectionError) {
+      errorMessage = "No internet connection. Please check your network.";
+    } else if (err.response?.statusCode == 500) {
+      if (err.requestOptions.path.contains('get_address_from_pincode') ||
+          err.requestOptions.path.contains('addressFromPincode')) {
+        errorMessage = "Unable to fetch location. Please change the pincode.";
+      } else {
+        errorMessage = "Server error. Please try again later.";
+      }
+    } else if (err.message != null &&
+        !err.message!.contains("This exception was thrown") &&
+        !err.message!.contains("status code of")) {
+      errorMessage = err.message!;
+    }
+
+    final errStatus = err.response?.data is Map ? err.response?.data['status']?.toString() : null;
+    if (errStatus == '3' || err.response?.statusCode == 401) {
+      final isLogoutRequest =
+          err.requestOptions.path.contains('apna_user_logout') ||
+          err.requestOptions.path.contains('user_logout');
+      final isAuthLoggedIn =
+          ref.read(authProvider).value == AuthStatus.loggedIn;
+      if (isAuthLoggedIn && !isLogoutRequest) {
+        ref.read(authProvider.notifier).logout(showToast: false);
+      }
+    }
 
     if (!(err.type == DioExceptionType.badResponse &&
-        err.requestOptions.path.contains('apna_u_user_details'))) {
+            err.requestOptions.path.contains('apna_u_user_details')) &&
+        !err.requestOptions.path.contains('apna_user_logout') &&
+        !err.requestOptions.path.contains('user_logout')) {
       showErrorAlertDialog(getx.Get.context, errorMessage);
     }
 

@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'color_constant.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
+import 'package:apnagodam/core/utils/progress_dialog_utils.dart';
 import 'package:get/get.dart' as getx;
 import 'package:elevarm_ui/elevarm_ui.dart';
 
@@ -108,7 +109,19 @@ String formatErrorMessage(BuildContext? context, dynamic rawMessage) {
   }
 
   if (!isHindi) {
+    if (msg.contains("This exception was thrown") ||
+        msg.contains("status code of 500") ||
+        msg.contains("Internal Server Error")) {
+      return "Server error. Please try again later.";
+    }
     return msg;
+  }
+
+  if (msg.contains("This exception was thrown") ||
+      msg.contains("status code of 500") ||
+      msg.contains("Internal Server Error") ||
+      msg.toLowerCase().contains("server error")) {
+    return "सर्वर त्रुटि, कृपया कुछ समय बाद पुनः प्रयास करें।";
   }
 
   RegExp priceRegex = RegExp(
@@ -133,6 +146,14 @@ String formatErrorMessage(BuildContext? context, dynamic rawMessage) {
     return "आपके द्वारा दर्ज किया गया मूल्य सही नहीं है, कृपया सही मूल्य दर्ज करें। न्यूनतम मूल्य : $minPrice और अधिकतम मूल्य : $maxPrice";
   }
 
+  if (msg.toLowerCase().contains("unable to fetch location") ||
+      msg.toLowerCase().contains("could not find address") ||
+      msg.toLowerCase().contains("unable to fetch address") ||
+      msg.toLowerCase().contains("change the pincode") ||
+      msg.toLowerCase().contains("chenge the pincode")) {
+    return "लोकेशन प्राप्त करने में असमर्थ, कृपया पिनकोड बदलें।";
+  }
+
   if (msg.toLowerCase().contains("user don't have suffcient balance") ||
       msg.toLowerCase().contains("user don't have sufficient balance") ||
       msg.toLowerCase().contains("insufficient balance")) {
@@ -148,12 +169,30 @@ String formatErrorMessage(BuildContext? context, dynamic rawMessage) {
   return msg;
 }
 
+bool _isErrorAlertOpen = false;
+
 void showErrorAlertDialog(BuildContext? context, dynamic rawMessage, {VoidCallback? onOk}) {
+  if (_isErrorAlertOpen) return;
+  _isErrorAlertOpen = true;
+
+  ProgressDialogUtils.hideProgressDialog();
   String message = formatErrorMessage(context, rawMessage);
 
   BuildContext? targetContext = context;
   if (targetContext == null || !targetContext.mounted) {
     targetContext = getx.Get.overlayContext ?? getx.Get.context;
+  }
+
+  bool isHindi = false;
+  try {
+    if (targetContext != null) {
+      isHindi = (Localizations.localeOf(targetContext).languageCode == 'hi');
+    }
+  } catch (_) {}
+  if (!isHindi) {
+    try {
+      isHindi = (getx.Get.locale?.languageCode == 'hi');
+    } catch (_) {}
   }
 
   if (targetContext != null && targetContext.mounted) {
@@ -162,10 +201,10 @@ void showErrorAlertDialog(BuildContext? context, dynamic rawMessage, {VoidCallba
       barrierDismissible: false,
       builder: (dialogCtx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Center(
+        title: Center(
           child: Text(
-            "Error",
-            style: TextStyle(fontWeight: FontWeight.bold),
+            isHindi ? "त्रुटि" : "Error",
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
         content: Column(
@@ -189,6 +228,8 @@ void showErrorAlertDialog(BuildContext? context, dynamic rawMessage, {VoidCallba
                       primaryColor: Colors.red.shade700,
                     ),
                     onPressed: () {
+                      _isErrorAlertOpen = false;
+                      ProgressDialogUtils.hideProgressDialog();
                       Navigator.of(dialogCtx).pop();
                       if (onOk != null) {
                         onOk();
@@ -199,7 +240,7 @@ void showErrorAlertDialog(BuildContext? context, dynamic rawMessage, {VoidCallba
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevarmPrimaryButton.text(
-                    text: 'Contact IVR',
+                    text: isHindi ? 'आईवीआर से संपर्क करें' : 'Contact IVR',
                     buttonThemeData: ElevarmPrimaryButtonThemeData(
                       primaryColor: ColorConstant.maingreen,
                     ),
@@ -211,10 +252,12 @@ void showErrorAlertDialog(BuildContext? context, dynamic rawMessage, {VoidCallba
           ],
         ),
       ),
-    );
+    ).then((_) {
+      _isErrorAlertOpen = false;
+    });
   } else {
     getx.Get.defaultDialog(
-      title: "Error",
+      title: isHindi ? "त्रुटि" : "Error",
       radius: 8,
       barrierDismissible: false,
       content: Column(
@@ -238,6 +281,8 @@ void showErrorAlertDialog(BuildContext? context, dynamic rawMessage, {VoidCallba
                     primaryColor: Colors.red.shade700,
                   ),
                   onPressed: () {
+                    _isErrorAlertOpen = false;
+                    ProgressDialogUtils.hideProgressDialog();
                     getx.Get.back();
                     if (onOk != null) {
                       onOk();
@@ -248,7 +293,7 @@ void showErrorAlertDialog(BuildContext? context, dynamic rawMessage, {VoidCallba
               const SizedBox(width: 5),
               Expanded(
                 child: ElevarmPrimaryButton.text(
-                  text: 'Contact IVR',
+                  text: isHindi ? 'आईवीआर से संपर्क करें' : 'Contact IVR',
                   buttonThemeData: ElevarmPrimaryButtonThemeData(
                     primaryColor: ColorConstant.maingreen,
                   ),
@@ -259,7 +304,9 @@ void showErrorAlertDialog(BuildContext? context, dynamic rawMessage, {VoidCallba
           ),
         ],
       ),
-    );
+    ).then((_) {
+      _isErrorAlertOpen = false;
+    });
   }
 }
 

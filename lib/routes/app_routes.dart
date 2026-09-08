@@ -104,9 +104,12 @@ var goRouterProvider = StateProvider((ref) => GoRouter(
                   return Otpscreen(
                     phoneNumber: data['phone'],
                     otpType: data['type'],
+                    userId: data['user_id']?.toString() ?? data['userId']?.toString(),
+                    userName: data['userName']?.toString(),
                   );
                 },
               ),
             ],
           )
+
         ]));

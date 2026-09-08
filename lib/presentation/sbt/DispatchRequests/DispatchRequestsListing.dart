@@ -43,12 +43,39 @@ class _DispatchrequestslistingState
           .watch(dispatchListingProvider(sbtOrderId: widget.orderId))
           .when(
             data:
-                (data) => ListView.builder(
-                  padding: EdgeInsets.all(10),
-                  itemCount: data.data?.length ?? 0,
-                  shrinkWrap: true,
-                  itemBuilder:
-                      (context, index) => Card(
+                (data) {
+                  final list = data.data ?? [];
+                  if (list.isEmpty) {
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        ref.invalidate(dispatchListingProvider(sbtOrderId: widget.orderId));
+                      },
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Container(
+                          height: MediaQuery.of(context).size.height * 0.7,
+                          alignment: Alignment.center,
+                          child: Text(
+                            AppLocalizations.of(context)!.noDataFound,
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(16),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(dispatchListingProvider(sbtOrderId: widget.orderId));
+                    },
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.all(10),
+                      itemCount: list.length,
+                      itemBuilder:
+                          (context, index) => Card(
                         color: Colors.white,
                         elevation: 8,
                         shape: RoundedRectangleBorder(
@@ -633,7 +660,9 @@ class _DispatchrequestslistingState
                           ),
                         ),
                       ),
-                ),
+                    ),
+                  );
+                },
             error: (e, s) => Container(),
             loading: () => defaultLoader(),
           ),

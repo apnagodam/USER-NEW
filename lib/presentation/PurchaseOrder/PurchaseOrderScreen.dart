@@ -3,15 +3,11 @@ import 'dart:io';
 import 'package:apnagodam/core/utils/color_constant.dart';
 import 'package:apnagodam/core/utils/no_data_found_widget.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
-import 'package:apnagodam/extensions/extensions.dart';
 import 'package:apnagodam/presentation/PurchaseOrder/model/BrokerBuyerModel.dart';
 import 'package:apnagodam/presentation/PurchaseOrder/service/PurchaseOrderService.dart';
 import 'package:apnagodam/presentation/dashboard/dashboard_screen.dart';
-import 'package:apnagodam/presentation/home_screen/models/warehouse_response_model.dart';
-import 'package:apnagodam/presentation/home_screen/service/home_screen_service.dart';
-import 'package:apnagodam/widgets/CommonTextField.dart';
+import 'package:apnagodam/widgets/dailogs/customAlertDialog.dart';
 import 'package:apnagodam/widgets/dailogs/error.dart';
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +20,7 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
 
 import '../../core/utils/helper.dart';
+import '../../extensions/extensions.dart';
 
 class Purchaseorderscreen extends ConsumerStatefulWidget {
   const Purchaseorderscreen({super.key});
@@ -46,26 +43,21 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
   final tdsController = TextEditingController();
 
   // State Providers
-  final commodityDropDownProvider = StateProvider<Commodite?>((ref) => null);
-  final brokerProvider = StateProvider<BrokerBuyerDatum?>((ref) => null);
-  final terminalDropDownProvider = StateProvider<Terminal?>((ref) => null);
-  final buyerProvider = StateProvider<BrokerBuyerDatum?>((ref) => null);
-  final shipToProvider = StateProvider<BrokerBuyerDatum?>((ref) => null);
-  final factoryNameProvider = StateProvider<String?>((ref) => null);
-  final paymentTypeProvider = StateProvider<String?>((ref) => null);
+  final selectedWarehouseProvider = StateProvider<PoWarehouseItem?>((ref) => null);
+  final selectedCommodityProvider = StateProvider<PoCommodityItem?>((ref) => null);
+  final selectedBrokerProvider = StateProvider<PoUserItem?>((ref) => null);
+  final selectedBuyerProvider = StateProvider<PoUserItem?>((ref) => null);
+  final selectedShipToProvider = StateProvider<PoUserItem?>((ref) => null);
+  final selectedFactoryProvider = StateProvider<PoFactoryItem?>((ref) => null);
+  final selectedPaymentProvider = StateProvider<Map<String, String>?>((ref) => null);
   final imageProvider = StateProvider<File?>((ref) => null);
   final issueDateProvider = StateProvider<DateTime?>((ref) => null);
   final expiryDateProvider = StateProvider<DateTime?>((ref) => null);
 
-  final List<String> paymentOptions = const [
-    "Advance",
-    "CAD",
-    "Credit",
-    "Against Delivery",
-    "RTGS / NEFT",
-    "PDC",
-    "LC",
-    "Immediate",
+  final List<Map<String, String>> paymentOptions = const [
+    {"id": "1", "name": "Truck Load"},
+    {"id": "2", "name": "Delivery"},
+
   ];
 
   @override
@@ -141,6 +133,10 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedWarehouse = ref.watch(selectedWarehouseProvider);
+    final selectedCommodity = ref.watch(selectedCommodityProvider);
+    final selectedShipTo = ref.watch(selectedShipToProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.purchaseOrder2),
@@ -152,20 +148,22 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Commodity* (Dropdown)
-              _fieldLabel("Commodity", isRequired: true),
-              ref.watch(warehouseDataProvider).when(
-                    data: (warehouseData) => DropdownSearch<Commodite?>(
-                      compareFn: (a, b) => a?.id == b?.id,
+              // 1. Warehouse Name* (Dropdown from getWarehouseData -> WarehouseData)
+              _fieldLabel("Warehouse Name", isRequired: true),
+              ref.watch(getPoWarehouseDataProvider).when(
+                    data: (warehouseData) => DropdownSearch<PoWarehouseItem>(
+                      compareFn: (a, b) => a.id == b.id,
                       popupProps: PopupProps.menu(
                         searchFieldProps: TextFieldProps(
                           autofocus: true,
                           cursorColor: ColorConstant.maingreen,
                           decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                            hintText: "Search Commodity",
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 10),
+                            hintText: "Search Warehouse",
                             border: OutlineInputBorder(
-                              borderSide: BorderSide(color: ColorConstant.maingreen),
+                              borderSide:
+                                  BorderSide(color: ColorConstant.maingreen),
                             ),
                           ),
                         ),
@@ -175,11 +173,10 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        itemBuilder: (context, commodity, isVisible, _) =>
-                            Padding(
+                        itemBuilder: (context, item, isVisible, _) => Padding(
                           padding: const EdgeInsets.all(12),
                           child: Text(
-                            "${commodity?.category}",
+                            "${item.name}",
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
                               fontSize: Adaptive.sp(15),
@@ -188,30 +185,146 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                         ),
                         showSearchBox: true,
                       ),
-                      filterFn: (user, filter) =>
-                          user?.userFilterByCreationDate(filter) ?? false,
-                      items: (s, d) => warehouseData.commodites ?? [],
-                      itemAsString: (Commodite? u) => u?.category ?? "",
-                      selectedItem: ref.watch(commodityDropDownProvider),
-                      onChanged: (Commodite? data) => ref
-                          .read(commodityDropDownProvider.notifier)
-                          .state = data,
+                      filterFn: (item, filter) => (item.name ?? '')
+                          .toLowerCase()
+                          .contains(filter.toLowerCase().trim()),
+                      items: (s, d) => warehouseData.warehouseData ?? [],
+                      itemAsString: (PoWarehouseItem? u) => u?.name ?? "",
+                      selectedItem: selectedWarehouse,
+                      onChanged: (PoWarehouseItem? data) {
+                        ref.read(selectedWarehouseProvider.notifier).state =
+                            data;
+                        ref.read(selectedCommodityProvider.notifier).state =
+                            null;
+                        ref.read(selectedShipToProvider.notifier).state = null;
+                        ref.read(selectedFactoryProvider.notifier).state = null;
+                        factoryAddressController.clear();
+                      },
                       validator: (value) {
                         if (value == null) {
-                          return "Please select Commodity";
+                          return "Please select Warehouse";
                         }
                         return null;
                       },
                       decoratorProps: DropDownDecoratorProps(
-                        decoration: _dropdownDecoration("Select Commodity"),
+                        decoration: _dropdownDecoration("Select Warehouse"),
                       ),
                     ),
-                    error: (e, s) => const SizedBox(),
+                    error: (e, s) => Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Text(
+                        "Failed to load warehouses. Please retry.",
+                        style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontSize: Adaptive.sp(14)),
+                      ),
+                    ),
                     loading: () => defaultLoader(),
                   ),
               const SizedBox(height: 14),
 
-              // 2. Weight(Qtl)* (Text Input)
+              // 2. Commodity* (Dropdown from getCommodityData by terminal_id)
+              _fieldLabel("Commodity", isRequired: true),
+              if (selectedWarehouse == null)
+                DropdownSearch<PoCommodityItem>(
+                  enabled: false,
+                  compareFn: (a, b) => a.id == b.id,
+                  items: (s, d) => [],
+                  decoratorProps: DropDownDecoratorProps(
+                    decoration:
+                        _dropdownDecoration("Select Warehouse first"),
+                  ),
+                )
+              else
+                ref
+                    .watch(
+                        getPoCommodityDataProvider("${selectedWarehouse.id}"))
+                    .when(
+                      data: (commodityData) =>
+                          DropdownSearch<PoCommodityItem>(
+                        compareFn: (a, b) => a.id == b.id,
+                        popupProps: PopupProps.menu(
+                          searchFieldProps: TextFieldProps(
+                            autofocus: true,
+                            cursorColor: ColorConstant.maingreen,
+                            decoration: InputDecoration(
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10),
+                              hintText: "Search Commodity",
+                              border: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: ColorConstant.maingreen),
+                              ),
+                            ),
+                          ),
+                          menuProps: MenuProps(
+                            shape: RoundedRectangleBorder(
+                              side: BorderSide(color: ColorConstant.maingreen),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          itemBuilder: (context, item, isVisible, _) => Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Text(
+                              "${item.category}",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: Adaptive.sp(15),
+                              ),
+                            ),
+                          ),
+                          showSearchBox: true,
+                        ),
+                        filterFn: (item, filter) => (item.category ?? '')
+                            .toLowerCase()
+                            .contains(filter.toLowerCase().trim()),
+                        items: (s, d) => commodityData.commodityData ?? [],
+                        itemAsString: (PoCommodityItem? u) =>
+                            u?.category ?? "",
+                        selectedItem: selectedCommodity,
+                        onChanged: (PoCommodityItem? data) {
+                          ref.read(selectedCommodityProvider.notifier).state =
+                              data;
+                          ref.read(selectedShipToProvider.notifier).state =
+                              null;
+                          ref.read(selectedFactoryProvider.notifier).state =
+                              null;
+                          factoryAddressController.clear();
+                        },
+                        validator: (value) {
+                          if (value == null) {
+                            return "Please select Commodity";
+                          }
+                          return null;
+                        },
+                        decoratorProps: DropDownDecoratorProps(
+                          decoration: _dropdownDecoration("Select Commodity"),
+                        ),
+                      ),
+                      error: (e, s) => Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade200),
+                        ),
+                        child: Text(
+                          "Failed to load commodities. Please retry.",
+                          style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: Adaptive.sp(14)),
+                        ),
+                      ),
+                      loading: () => defaultLoader(),
+                    ),
+              const SizedBox(height: 14),
+
+              // 3. Weight(Qtl)* (Text Input)
               _fieldLabel("Weight(Qtl)", isRequired: true),
               TextFormField(
                 controller: weightController,
@@ -228,7 +341,7 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
               ),
               const SizedBox(height: 14),
 
-              // 3. Rate(Qtl)* (Text Input)
+              // 4. Rate(Qtl)* (Text Input)
               _fieldLabel("Rate(Qtl)", isRequired: true),
               TextFormField(
                 controller: rateController,
@@ -245,7 +358,7 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
               ),
               const SizedBox(height: 14),
 
-              // 4. PO Number* (Text Input)
+              // 5. PO Number* (Text Input)
               _fieldLabel("PO Number", isRequired: true),
               TextFormField(
                 controller: poNumberController,
@@ -260,20 +373,22 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
               ),
               const SizedBox(height: 14),
 
-              // 5. Broker Name (Dropdown - Optional)
+              // 6. Broker Name (Dropdown from getWarehouseData -> BrokerData, Optional)
               _fieldLabel("Broker Name", isRequired: false),
-              ref.watch(getBrokerNamesProvider).when(
-                    data: (data) => DropdownSearch<BrokerBuyerDatum>(
-                      compareFn: (a, b) => a.userId == b.userId,
+              ref.watch(getPoWarehouseDataProvider).when(
+                    data: (warehouseData) => DropdownSearch<PoUserItem>(
+                      compareFn: (a, b) => a.id == b.id,
                       popupProps: PopupProps.menu(
                         searchFieldProps: TextFieldProps(
                           autofocus: true,
                           cursorColor: ColorConstant.maingreen,
                           decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 10),
                             hintText: "Search Broker",
                             border: OutlineInputBorder(
-                              borderSide: BorderSide(color: ColorConstant.maingreen),
+                              borderSide:
+                                  BorderSide(color: ColorConstant.maingreen),
                             ),
                           ),
                         ),
@@ -283,11 +398,10 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        itemBuilder: (context, broker, isVisible, _) =>
-                            Padding(
+                        itemBuilder: (context, item, isVisible, _) => Padding(
                           padding: const EdgeInsets.all(12),
                           child: Text(
-                            "${broker.name}",
+                            "${item.name}",
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
                               fontSize: Adaptive.sp(15),
@@ -296,77 +410,17 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                         ),
                         showSearchBox: true,
                       ),
-                      filterFn: (user, filter) => user.name
-                          .toString()
+                      filterFn: (item, filter) => (item.name ?? '')
                           .toLowerCase()
-                          .trim()
-                          .contains(filter.toLowerCase()),
-                      items: (s, d) => data.data ?? [],
-                      itemAsString: (BrokerBuyerDatum? u) => u?.name ?? "",
-                      selectedItem: ref.watch(brokerProvider),
-                      onChanged: (BrokerBuyerDatum? data) =>
-                          ref.read(brokerProvider.notifier).state = data,
-                      decoratorProps: DropDownDecoratorProps(
-                        decoration: _dropdownDecoration("Select User"),
-                      ),
-                    ),
-                    error: (e, s) => const SizedBox(),
-                    loading: () => defaultLoader(),
-                  ),
-              const SizedBox(height: 14),
-
-              // 6. Warehouse Name* (Dropdown)
-              _fieldLabel("Warehouse Name", isRequired: true),
-              ref.watch(warehouseDataProvider).when(
-                    data: (warehouseData) => DropdownSearch<Terminal?>(
-                      compareFn: (a, b) => a?.id == b?.id,
-                      popupProps: PopupProps.menu(
-                        searchFieldProps: TextFieldProps(
-                          autofocus: true,
-                          cursorColor: ColorConstant.maingreen,
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                            hintText: "Search Warehouse",
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide(color: ColorConstant.maingreen),
-                            ),
-                          ),
-                        ),
-                        menuProps: MenuProps(
-                          shape: RoundedRectangleBorder(
-                            side: BorderSide(color: ColorConstant.maingreen),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        itemBuilder: (context, terminal, isVisible, _) =>
-                            Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Text(
-                            "${terminal?.name}",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: Adaptive.sp(15),
-                            ),
-                          ),
-                        ),
-                        showSearchBox: true,
-                      ),
-                      filterFn: (user, filter) =>
-                          user?.userFilterByCreationDate(filter) ?? false,
-                      items: (s, d) => warehouseData.terminals ?? [],
-                      itemAsString: (Terminal? u) => u?.name ?? "",
-                      selectedItem: ref.watch(terminalDropDownProvider),
-                      onChanged: (Terminal? data) => ref
-                          .read(terminalDropDownProvider.notifier)
+                          .contains(filter.toLowerCase().trim()),
+                      items: (s, d) => warehouseData.brokerData ?? [],
+                      itemAsString: (PoUserItem? u) => u?.name ?? "",
+                      selectedItem: ref.watch(selectedBrokerProvider),
+                      onChanged: (PoUserItem? data) => ref
+                          .read(selectedBrokerProvider.notifier)
                           .state = data,
-                      validator: (value) {
-                        if (value == null) {
-                          return "Please select Warehouse";
-                        }
-                        return null;
-                      },
                       decoratorProps: DropDownDecoratorProps(
-                        decoration: _dropdownDecoration("Select Warehouse"),
+                        decoration: _dropdownDecoration("Select Broker"),
                       ),
                     ),
                     error: (e, s) => const SizedBox(),
@@ -374,20 +428,22 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                   ),
               const SizedBox(height: 14),
 
-              // 7. Buyer Name* (Dropdown)
+              // 7. Buyer Name* (Dropdown from getWarehouseData -> BuyerData)
               _fieldLabel("Buyer Name", isRequired: true),
-              ref.watch(getBrokerNamesProvider).when(
-                    data: (data) => DropdownSearch<BrokerBuyerDatum>(
-                      compareFn: (a, b) => a.userId == b.userId,
+              ref.watch(getPoWarehouseDataProvider).when(
+                    data: (warehouseData) => DropdownSearch<PoUserItem>(
+                      compareFn: (a, b) => a.id == b.id,
                       popupProps: PopupProps.menu(
                         searchFieldProps: TextFieldProps(
                           autofocus: true,
                           cursorColor: ColorConstant.maingreen,
                           decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 10),
                             hintText: "Search Buyer",
                             border: OutlineInputBorder(
-                              borderSide: BorderSide(color: ColorConstant.maingreen),
+                              borderSide:
+                                  BorderSide(color: ColorConstant.maingreen),
                             ),
                           ),
                         ),
@@ -397,11 +453,10 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        itemBuilder: (context, buyer, isVisible, _) =>
-                            Padding(
+                        itemBuilder: (context, item, isVisible, _) => Padding(
                           padding: const EdgeInsets.all(12),
                           child: Text(
-                            "${buyer.name}",
+                            "${item.name}",
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
                               fontSize: Adaptive.sp(15),
@@ -410,16 +465,15 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                         ),
                         showSearchBox: true,
                       ),
-                      filterFn: (user, filter) => user.name
-                          .toString()
+                      filterFn: (item, filter) => (item.name ?? '')
                           .toLowerCase()
-                          .trim()
-                          .contains(filter.toLowerCase()),
-                      items: (s, d) => data.data ?? [],
-                      itemAsString: (BrokerBuyerDatum? u) => u?.name ?? "",
-                      selectedItem: ref.watch(buyerProvider),
-                      onChanged: (BrokerBuyerDatum? data) =>
-                          ref.read(buyerProvider.notifier).state = data,
+                          .contains(filter.toLowerCase().trim()),
+                      items: (s, d) => warehouseData.buyerData ?? [],
+                      itemAsString: (PoUserItem? u) => u?.name ?? "",
+                      selectedItem: ref.watch(selectedBuyerProvider),
+                      onChanged: (PoUserItem? data) => ref
+                          .read(selectedBuyerProvider.notifier)
+                          .state = data,
                       validator: (value) {
                         if (value == null) {
                           return "Please select Buyer Name";
@@ -435,85 +489,36 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                   ),
               const SizedBox(height: 14),
 
-              // 8. Ship To* (Dropdown)
+              // 8. Ship To* (Dropdown from getShipToUserData by commodity_id)
               _fieldLabel("Ship To", isRequired: true),
-              ref.watch(getBrokerNamesProvider).when(
-                    data: (data) => DropdownSearch<BrokerBuyerDatum>(
-                      compareFn: (a, b) => a.userId == b.userId,
-                      popupProps: PopupProps.menu(
-                        searchFieldProps: TextFieldProps(
-                          autofocus: true,
-                          cursorColor: ColorConstant.maingreen,
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                            hintText: "Search Ship To",
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide(color: ColorConstant.maingreen),
-                            ),
-                          ),
-                        ),
-                        menuProps: MenuProps(
-                          shape: RoundedRectangleBorder(
-                            side: BorderSide(color: ColorConstant.maingreen),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        itemBuilder: (context, shipToItem, isVisible, _) =>
-                            Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Text(
-                            "${shipToItem.name}",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: Adaptive.sp(15),
-                            ),
-                          ),
-                        ),
-                        showSearchBox: true,
-                      ),
-                      filterFn: (user, filter) => user.name
-                          .toString()
-                          .toLowerCase()
-                          .trim()
-                          .contains(filter.toLowerCase()),
-                      items: (s, d) => data.data ?? [],
-                      itemAsString: (BrokerBuyerDatum? u) => u?.name ?? "",
-                      selectedItem: ref.watch(shipToProvider),
-                      onChanged: (BrokerBuyerDatum? data) =>
-                          ref.read(shipToProvider.notifier).state = data,
-                      validator: (value) {
-                        if (value == null) {
-                          return "Please select Ship To";
-                        }
-                        return null;
-                      },
-                      decoratorProps: DropDownDecoratorProps(
-                        decoration: _dropdownDecoration("Select Ship To"),
-                      ),
-                    ),
-                    error: (e, s) => const SizedBox(),
-                    loading: () => defaultLoader(),
+              if (selectedCommodity == null)
+                DropdownSearch<PoUserItem>(
+                  enabled: false,
+                  compareFn: (a, b) => a.id == b.id,
+                  items: (s, d) => [],
+                  decoratorProps: DropDownDecoratorProps(
+                    decoration:
+                        _dropdownDecoration("Select Commodity first"),
                   ),
-              const SizedBox(height: 14),
-
-              // 9. Factory Name* (Dropdown)
-              _fieldLabel("Factory Name", isRequired: true),
-              ref.watch(getBrokerNamesProvider).when(
-                    data: (data) {
-                      final names = (data.data ?? [])
-                          .map((e) => e.name ?? "")
-                          .where((e) => e.isNotEmpty)
-                          .toList();
-                      return DropdownSearch<String>(
+                )
+              else
+                ref
+                    .watch(
+                        getPoShipToUserDataProvider("${selectedCommodity.id}"))
+                    .when(
+                      data: (shipToData) => DropdownSearch<PoUserItem>(
+                        compareFn: (a, b) => a.id == b.id,
                         popupProps: PopupProps.menu(
                           searchFieldProps: TextFieldProps(
                             autofocus: true,
                             cursorColor: ColorConstant.maingreen,
                             decoration: InputDecoration(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                              hintText: "Search / Enter Factory Name",
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10),
+                              hintText: "Search Ship To",
                               border: OutlineInputBorder(
-                                borderSide: BorderSide(color: ColorConstant.maingreen),
+                                borderSide: BorderSide(
+                                    color: ColorConstant.maingreen),
                               ),
                             ),
                           ),
@@ -523,11 +528,10 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          itemBuilder: (context, item, isVisible, _) =>
-                              Padding(
+                          itemBuilder: (context, item, isVisible, _) => Padding(
                             padding: const EdgeInsets.all(12),
                             child: Text(
-                              item,
+                              "${item.name}",
                               style: TextStyle(
                                 fontWeight: FontWeight.w500,
                                 fontSize: Adaptive.sp(15),
@@ -536,31 +540,149 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                           ),
                           showSearchBox: true,
                         ),
-                        items: (s, d) => names,
-                        selectedItem: ref.watch(factoryNameProvider),
-                        onChanged: (String? data) =>
-                            ref.read(factoryNameProvider.notifier).state = data,
+                        filterFn: (item, filter) => (item.name ?? '')
+                            .toLowerCase()
+                            .contains(filter.toLowerCase().trim()),
+                        items: (s, d) => shipToData.buyers ?? [],
+                        itemAsString: (PoUserItem? u) => u?.name ?? "",
+                        selectedItem: selectedShipTo,
+                        onChanged: (PoUserItem? data) {
+                          ref.read(selectedShipToProvider.notifier).state =
+                              data;
+                          ref.read(selectedFactoryProvider.notifier).state =
+                              null;
+                          factoryAddressController.clear();
+                        },
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
+                          if (value == null) {
+                            return "Please select Ship To";
+                          }
+                          return null;
+                        },
+                        decoratorProps: DropDownDecoratorProps(
+                          decoration: _dropdownDecoration("Select Ship To"),
+                        ),
+                      ),
+                      error: (e, s) => Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade200),
+                        ),
+                        child: Text(
+                          "Failed to load Ship To users. Please retry.",
+                          style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: Adaptive.sp(14)),
+                        ),
+                      ),
+                      loading: () => defaultLoader(),
+                    ),
+              const SizedBox(height: 14),
+
+              // 9. Factory Name* (Dropdown from getFactoryList by shipToUserId)
+              _fieldLabel("Factory Name", isRequired: true),
+              if (selectedShipTo == null)
+                DropdownSearch<PoFactoryItem>(
+                  enabled: false,
+                  compareFn: (a, b) => a.id == b.id,
+                  items: (s, d) => [],
+                  decoratorProps: DropDownDecoratorProps(
+                    decoration:
+                        _dropdownDecoration("Select Ship To first"),
+                  ),
+                )
+              else
+                ref
+                    .watch(getPoFactoryListProvider("${selectedShipTo.id}"))
+                    .when(
+                      data: (factoryData) => DropdownSearch<PoFactoryItem>(
+                        compareFn: (a, b) => a.id == b.id,
+                        popupProps: PopupProps.menu(
+                          searchFieldProps: TextFieldProps(
+                            autofocus: true,
+                            cursorColor: ColorConstant.maingreen,
+                            decoration: InputDecoration(
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10),
+                              hintText: "Search Factory Name",
+                              border: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: ColorConstant.maingreen),
+                              ),
+                            ),
+                          ),
+                          menuProps: MenuProps(
+                            shape: RoundedRectangleBorder(
+                              side: BorderSide(color: ColorConstant.maingreen),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          itemBuilder: (context, item, isVisible, _) => Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Text(
+                              "${item.factoryName}",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: Adaptive.sp(15),
+                              ),
+                            ),
+                          ),
+                          showSearchBox: true,
+                        ),
+                        filterFn: (item, filter) => (item.factoryName ?? '')
+                            .toLowerCase()
+                            .contains(filter.toLowerCase().trim()),
+                        items: (s, d) => factoryData.factoryList ?? [],
+                        itemAsString: (PoFactoryItem? u) =>
+                            u?.factoryName ?? "",
+                        selectedItem: ref.watch(selectedFactoryProvider),
+                        onChanged: (PoFactoryItem? data) {
+                          ref.read(selectedFactoryProvider.notifier).state =
+                              data;
+                          if (data != null &&
+                              data.factoryAddress != null &&
+                              data.factoryAddress!.isNotEmpty) {
+                            factoryAddressController.text =
+                                data.factoryAddress!;
+                          }
+                        },
+                        validator: (value) {
+                          if (value == null) {
                             return "Please select Factory Name";
                           }
                           return null;
                         },
                         decoratorProps: DropDownDecoratorProps(
-                          decoration: _dropdownDecoration("Select Factory Name"),
+                          decoration:
+                              _dropdownDecoration("Select Factory Name"),
                         ),
-                      );
-                    },
-                    error: (e, s) => const SizedBox(),
-                    loading: () => defaultLoader(),
-                  ),
+                      ),
+                      error: (e, s) => Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade200),
+                        ),
+                        child: Text(
+                          "Failed to load factories. Please retry.",
+                          style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: Adaptive.sp(14)),
+                        ),
+                      ),
+                      loading: () => defaultLoader(),
+                    ),
               const SizedBox(height: 14),
 
-              // 10. Factory Address* (Text Input)
+              // 10. Factory Address* (Text Input, Auto-filled from factory selection)
               _fieldLabel("Factory Address", isRequired: true),
               TextFormField(
                 controller: factoryAddressController,
                 keyboardType: TextInputType.streetAddress,
+                maxLines: 2,
                 textInputAction: TextInputAction.next,
                 decoration: _dropdownDecoration("Enter Factory Address"),
                 validator: (value) {
@@ -574,7 +696,8 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
 
               // 11. Payment* (Dropdown)
               _fieldLabel("Payment", isRequired: true),
-              DropdownSearch<String>(
+              DropdownSearch<Map<String, String>>(
+                compareFn: (a, b) => a["id"] == b["id"],
                 popupProps: PopupProps.menu(
                   menuProps: MenuProps(
                     shape: RoundedRectangleBorder(
@@ -585,7 +708,7 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                   itemBuilder: (context, item, isVisible, _) => Padding(
                     padding: const EdgeInsets.all(12),
                     child: Text(
-                      item,
+                      item["name"] ?? "",
                       style: TextStyle(
                         fontWeight: FontWeight.w500,
                         fontSize: Adaptive.sp(15),
@@ -594,11 +717,12 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                   ),
                 ),
                 items: (s, d) => paymentOptions,
-                selectedItem: ref.watch(paymentTypeProvider),
-                onChanged: (String? data) =>
-                    ref.read(paymentTypeProvider.notifier).state = data,
+                itemAsString: (item) => item["name"] ?? "",
+                selectedItem: ref.watch(selectedPaymentProvider),
+                onChanged: (data) =>
+                    ref.read(selectedPaymentProvider.notifier).state = data,
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
+                  if (value == null) {
                     return "Please select Payment Type";
                   }
                   return null;
@@ -659,16 +783,16 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                 child: InkWell(
                   onTap: () async {
                     try {
-                      final picker = ImagePicker();
-                      final value = await picker.pickImage(
-                        source: ImageSource.gallery,
-                        maxWidth: 1200,
-                        maxHeight: 1600,
-                        imageQuality: 80,
+                      showImageSourceFilePickerDialog(
+                        context,
+                        (image) {
+                          ref.read(imageProvider.notifier).state =
+                              File(image.path);
+                        },
+                        maxWidth: 1024,
+                        maxHeight: 1024,
+                        imageQuality: 70,
                       );
-                      if (value != null) {
-                        ref.read(imageProvider.notifier).state = File(value.path);
-                      }
                     } catch (e, s) {
                       debugPrintStack(stackTrace: s);
                     }
@@ -695,7 +819,8 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                                   decoration: BoxDecoration(
                                     color: Colors.grey.shade200,
                                     borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.grey.shade400),
+                                    border:
+                                        Border.all(color: Colors.grey.shade400),
                                   ),
                                   child: const Text(
                                     "Choose File",
@@ -732,7 +857,8 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                                         size: 16, color: Colors.white),
                                   ),
                                   onPressed: () {
-                                    ref.read(imageProvider.notifier).state = null;
+                                    ref.read(imageProvider.notifier).state =
+                                        null;
                                   },
                                 ),
                               ],
@@ -759,7 +885,8 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                 },
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -771,7 +898,8 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                       Text(
                         ref.watch(issueDateProvider) == null
                             ? "dd-mm-yyyy"
-                            : DateFormat('dd-MM-yyyy').format(ref.watch(issueDateProvider)!),
+                            : DateFormat('dd-MM-yyyy')
+                                .format(ref.watch(issueDateProvider)!),
                         style: TextStyle(
                           fontSize: Adaptive.sp(15),
                           color: ref.watch(issueDateProvider) == null
@@ -782,7 +910,8 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                               : FontWeight.w600,
                         ),
                       ),
-                      Icon(Icons.calendar_today_outlined, size: 20, color: ColorConstant.maingreen),
+                      Icon(Icons.calendar_today_outlined,
+                          size: 20, color: ColorConstant.maingreen),
                     ],
                   ),
                 ),
@@ -796,7 +925,8 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                   final picked = await showDatePicker(
                     context: context,
                     initialDate: ref.watch(expiryDateProvider) ??
-                        (ref.watch(issueDateProvider) ?? DateTime.now()).add(const Duration(days: 30)),
+                        (ref.watch(issueDateProvider) ?? DateTime.now())
+                            .add(const Duration(days: 30)),
                     firstDate: DateTime(2000),
                     lastDate: DateTime(2050),
                   );
@@ -806,7 +936,8 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                 },
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -818,7 +949,8 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                       Text(
                         ref.watch(expiryDateProvider) == null
                             ? "dd-mm-yyyy"
-                            : DateFormat('dd-MM-yyyy').format(ref.watch(expiryDateProvider)!),
+                            : DateFormat('dd-MM-yyyy')
+                                .format(ref.watch(expiryDateProvider)!),
                         style: TextStyle(
                           fontSize: Adaptive.sp(15),
                           color: ref.watch(expiryDateProvider) == null
@@ -829,7 +961,8 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                               : FontWeight.w600,
                         ),
                       ),
-                      Icon(Icons.calendar_today_outlined, size: 20, color: ColorConstant.maingreen),
+                      Icon(Icons.calendar_today_outlined,
+                          size: 20, color: ColorConstant.maingreen),
                     ],
                   ),
                 ),
@@ -843,30 +976,33 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                 child: ElevatedButton(
                   onPressed: () async {
                     if (poKey.currentState!.validate()) {
-                      if (ref.read(commodityDropDownProvider) == null) {
-                        showErrorAlertDialog(context, "Please select Commodity");
+                      if (ref.read(selectedWarehouseProvider) == null) {
+                        showErrorAlertDialog(
+                            context, "Please select Warehouse");
                         return;
                       }
-                      if (ref.read(terminalDropDownProvider) == null) {
-                        showErrorAlertDialog(context, "Please select Warehouse");
+                      if (ref.read(selectedCommodityProvider) == null) {
+                        showErrorAlertDialog(
+                            context, "Please select Commodity");
                         return;
                       }
-                      if (ref.read(buyerProvider) == null) {
-                        showErrorAlertDialog(context, "Please select Buyer Name");
+                      if (ref.read(selectedBuyerProvider) == null) {
+                        showErrorAlertDialog(
+                            context, "Please select Buyer Name");
                         return;
                       }
-                      if (ref.read(shipToProvider) == null) {
+                      if (ref.read(selectedShipToProvider) == null) {
                         showErrorAlertDialog(context, "Please select Ship To");
                         return;
                       }
-                      if (ref.read(factoryNameProvider) == null ||
-                          ref.read(factoryNameProvider)!.trim().isEmpty) {
-                        showErrorAlertDialog(context, "Please select Factory Name");
+                      if (ref.read(selectedFactoryProvider) == null) {
+                        showErrorAlertDialog(
+                            context, "Please select Factory Name");
                         return;
                       }
-                      if (ref.read(paymentTypeProvider) == null ||
-                          ref.read(paymentTypeProvider)!.trim().isEmpty) {
-                        showErrorAlertDialog(context, "Please select Payment Type");
+                      if (ref.read(selectedPaymentProvider) == null) {
+                        showErrorAlertDialog(
+                            context, "Please select Payment Type");
                         return;
                       }
                       if (ref.read(imageProvider) == null) {
@@ -874,11 +1010,13 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                         return;
                       }
                       if (ref.read(issueDateProvider) == null) {
-                        showErrorAlertDialog(context, "Please select Date of Purchase Order");
+                        showErrorAlertDialog(
+                            context, "Please select Date of Purchase Order");
                         return;
                       }
                       if (ref.read(expiryDateProvider) == null) {
-                        showErrorAlertDialog(context, "Please select Expiry Date");
+                        showErrorAlertDialog(
+                            context, "Please select Expiry Date");
                         return;
                       }
 
@@ -893,38 +1031,45 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                             .read(purchaseOrderServiceProvider)
                             .createPurchaseOrder(
                               terminalId:
-                                  "${ref.read(terminalDropDownProvider)?.id}",
+                                  "${ref.read(selectedWarehouseProvider)!.id}",
                               commodityId:
-                                  "${ref.read(commodityDropDownProvider)?.id}",
+                                  "${ref.read(selectedCommodityProvider)!.id}",
                               weight: weightController.text.trim(),
                               rate: rateController.text.trim(),
                               date: formattedDate,
                               expiryDate: formattedExpiryDate,
                               poNumber: poNumberController.text.trim(),
-                              broker: ref.read(brokerProvider)?.userId != null
-                                  ? "${ref.read(brokerProvider)?.userId}"
+                              brokerUser: ref
+                                          .read(selectedBrokerProvider)
+                                          ?.id !=
+                                      null
+                                  ? "${ref.read(selectedBrokerProvider)!.id}"
                                   : "",
-                              buyerName:
-                                  "${ref.read(buyerProvider)?.userId ?? ref.read(buyerProvider)?.name}",
-                              shipTo:
-                                  "${ref.read(shipToProvider)?.userId ?? ref.read(shipToProvider)?.name}",
-                              factoryName:
-                                  ref.read(factoryNameProvider) ?? "",
+                              walletUser:
+                                  "${ref.read(selectedBuyerProvider)!.id}",
+                              shipToBuyer:
+                                  "${ref.read(selectedShipToProvider)!.id}",
+                              factoryId:
+                                  "${ref.read(selectedFactoryProvider)!.id}",
                               factoryAddress:
                                   factoryAddressController.text.trim(),
-                              payment: ref.read(paymentTypeProvider) ?? "",
-                              paymentDays:
-                                  paymentDaysController.text.trim(),
+                              paymentType: ref
+                                      .read(selectedPaymentProvider)?["id"] ??
+                                  "1",
+                              paymentDays: paymentDaysController.text.trim(),
                               qualityCondition:
                                   qualityController.text.trim(),
-                              tds: tdsController.text.trim(),
+                              tdsRate: tdsController.text.trim().isNotEmpty
+                                  ? tdsController.text.trim()
+                                  : "0",
                               poImage: ref.read(imageProvider)!,
                             );
 
                         context.hideloader();
 
                         if (response['status'].toString() == "1" ||
-                            response['status'].toString().toLowerCase() == "true") {
+                            response['status'].toString().toLowerCase() ==
+                                "true") {
                           Fluttertoast.showToast(
                             msg: response['message']?.toString() ??
                                 AppLocalizations.of(context)!.success4,
@@ -933,7 +1078,8 @@ class _PurchaseorderscreenState extends ConsumerState<Purchaseorderscreen> {
                         } else {
                           showErrorAlertDialog(
                             context,
-                            response['message']?.toString() ?? "Failed to create purchase order",
+                            response['message']?.toString() ??
+                                "Failed to create purchase order",
                           );
                         }
                       } catch (e) {

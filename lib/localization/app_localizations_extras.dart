@@ -542,6 +542,8 @@ extension AppLocalizationsExtras on AppLocalizations {
   String get pleaseSelectImage => 'Please Select Image';
   String get pleaseSelectLicenseType => 'Please Select License Type';
   String get poDetails => 'Po Details';
+  String get poEdit => 'PO Edit';
+  String get poDelete => 'PO Delete';
   String get price => 'Price';
   String get priceLp => 'Price Lp';
   String get pricing => 'Pricing';

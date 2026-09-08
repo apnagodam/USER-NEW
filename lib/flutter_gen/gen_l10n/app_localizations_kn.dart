@@ -3907,4 +3907,10 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get wsacharge => 'WSA Charge';
+
+  @override
+  String get poEdit => 'ಪಿಒ ಸಂಪಾದಿಸಿ';
+
+  @override
+  String get poDelete => 'ಪಿಒ ಅಳಿಸಿ';
 }

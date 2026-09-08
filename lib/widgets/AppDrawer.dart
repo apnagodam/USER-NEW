@@ -4,6 +4,7 @@ import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'package:apnagodam/core/utils/color_constant.dart';
 import 'package:apnagodam/core/utils/image_constant.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
+import 'package:apnagodam/presentation/dashboard/dashboard_screen.dart';
 import 'package:apnagodam/presentation/BusinessProfile/BusinessProfile.dart';
 import 'package:apnagodam/presentation/BusinessProfile/BusinessProfileListing.dart';
 import 'package:apnagodam/presentation/Feedback/Feedbackscreen.dart';
@@ -31,7 +32,6 @@ import 'package:apnagodam/presentation/sbt/SbtDeals.dart';
 import 'package:apnagodam/presentation/sbt/SbtOrders.dart';
 import 'package:apnagodam/presentation/singup_screen/termandcon_webview.dart';
 import 'package:apnagodam/presentation/spot_order_booking_screen/spot_order_booking_screen.dart';
-import 'package:apnagodam/presentation/wallet_tabbar_screen/wallet_screen.dart';
 import 'package:apnagodam/presentation/warehouse_Tab/warehouse_tabbar.dart';
 import 'package:apnagodam/widgets/widgets.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
@@ -1664,9 +1664,70 @@ class AppDrawer extends ConsumerWidget {
               // 16. Logout / Login
               InkWell(
                 onTap: () async {
-                  if (ref.watch(authProvider).value == AuthStatus.loggedIn) {
-                    ref.watch(authProvider.notifier).logout();
+                  if (ref.read(authProvider).value == AuthStatus.loggedIn) {
+                    final shouldLogout = await showDialog<bool>(
+                      context: context,
+                      builder: (dialogCtx) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: Row(
+                          children: [
+                            Icon(Icons.logout_rounded,
+                                color: ColorConstant.red500),
+                            const SizedBox(width: 8),
+                            Text(
+                              isHindi ? 'लॉगआउट' : 'Logout',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        content: Text(
+                          isHindi
+                              ? 'क्या आप वाकई अपने खाते से लॉगआउट करना चाहते हैं?'
+                              : 'Are you sure you want to log out of your account?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(dialogCtx).pop(false),
+                            child: Text(
+                              isHindi ? 'रद्द करें' : 'Cancel',
+                              style: TextStyle(color: ColorConstant.grey),
+                            ),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ColorConstant.red500,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () => Navigator.of(dialogCtx).pop(true),
+                            child: Text(
+                              isHindi ? 'लॉगआउट' : 'Logout',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (shouldLogout == true) {
+                      if (context.mounted) {
+                        Navigator.of(context).pop(); // Close drawer
+                      }
+                      await ref.read(authProvider.notifier).logout();
+                      Get.offAll(() => const DashboardScreen());
+                    }
                   } else {
+                    if (context.mounted) {
+                      Navigator.of(context).pop(); // Close drawer
+                    }
                     showLoginBottomsheet(context);
                   }
                 },

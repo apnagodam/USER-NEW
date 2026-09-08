@@ -1103,23 +1103,36 @@ class _HomepageState extends ConsumerState<Homepage> {
                           ),
                         ),
                 )
-              : ElevatedButton(
-                  onPressed: () {
-                    showLoginBottomsheet(context);
-                  },
-                  style: AppStyle.buttonStyle.copyWith(
-                    backgroundColor: WidgetStateProperty.resolveWith(
-                      (states) => Colors.white,
+              : Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ElevatedButton(
+                    onPressed: () {
+                      showLoginBottomsheet(context);
+                    },
+                    style: AppStyle.buttonStyle.copyWith(
+                      backgroundColor: WidgetStateProperty.resolveWith(
+                        (states) => Colors.white,
+                      ),
+                      shape: WidgetStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25.0),
+                          side: BorderSide(
+                            color: ColorConstant.maingreen,
+                            width: 1.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.msgLoging,
+                      style: TextStyle(
+                        color: ColorConstant.maingreen,
+                        fontSize: Adaptive.sp(15),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    AppLocalizations.of(context)!.msgLoging,
-                    style: TextStyle(
-                      color: ColorConstant.maingreen,
-                      fontSize: Adaptive.sp(15),
-                    ),
-                  ),
-                )],
+              )],
       ),
       drawer: const AppDrawer(),
       body: SafeArea(

@@ -131,7 +131,10 @@ Future<void> showImageSourceDialog(
 }
 
 Future<void> showImageSourceFilePickerDialog(
-    BuildContext context, Function(XFile) onImagePicked) async {
+    BuildContext context, Function(XFile) onImagePicked,
+    {double maxWidth = 1024,
+    double maxHeight = 1024,
+    int imageQuality = 70}) async {
   final ImagePicker picker = ImagePicker();
 
   showDialog(
@@ -149,10 +152,18 @@ Future<void> showImageSourceFilePickerDialog(
               onTap: () async {
                 Navigator.of(context, rootNavigator: false)
                     .pop(); // Close the dialog
-                final XFile? image =
-                    await picker.pickImage(source: ImageSource.camera);
-                if (image != null) {
-                  onImagePicked(image);
+                try {
+                  final XFile? image = await picker.pickImage(
+                    source: ImageSource.camera,
+                    maxWidth: maxWidth,
+                    maxHeight: maxHeight,
+                    imageQuality: imageQuality,
+                  );
+                  if (image != null) {
+                    onImagePicked(image);
+                  }
+                } catch (e) {
+                  print("Error picking image from camera: $e");
                 }
               },
             ),
@@ -163,8 +174,12 @@ Future<void> showImageSourceFilePickerDialog(
                 Navigator.of(context, rootNavigator: false)
                     .pop(); // Close the dialog
                 try {
-                  final XFile? image =
-                      await picker.pickImage(source: ImageSource.gallery);
+                  final XFile? image = await picker.pickImage(
+                    source: ImageSource.gallery,
+                    maxWidth: maxWidth,
+                    maxHeight: maxHeight,
+                    imageQuality: imageQuality,
+                  );
                   if (image != null) {
                     onImagePicked(image);
                   }

@@ -18,6 +18,7 @@ import 'package:insta_image_viewer/insta_image_viewer.dart';
 import 'package:intl/intl.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Purchaseorderslistscreen extends ConsumerStatefulWidget {
   const Purchaseorderslistscreen({super.key});
@@ -29,6 +30,48 @@ class Purchaseorderslistscreen extends ConsumerStatefulWidget {
 
 class _PurchaseorderslistscreenState
     extends ConsumerState<Purchaseorderslistscreen> {
+  String _getPoImageUrl(Datum? po) {
+    if (po == null) return '';
+    final poImage = po.poImage?.toString().trim() ?? '';
+    final imageUrl = po.imageUrl?.toString().trim() ?? '';
+
+    if (poImage.isEmpty && imageUrl.isEmpty) return '';
+
+    // If poImage is already a full URL
+    if (poImage.startsWith('http://') || poImage.startsWith('https://')) {
+      return poImage;
+    }
+
+    // If imageUrl is already a full URL
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      if (imageUrl.endsWith('/') && poImage.isNotEmpty) {
+        return '$imageUrl$poImage';
+      } else if (poImage.isNotEmpty && !imageUrl.endsWith(poImage)) {
+        return '$imageUrl/$poImage';
+      }
+      return imageUrl;
+    }
+
+    // Base prefix from imageUrl or fallback to 'resources/assets/upload/po/'
+    String pathPrefix =
+        imageUrl.isNotEmpty ? imageUrl : 'resources/assets/upload/po/';
+    if (pathPrefix.startsWith('/')) {
+      pathPrefix = pathPrefix.substring(1);
+    }
+    if (!pathPrefix.endsWith('/')) {
+      pathPrefix = '$pathPrefix/';
+    }
+
+    if (poImage.isNotEmpty) {
+      if (poImage.startsWith(pathPrefix)) {
+        return '$BASEURL$poImage';
+      }
+      return '$BASEURL$pathPrefix$poImage';
+    }
+
+    return '$BASEURL$pathPrefix';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -305,15 +348,30 @@ class _PurchaseorderslistscreenState
                                                                       16))),
                                                     ),
                                                     Expanded(
-                                                      child: InstaImageViewer(
-                                                        imageUrl:
-                                                            "$IMAGE_BASE_URL${activeList?[index].poImage}",
-                                                        child: Icon(
-                                                          CupertinoIcons.eye,
-                                                          color: ColorConstant
-                                                              .maingreen,
-                                                        ),
-                                                      ),
+                                                      child: _getPoImageUrl(activeList?[index]).isNotEmpty
+                                                          ? (_getPoImageUrl(activeList?[index]).toLowerCase().endsWith('.pdf')
+                                                              ? InkWell(
+                                                                  onTap: () async {
+                                                                    final uri = Uri.parse(_getPoImageUrl(activeList?[index]));
+                                                                    if (await canLaunchUrl(uri)) {
+                                                                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                                                    }
+                                                                  },
+                                                                  child: Icon(
+                                                                    Icons.picture_as_pdf,
+                                                                    color: ColorConstant.maingreen,
+                                                                  ),
+                                                                )
+                                                              : InstaImageViewer(
+                                                                  imageUrl:
+                                                                      _getPoImageUrl(activeList?[index]),
+                                                                  child: Icon(
+                                                                    CupertinoIcons.eye,
+                                                                    color: ColorConstant
+                                                                        .maingreen,
+                                                                  ),
+                                                                ))
+                                                          : const Text("N/A"),
                                                     ),
                                                   ],
                                                 ),
@@ -569,7 +627,7 @@ class _PurchaseorderslistscreenState
                                                             text: AppLocalizations
                                                                     .of(
                                                                         context)!
-                                                                .msgEdit,
+                                                                .poEdit,
                                                             recognizer:
                                                                 TapGestureRecognizer()
                                                                   ..onTap = () {
@@ -612,7 +670,7 @@ class _PurchaseorderslistscreenState
                                                             text: AppLocalizations
                                                                     .of(
                                                                         context)!
-                                                                .msgDelete,
+                                                                .poDelete,
                                                             recognizer:
                                                                 TapGestureRecognizer()
                                                                   ..onTap = () {

@@ -350,66 +350,180 @@ ref.read(searchQueryProvider.notifier).state = value;
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.only(
-              left: 10.0,
-              right: 10.0,
-              top: 5,
-              bottom: 5,
-            ),
-            color: ColorConstant.bgcolor,
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)!.msgOpeningBalance,
-                      style: TextStyle(
-                        fontSize: Adaptive.sp(16),
-                        fontWeight: FontWeight.bold,
-                      ),
+          ref.watch(getWalletListProvider(walletType: '1')).when(
+                data: (data) {
+                  final opening = num.tryParse(
+                          data.openingBalance?.toString() ?? '0') ??
+                      0.0;
+                  final closing = num.tryParse(
+                          data.closingBalance?.toString() ?? '0') ??
+                      0.0;
+                  return Container(
+                    padding: const EdgeInsets.only(
+                      left: 10.0,
+                      right: 10.0,
+                      top: 5,
+                      bottom: 5,
                     ),
-                    Text(
-                      AppLocalizations.of(context)!.msgClosingbal,
-                      style: TextStyle(
-                        fontSize: Adaptive.sp(16),
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: ColorConstant.bgcolor,
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              AppLocalizations.of(context)!.msgOpeningBalance,
+                              style: TextStyle(
+                                fontSize: Adaptive.sp(16),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              AppLocalizations.of(context)!.msgClosingbal,
+                              style: TextStyle(
+                                fontSize: Adaptive.sp(16),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              NumberFormat.currency(
+                                locale: 'HI',
+                                symbol: '\u{20B9}',
+                                decimalDigits: 2,
+                              ).format(opening),
+                              style: TextStyle(
+                                fontSize: Adaptive.sp(17),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              NumberFormat.currency(
+                                locale: 'HI',
+                                symbol: '\u{20B9}',
+                                decimalDigits: 2,
+                              ).format(closing),
+                              style: TextStyle(
+                                fontSize: Adaptive.sp(17),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
+                  );
+                },
+                loading: () => Container(
+                  padding: const EdgeInsets.only(
+                    left: 10.0,
+                    right: 10.0,
+                    top: 5,
+                    bottom: 5,
+                  ),
+                  color: ColorConstant.bgcolor,
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            AppLocalizations.of(context)!.msgOpeningBalance,
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(16),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            AppLocalizations.of(context)!.msgClosingbal,
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(16),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "₹ 0.00",
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(17),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            "₹ 0.00",
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(17),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 3),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      NumberFormat.currency(
-                        locale: 'HI',
-                        symbol: '\u{20B9}',
-                        decimalDigits: 2,
-                      ).format(ref.watch(openingBalance)),
-                      style: TextStyle(
-                        fontSize: Adaptive.sp(17),
-                        fontWeight: FontWeight.bold,
+                error: (e, s) => Container(
+                  padding: const EdgeInsets.only(
+                    left: 10.0,
+                    right: 10.0,
+                    top: 5,
+                    bottom: 5,
+                  ),
+                  color: ColorConstant.bgcolor,
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            AppLocalizations.of(context)!.msgOpeningBalance,
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(16),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            AppLocalizations.of(context)!.msgClosingbal,
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(16),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Text(
-                      NumberFormat.currency(
-                        locale: 'HI',
-                        symbol: '\u{20B9}',
-                        decimalDigits: 2,
-                      ).format(num.parse(ref.watch(closingBalance))),
-                      style: TextStyle(
-                        fontSize: Adaptive.sp(17),
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(height: 3),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "₹ 0.00",
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(17),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            "₹ 0.00",
+                            style: TextStyle(
+                              fontSize: Adaptive.sp(17),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ),
+              ),
           Container(
             padding: const EdgeInsets.only(
               left: 10.0,
@@ -693,6 +807,10 @@ ref.read(searchQueryProvider.notifier).state = value;
         visible: ref.watch(dataList).isNotEmpty,
         child: ElevatedButton(
           onPressed: () async {
+            final walletState =
+                ref.read(getWalletListProvider(walletType: '1')).value;
+            final opBal = (walletState?.openingBalance ?? 0.0).toString();
+            final clBal = (walletState?.closingBalance ?? '0.0').toString();
             ref
                 .read(
                   walletSummaryDataProvider(
@@ -705,8 +823,8 @@ ref.read(searchQueryProvider.notifier).state = value;
                   makePdf(
                         context,
                         ref.watch(dataList),
-                        ref.watch(openingBalance).toString(),
-                        ref.watch(closingBalance),
+                        opBal,
+                        clBal,
                         ref,
                         value.data,
                       )

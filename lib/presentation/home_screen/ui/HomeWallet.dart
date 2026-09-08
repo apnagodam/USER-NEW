@@ -68,10 +68,24 @@ class _MyWidgetState extends ConsumerState<HomeWalletScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ElevatedButton(
-                      style: AppStyle.loginButtonStyle,
+                      style: AppStyle.buttonStyle.copyWith(
+                        backgroundColor: WidgetStateProperty.resolveWith(
+                              (states) => Colors.white,
+                        ),
+                        shape: WidgetStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25.0),
+                            side: BorderSide(
+                              color: ColorConstant.maingreen,
+                              width: 1.2,
+                            ),
+                          ),
+                        ),
+                      ),
                       onPressed: () {
                         showLoginBottomsheet(context);
                       },
+
                       child: Text(
                         AppLocalizations.of(context)!.msgLoging,
                         style: TextStyle(color: ColorConstant.maingreen),

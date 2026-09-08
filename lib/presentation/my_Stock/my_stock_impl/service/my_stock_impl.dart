@@ -88,7 +88,7 @@ Future<Map<String, dynamic>> updateSellerPrice(UpdateSellerPriceRef ref,
       await ref.watch(dioProvider).post(postSellerPriceUpdate, data: {
     "stack_sell_id": stackId,
     "price": price,
-  });
+  }, options: Options(extra: {'show_loader': true}));
   return response.data;
 }
 
@@ -107,7 +107,7 @@ Future<Map<String, dynamic>> deleteSellerPrice(DeleteSellerPriceRef ref,
   var response =
       await ref.watch(dioProvider).post(postSellerPriceDelete, data: {
     "stack_sell_id": stackId,
-  });
+  }, options: Options(extra: {'show_loader': true}));
   return response.data;
 }
 
@@ -127,7 +127,7 @@ Future<Map<String, dynamic>> bidSellStack(BidSellStackRef ref,
     'wallet_type': walletType,
     'loan_type': loanType,
     'scheme_id': schemeId
-  });
+  }, options: Options(extra: {'show_loader': true}));
   return response.data;
 }
 

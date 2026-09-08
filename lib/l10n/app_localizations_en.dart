@@ -3900,6 +3900,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get poDetails => 'PO Details';
 
   @override
+  String get poEdit => 'PO Edit';
+
+  @override
+  String get poDelete => 'PO Delete';
+
+  @override
   String get somethingwentwrongyoumay => 'Something went wrong';
 
   @override

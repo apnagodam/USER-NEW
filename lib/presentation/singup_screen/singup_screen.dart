@@ -1,35 +1,26 @@
 import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'package:apnagodam/core/utils/color_constant.dart';
 import 'package:apnagodam/core/utils/extensions.dart';
-import 'package:apnagodam/core/utils/progress_dialog_utils.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
-import 'package:apnagodam/presentation/login_screen/login_screen.dart';
 import 'package:apnagodam/presentation/login_screen/register_otp_screen.dart';
 import 'package:apnagodam/presentation/login_screen/service/LoginService.dart';
 import 'package:apnagodam/presentation/my_Stock/my_stock_impl/service/my_stock_impl.dart';
 import 'package:apnagodam/presentation/singup_screen/termandcon_webview.dart';
-import 'package:apnagodam/widgets/CommonTextField.dart';
 import 'package:apnagodam/widgets/enums.dart';
 import 'package:elevarm_ui/elevarm_ui.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
-import 'package:pinput/pinput.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-import 'package:elevarm_ui/elevarm_ui.dart';
 
 import '../../core/utils/image_constant.dart';
 import '../../routes/app_routes.dart';
-import '../home_screen/service/home_screen_service.dart';
 import '../login_screen/controller/login_controller.dart';
-import '../login_screen/otp_screen.dart';
-import 'package:html/dom.dart' as html;
-import 'package:html/dom_parsing.dart';
-import 'package:html/parser.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
+
 
 class SingupScreen extends ConsumerStatefulWidget {
   const SingupScreen({super.key, required this.mobileNumber});
@@ -41,21 +32,30 @@ class SingupScreen extends ConsumerStatefulWidget {
 
 class _SingupScreenState extends ConsumerState<SingupScreen> {
   final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
-  TextEditingController mobilenumberController = TextEditingController();
-  TextEditingController signUpMobilenumberController = TextEditingController();
-  TextEditingController signUpNameController = TextEditingController();
-  TextEditingController otpController = TextEditingController();
+  final TextEditingController mobilenumberController = TextEditingController();
+  final TextEditingController signUpMobilenumberController =
+      TextEditingController();
+  final TextEditingController signUpNameController = TextEditingController();
+  final TextEditingController otpController = TextEditingController();
   var logincont = Get.put(LoginController());
   var constitutionTypeProvider = StateProvider<ConstitutionType?>(
     (ref) => null,
   );
+  bool _isLoading = false;
 
-  var isAgreementChecked = StateProvider<bool?>((ref) => null);
-  var loadingProgress = StateProvider<double>((ref) => 0.0);
   @override
   void initState() {
     super.initState();
     signUpMobilenumberController.text = widget.mobileNumber;
+  }
+
+  @override
+  void dispose() {
+    mobilenumberController.dispose();
+    signUpMobilenumberController.dispose();
+    signUpNameController.dispose();
+    otpController.dispose();
+    super.dispose();
   }
 
   @override
@@ -70,9 +70,23 @@ class _SingupScreenState extends ConsumerState<SingupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (Navigator.canPop(context))
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: Colors.black87,
+                          size: 20,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ),
                   Center(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 20.0, bottom: 20),
+                      padding: const EdgeInsets.only(top: 10.0, bottom: 20),
                       child: Image.asset(
                         ImageConstant.imgwellcome,
                         fit: BoxFit.cover,
@@ -120,11 +134,11 @@ class _SingupScreenState extends ConsumerState<SingupScreen> {
                     suffixIconAssetName: Icons.person,
                     onTapSuffix: null,
                     errorText: null,
-                    enabled: true,
+                    enabled: !_isLoading,
                     isRequired: true,
                     controller: signUpNameController,
                     validator: (value) {
-                      if (value!.isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return ref.watch(constitutionTypeProvider) ==
                                 ConstitutionType.individual
                             ? AppLocalizations.of(context)!.enterYourName
@@ -139,26 +153,26 @@ class _SingupScreenState extends ConsumerState<SingupScreen> {
                         ref.watch(constitutionTypeProvider) ==
                                 ConstitutionType.individual
                             ? AppLocalizations.of(
-                              context,
-                            )!.enterYourMobileNumber
+                                context,
+                              )!.enterYourMobileNumber
                             : AppLocalizations.of(context)!.enterCompanyNumber2,
                     hintText:
                         ref.watch(constitutionTypeProvider) ==
                                 ConstitutionType.individual
                             ? AppLocalizations.of(
-                              context,
-                            )!.enterYourMobileNumber
+                                context,
+                              )!.enterYourMobileNumber
                             : AppLocalizations.of(context)!.enterCompanyNumber2,
                     suffixIconAssetName: Icons.mobile_friendly,
                     onTapSuffix: null,
                     errorText: null,
-                    enabled: true,
+                    enabled: !_isLoading,
                     isRequired: true,
                     maxLength: 10,
                     controller: signUpMobilenumberController,
                     keyboardType: TextInputType.number,
                     validator: (value) {
-                      if (value!.isEmpty || value.length < 10) {
+                      if (value == null || value.isEmpty || value.length < 10) {
                         return AppLocalizations.of(context)!.messageValidation;
                       }
                       if (!value.isValidMobileNumber()) {
@@ -171,7 +185,7 @@ class _SingupScreenState extends ConsumerState<SingupScreen> {
                   ),
                   Column(
                     children: [
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Padding(
                         padding: const EdgeInsets.only(top: 18.0, bottom: 10),
                         child: Text.rich(
@@ -184,18 +198,17 @@ class _SingupScreenState extends ConsumerState<SingupScreen> {
                                 style: AppStyle.lbltermncon.copyWith(
                                   fontSize: Adaptive.sp(16),
                                 ),
-                                recognizer:
-                                    TapGestureRecognizer()
-                                      ..onTap =
-                                          () => Get.to(
-                                            Webview(
-                                              url:
-                                                  "https://swlpl-next.onrender.com/terms",
-                                            ),
-                                          ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () => Get.to(
+                                        Webview(
+                                          url:
+                                              "https://swlpl-next.onrender.com/terms",
+                                        ),
+                                      ),
                               ),
                               TextSpan(
-                                text: " ${AppLocalizations.of(context)!.and} ",
+                                text:
+                                    " ${AppLocalizations.of(context)!.and} ",
                               ),
                               TextSpan(
                                 text:
@@ -203,15 +216,13 @@ class _SingupScreenState extends ConsumerState<SingupScreen> {
                                 style: AppStyle.lbltermncon.copyWith(
                                   fontSize: Adaptive.sp(16),
                                 ),
-                                recognizer:
-                                    TapGestureRecognizer()
-                                      ..onTap =
-                                          () => Get.to(
-                                            Webview(
-                                              url:
-                                                  "https://swlpl-next.onrender.com/terms",
-                                            ),
-                                          ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () => Get.to(
+                                        Webview(
+                                          url:
+                                              "https://swlpl-next.onrender.com/terms",
+                                        ),
+                                      ),
                               ),
                             ],
                           ),
@@ -228,86 +239,162 @@ class _SingupScreenState extends ConsumerState<SingupScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: AppStyle.buttonStyle,
-                 onPressed: () async {
-  if (ref.read(constitutionTypeProvider) == null) {
-    Fluttertoast.showToast(
-      msg: AppLocalizations.of(context)!.pleaseSelectConstitution,
-      toastLength: Toast.LENGTH_LONG,
-    );
-    return;
-  }
+                      onPressed: _isLoading
+                          ? null
+                          : () async {
+                              if (ref.read(constitutionTypeProvider) == null) {
+                                Fluttertoast.showToast(
+                                  msg: AppLocalizations.of(context)!
+                                      .pleaseSelectConstitution,
+                                  toastLength: Toast.LENGTH_LONG,
+                                );
+                                return;
+                              }
 
-  if (!_formkey.currentState!.validate()) return;
+                              if (!_formkey.currentState!.validate()) return;
 
-  if (signUpMobilenumberController.text.length != 10) return;
+                              if (signUpMobilenumberController.text.length !=
+                                  10) {
+                                return;
+                              }
 
-  otpController.clear();
+                              otpController.clear();
+                              setState(() {
+                                _isLoading = true;
+                              });
 
-  try {
-    // ✅ Use ref.read() — NOT ref.watch() — for one-time calls
-    final value = await ref.read(
-      signUpUserProvider(
-        number: signUpMobilenumberController.text,
-        userName: signUpNameController.text,
-        constitutionType: "${ref.read(constitutionTypeProvider)?.type}",
-      ).future,
-    );
+                              try {
+                                String token = '';
+                                try {
+                                  if (GetPlatform.isIOS) {
+                                    String? apnsToken = await FirebaseMessaging
+                                        .instance
+                                        .getAPNSToken();
+                                    if (apnsToken == null) {
+                                      await Future.delayed(
+                                        const Duration(seconds: 2),
+                                      );
+                                      apnsToken = await FirebaseMessaging
+                                          .instance
+                                          .getAPNSToken();
+                                    }
+                                    if (apnsToken != null) {
+                                      await FirebaseMessaging.instance
+                                          .subscribeToTopic('all');
+                                      token = await FirebaseMessaging.instance
+                                              .getToken() ??
+                                          "";
+                                    }
+                                  } else {
+                                    token = await FirebaseMessaging.instance
+                                            .getToken() ??
+                                        "";
+                                  }
+                                } catch (_) {}
 
-  if (value['status'].toString() == "1") {
-  final token = value['Authorization'].toString(); // ← note capital 'A'
+                                final value = await ref.read(
+                                  userRegisterProvider(
+                                    number: signUpMobilenumberController.text,
+                                    userName: signUpNameController.text,
+                                    fcmToken: token,
+                                    constitutionType:
+                                        ref.read(constitutionTypeProvider)?.type ??
+                                            1,
+                                  ).future,
+                                );
 
-  // ✅ Step 1: Save token to SharedPreferences FIRST
-  await ref.read(sharedPreferencesProvider).setString("token", token);
-  
-  // ✅ Step 2: Save to your utility
-  ref.read(sharedUtilityProvider).setToken(token);
 
-  // ✅ Step 3: NOW invalidate so Dio rebuilds WITH the saved token
-  ref.invalidate(dioProvider);
+                                if (!mounted) return;
+                                setState(() {
+                                  _isLoading = false;
+                                });
 
-  // ✅ Step 4: Wait for Dio to rebuild
-  await Future.delayed(const Duration(milliseconds: 300));
+                                if (value.status.toString() == "1") {
+                                  final userId = value.userId.toString();
+                                  final authHeader =
+                                      value.authorization?.toString() ?? "";
 
-  // ✅ Step 5: Then send OTP
-  try {
-    final response = await ref.read(
-      sendOtpV1Provider(number: signUpMobilenumberController.text).future,
-    );
-    if (response.status.toString() == "1") {
-      Fluttertoast.showToast(
-        msg: response.message.toString(),
-        toastLength: Toast.LENGTH_LONG,
-      );
-    }
-  } catch (_) {}
+                                  if (authHeader.isNotEmpty) {
+                                    await ref
+                                        .read(sharedPreferencesProvider)
+                                        .setString("token", authHeader);
+                                    ref
+                                        .read(sharedUtilityProvider)
+                                        .setToken(authHeader);
+                                    ref.invalidate(dioProvider);
+                                    await Future.delayed(
+                                      const Duration(milliseconds: 300),
+                                    );
+                                  }
 
-  Get.to(RegisterOtpScreen(
-    phoneNumber: signUpMobilenumberController.text,
-    otpType: 'register',
-    userName: signUpNameController.text,
-  ));
-    } else {
-      // ✅ Only show error when status != 1
-      Fluttertoast.showToast(
-        msg: value['message'].toString(),
-        toastLength: Toast.LENGTH_LONG,
-      );
-    }
-  } catch (e) {
-    Fluttertoast.showToast(
-      msg: "Something went wrong. Please try again.",
-      toastLength: Toast.LENGTH_LONG,
-    );
-  }
-},
-                      child: Text(
-                        AppLocalizations.of(context)!.msgSignup,
-                        style: TextStyle(
-                          fontSize: Adaptive.sp(16),
-                          fontWeight: FontWeight.w500,
-                          color: ColorConstant.mainwhite,
-                        ),
-                      ),
+                                  // Send OTP
+                                  try {
+                                    final response = await ref.read(
+                                      userSendOtpProvider(
+                                        userId: userId,
+                                        fcmToken: token,
+                                      ).future,
+                                    );
+                                    if (response.status.toString() == "1") {
+                                      Fluttertoast.showToast(
+                                        msg: response.message ??
+                                            "OTP Send successfully",
+                                        toastLength: Toast.LENGTH_LONG,
+                                        backgroundColor:
+                                            ColorConstant.maingreen,
+                                      );
+                                    }
+                                  } catch (_) {}
+
+                                  Get.to(
+                                    () => RegisterOtpScreen(
+                                      phoneNumber:
+                                          signUpMobilenumberController.text,
+                                      otpType: 'register',
+                                      userName: signUpNameController.text,
+                                      userId: userId,
+                                    ),
+                                  );
+                                } else {
+                                  Fluttertoast.showToast(
+                                    msg: value.message?.toString() ??
+                                        "Registration failed",
+                                    toastLength: Toast.LENGTH_LONG,
+                                    backgroundColor: ColorConstant.red500,
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  setState(() {
+                                    _isLoading = false;
+                                  });
+                                }
+                                debugPrint("Registration error: $e");
+                                Fluttertoast.showToast(
+                                  msg:
+                                      "Something went wrong. Please try again.",
+                                  toastLength: Toast.LENGTH_LONG,
+                                  backgroundColor: ColorConstant.red500,
+                                );
+                              }
+                            },
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              AppLocalizations.of(context)!.msgSignup,
+                              style: TextStyle(
+                                fontSize: Adaptive.sp(16),
+                                fontWeight: FontWeight.w500,
+                                color: ColorConstant.mainwhite,
+                              ),
+                            ),
                     ),
                   ),
                   Row(
@@ -326,8 +413,8 @@ class _SingupScreenState extends ConsumerState<SingupScreen> {
                         },
                         child: Text(
                           AppLocalizations.of(context)!.msgLoging,
-                          style: TextStyle(
-                            fontSize: Adaptive.sp(16),
+                          style: const TextStyle(
+                            fontSize: 16,
                             color: Color(0xff53B175),
                             fontWeight: FontWeight.w500,
                           ),

@@ -1133,6 +1133,7 @@ class _StackBookingState extends ConsumerState<StackBooking> {
                             SizedBox(height: 10),
                             InkWell(
                               onTap: () {
+                                Navigator.of(context).pop();
                                 Get.to(
                                   () => RateCard(
                                     stackNumber: stackNumber,

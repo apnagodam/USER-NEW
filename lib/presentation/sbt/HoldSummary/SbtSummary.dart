@@ -51,13 +51,18 @@ class _SbtHoldSummaryState extends ConsumerState<SbtHoldSummary> {
               .watch(sbtHoldStatementProvider(walletType: widget.walletType))
               .when(
                   data: (data) {
-                    Future.delayed(Duration(seconds: 1)).then((_) {
-                      ref.watch(totalAmountProvider.notifier).state = data.data!
-                          .fold(
-                              0,
-                              (previous, current) =>
-                                  previous +
-                                  int.parse("${current.amount ?? 0}"));
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        final total = data.data?.fold(
+                                0,
+                                (previous, current) =>
+                                    previous +
+                                    int.parse("${current.amount ?? 0}")) ??
+                            0;
+                        if (ref.read(totalAmountProvider) != total) {
+                          ref.read(totalAmountProvider.notifier).state = total;
+                        }
+                      }
                     });
                     return ListView(
                       shrinkWrap: true,

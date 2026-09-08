@@ -187,7 +187,7 @@ class _DeliveryMarkingState extends ConsumerState<DeliveryMarking> {
       ref.read(sellOrdersListProvider.notifier).state = sellerOrders;
     });
   });
-    return SingleChildScrollView(
+    Widget body = SingleChildScrollView(
       child: Column(
         children: [
           Padding(
@@ -247,7 +247,7 @@ class _DeliveryMarkingState extends ConsumerState<DeliveryMarking> {
           ref.watch(tabIndexProvider) == 0
               ? (ref.watch(sellOrdersListProvider) ?? []).isEmpty
                   ? SizedBox(
-                      height: Get.height,
+                      height: MediaQuery.of(context).size.height * 0.6,
                       child: Center(
                         child: noStockData(context),
                       ),
@@ -563,7 +563,7 @@ class _DeliveryMarkingState extends ConsumerState<DeliveryMarking> {
                           })
               : ref.watch(buyOrdersListProvider).isEmpty
                   ? SizedBox(
-                      height: Get.height,
+                      height: MediaQuery.of(context).size.height * 0.6,
                       child: Center(
                         child: noStockData(context),
                       ),
@@ -860,5 +860,15 @@ class _DeliveryMarkingState extends ConsumerState<DeliveryMarking> {
         ],
       ),
     );
+
+    if (widget.isScreen) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(AppLocalizations.of(context)!.markDelivery),
+        ),
+        body: body,
+      );
+    }
+    return body;
   }
 }

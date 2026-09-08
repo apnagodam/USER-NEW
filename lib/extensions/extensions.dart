@@ -1,11 +1,9 @@
-import 'package:apnagodam/core/utils/image_constant.dart';
 import 'package:apnagodam/core/utils/helper.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:apnagodam/core/utils/progress_dialog_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:lottie/lottie.dart';
 
 extension NumberParsing on String? {
   double convertToDouble({dynamic defaultValue = 0}) {
@@ -59,25 +57,9 @@ extension toast on BuildContext {
 }
 
 extension loader on BuildContext {
-  showLoader() => showDialog(
-      context: this,
-      builder: (dialogContext) => Container(
-            width: 150,
-            height: 150,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.all(Radius.circular(10)),
-            ),
-            child: Center(
-              child: Lottie.asset(
-                ImageConstant.imgisloding,
-                width: 140,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ));
+  showLoader() => ProgressDialogUtils.showProgressDialog();
 
-  hideloader() => Navigator.of(this).pop();
+  hideloader() => ProgressDialogUtils.hideProgressDialog();
 }
 
 class UpperCaseTextFormatter extends TextInputFormatter {

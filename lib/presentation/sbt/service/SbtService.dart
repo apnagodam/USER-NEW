@@ -205,11 +205,23 @@ Future<Map<String, dynamic>> deleteDispatchRequest(DeleteDispatchRequestRef ref,
 
 @riverpod
 Future<Map<String, dynamic>> getAddress(Ref ref, {String? pinCode}) async {
-  final formData = FormData.fromMap({"pincode": pinCode});
-  var response =
-      await ref.watch(dioProvider).post(addressFromPincode, data: formData);
-  ref.invalidate(dispatchListingNewProvider);
-  return response.data;
+  try {
+    final formData = FormData.fromMap({"pincode": pinCode});
+    var response =
+        await ref.watch(dioProvider).post(addressFromPincode, data: formData);
+    if (response.data is Map<String, dynamic>) {
+      return response.data;
+    }
+    return {
+      'status': '0',
+      'message': 'Unable to fetch location. Please change the pincode.'
+    };
+  } catch (e) {
+    return {
+      'status': '0',
+      'message': 'Unable to fetch location. Please change the pincode.'
+    };
+  }
 }
 
 @riverpod

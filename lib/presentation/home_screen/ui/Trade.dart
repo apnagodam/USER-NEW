@@ -386,24 +386,25 @@ class _TradeState extends ConsumerState<Trade> with SingleTickerProviderStateMix
 
               // Screen View Content
               Expanded(
-                child: ref.watch(authProvider).when(
-                      data: (data) => ref.watch(selectedTabIndex) == 0
-                          ? const Sbtscreen()
-                          : ref.watch(selectedTabIndex) == 1
-                              ? const Wbtscreen()
-                              : ref.watch(selectedTabIndex) == 2
-                                  ? Buysellscreen(type: 1)
-                                  : ref.watch(selectedTabIndex) == 3
-                                      ? Buysellscreen(type: 2)
-                                      : ref.watch(selectedTabIndex) == 4
-                                          ? const Tradewalletscreen()
-                                          : const Tradesbtsummary(
-                                              walletType: "2"),
-                      error: (e, s) => const SizedBox(),
-                      loading: () => const Center(
-                        child: CircularProgressIndicator.adaptive(),
-                      ),
-                    ),
+                child: Builder(
+                  builder: (context) {
+                    final currentTab = ref.watch(selectedTabIndex);
+                    switch (currentTab) {
+                      case 0:
+                        return const Sbtscreen();
+                      case 1:
+                        return const Wbtscreen();
+                      case 2:
+                        return Buysellscreen(type: 1);
+                      case 3:
+                        return Buysellscreen(type: 2);
+                      case 4:
+                        return const Tradewalletscreen();
+                      default:
+                        return const Tradesbtsummary(walletType: "2");
+                    }
+                  },
+                ),
               ),
             ],
           ),

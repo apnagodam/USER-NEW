@@ -196,8 +196,115 @@ class _AccountsettingsState extends ConsumerState<Accountsettings> {
                 ),
               ),
             ),
-            SizedBox(height: 24),
-            // Add more account settings options here as needed
+            const SizedBox(height: 16),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 4,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () async {
+                  final isHindi = Get.locale?.languageCode == 'hi';
+                  final shouldLogout = await showDialog<bool>(
+                    context: context,
+                    builder: (dialogCtx) => AlertDialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      title: Row(
+                        children: [
+                          Icon(Icons.logout_rounded,
+                              color: ColorConstant.red500),
+                          const SizedBox(width: 8),
+                          Text(
+                            isHindi ? 'लॉगआउट' : 'Logout',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      content: Text(
+                        isHindi
+                            ? 'क्या आप वाकई अपने खाते से लॉगआउट करना चाहते हैं?'
+                            : 'Are you sure you want to log out of your account?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogCtx).pop(false),
+                          child: Text(
+                            isHindi ? 'रद्द करें' : 'Cancel',
+                            style: TextStyle(color: ColorConstant.grey),
+                          ),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorConstant.red500,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () => Navigator.of(dialogCtx).pop(true),
+                          child: Text(
+                            isHindi ? 'लॉगआउट' : 'Logout',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (shouldLogout == true) {
+                    await ref.read(authProvider.notifier).logout();
+                    Get.offAll(() => const DashboardScreen());
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 18.0,
+                    horizontal: 12.0,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.logout_rounded,
+                        size: 28,
+                        color: ColorConstant.red500,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppLocalizations.of(context)!.msgLogout,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: Adaptive.sp(17),
+                                color: ColorConstant.red500,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              Get.locale?.languageCode == 'hi'
+                                  ? 'इस डिवाइस से सुरक्षित रूप से लॉगआउट करें'
+                                  : 'Safely log out of your account on this device',
+                              style: TextStyle(
+                                fontSize: Adaptive.sp(14),
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),

@@ -78,14 +78,34 @@ class _FactorydispatchlistingscreenState
               data: (data) {
                 final requests = data['data'] as List<dynamic>? ?? [];
                 if (requests.isEmpty) {
-                  return Container();
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(dispatchListingNewProvider(
+                          sbtOrderId: widget.sbtOrderId));
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Container(
+                        height: MediaQuery.of(context).size.height * 0.7,
+                        alignment: Alignment.center,
+                        child: Text(
+                          AppLocalizations.of(context)!.noDataFound,
+                          style: TextStyle(
+                            fontSize: Adaptive.sp(16),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
                 }
                 return RefreshIndicator(
                   onRefresh: () async {
-                    ref.invalidate(dispatchRequestProvider(
-                        sbtOrderId: widget.sbtOrderId ?? ""));
+                    ref.invalidate(dispatchListingNewProvider(
+                        sbtOrderId: widget.sbtOrderId));
                   },
                   child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: requests.length,
                     itemBuilder: (context, index) {

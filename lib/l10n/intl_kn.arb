@@ -604,5 +604,7 @@
   "msgFacetoface": "ಮುಖಾಮುಖಿ",
   "mySbtOrders": "ನನ್ನ ಸ್ಪಾಟ್ ಆಧಾರಿತ ಆರ್ಡರ್‌ಗಳು",
   "buycommission": "ಖರೀದಿ ಕಮಿಷನ್",
-  "sellcommission": "ಮಾರಾಟ ಕಮಿಷನ್"
+  "sellcommission": "ಮಾರಾಟ ಕಮಿಷನ್",
+  "poEdit": "ಪಿಒ ಸಂಪಾದಿಸಿ",
+  "poDelete": "ಪಿಒ ಅಳಿಸಿ"
 }

@@ -3901,4 +3901,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wsacharge => 'WSA Charge';
+
+  @override
+  String get poEdit => 'PO Edit';
+
+  @override
+  String get poDelete => 'PO Delete';
 }

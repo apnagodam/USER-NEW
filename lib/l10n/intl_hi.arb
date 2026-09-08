@@ -1642,5 +1642,7 @@
   "somethingwentwrongyoumay": "कुछ गलत हो गया",
   "wsacharge": "WSA शुल्क",
   "buycommission": "खरीद कमीशन",
-  "sellcommission": "बिक्री कमीशन"
+  "sellcommission": "बिक्री कमीशन",
+  "poEdit": "PO Edit करे",
+  "poDelete": "PO हटाये"
 }

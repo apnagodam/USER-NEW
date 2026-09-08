@@ -1,5 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
+// ignore_for_file: type=lint, subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package, duplicate_ignore, unnecessary_cast
+
 part of 'LoginService.dart';
 
 // **************************************************************************
@@ -121,10 +123,10 @@ class SendOtpProvider extends AutoDisposeFutureProvider<OtpResponseModel> {
       override: SendOtpProvider._internal(
         (ref) => create(ref as SendOtpRef),
         from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
+        name: name,
+        dependencies: dependencies,
+        allTransitiveDependencies: allTransitiveDependencies,
+        debugGetCreateSourceHash: debugGetCreateSourceHash,
         number: number,
         fcmToken: fcmToken,
       ),
@@ -173,7 +175,7 @@ class _SendOtpProviderElement
   String? get fcmToken => (origin as SendOtpProvider).fcmToken;
 }
 
-String _$sendOtpV1Hash() => r'0f9dece28beac0b0fe6281e0995d4fc0ee1e4e58';
+String _$sendOtpV1Hash() => r'e27b14073e449257e1bb706ea46e094c8b6b060d';
 
 /// See also [sendOtpV1].
 @ProviderFor(sendOtpV1)
@@ -267,10 +269,10 @@ class SendOtpV1Provider extends AutoDisposeFutureProvider<OtpResponseModel> {
       override: SendOtpV1Provider._internal(
         (ref) => create(ref as SendOtpV1Ref),
         from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
+        name: name,
+        dependencies: dependencies,
+        allTransitiveDependencies: allTransitiveDependencies,
+        debugGetCreateSourceHash: debugGetCreateSourceHash,
         number: number,
         fcmToken: fcmToken,
       ),
@@ -320,7 +322,7 @@ class _SendOtpV1ProviderElement
   String? get fcmToken => (origin as SendOtpV1Provider).fcmToken;
 }
 
-String _$verifyOtpHash() => r'7db05c654e57cb9152c8c969ce180cdb57760b21';
+String _$verifyOtpHash() => r'fa08dffdf212ef54be1297e29965fc71295b9278';
 
 /// See also [verifyOtp].
 @ProviderFor(verifyOtp)
@@ -371,7 +373,8 @@ class VerifyOtpFamily extends Family<AsyncValue<AuthenticationModel>> {
 }
 
 /// See also [verifyOtp].
-class VerifyOtpProvider extends AutoDisposeFutureProvider<AuthenticationModel> {
+class VerifyOtpProvider
+    extends AutoDisposeFutureProvider<AuthenticationModel> {
   /// See also [verifyOtp].
   VerifyOtpProvider({
     String? num,
@@ -391,7 +394,8 @@ class VerifyOtpProvider extends AutoDisposeFutureProvider<AuthenticationModel> {
                   ? null
                   : _$verifyOtpHash,
           dependencies: VerifyOtpFamily._dependencies,
-          allTransitiveDependencies: VerifyOtpFamily._allTransitiveDependencies,
+          allTransitiveDependencies:
+              VerifyOtpFamily._allTransitiveDependencies,
           num: num,
           otp: otp,
           fcmToken: fcmToken,
@@ -422,10 +426,10 @@ class VerifyOtpProvider extends AutoDisposeFutureProvider<AuthenticationModel> {
       override: VerifyOtpProvider._internal(
         (ref) => create(ref as VerifyOtpRef),
         from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
+        name: name,
+        dependencies: dependencies,
+        allTransitiveDependencies: allTransitiveDependencies,
+        debugGetCreateSourceHash: debugGetCreateSourceHash,
         num: num,
         otp: otp,
         fcmToken: fcmToken,
@@ -482,5 +486,669 @@ class _VerifyOtpProviderElement
   @override
   String? get fcmToken => (origin as VerifyOtpProvider).fcmToken;
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+
+// ---------------------------------------------------------------------------
+// checkUser
+// ---------------------------------------------------------------------------
+
+String _$checkUserHash() => r'c0a1b2c3d4e5f60718293a4b5c6d7e8f90123456';
+
+/// See also [checkUser].
+@ProviderFor(checkUser)
+const checkUserProvider = CheckUserFamily();
+
+/// See also [checkUser].
+class CheckUserFamily extends Family<AsyncValue<CheckUserModel>> {
+  /// See also [checkUser].
+  const CheckUserFamily();
+
+  /// See also [checkUser].
+  CheckUserProvider call({
+    required String number,
+  }) {
+    return CheckUserProvider(
+      number: number,
+    );
+  }
+
+  @override
+  CheckUserProvider getProviderOverride(
+    covariant CheckUserProvider provider,
+  ) {
+    return call(
+      number: provider.number,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'checkUserProvider';
+}
+
+/// See also [checkUser].
+class CheckUserProvider
+    extends AutoDisposeFutureProvider<CheckUserModel> {
+  /// See also [checkUser].
+  CheckUserProvider({
+    required String number,
+  }) : this._internal(
+          (ref) => checkUser(
+            ref as CheckUserRef,
+            number: number,
+          ),
+          from: checkUserProvider,
+          name: r'checkUserProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$checkUserHash,
+          dependencies: CheckUserFamily._dependencies,
+          allTransitiveDependencies:
+              CheckUserFamily._allTransitiveDependencies,
+          number: number,
+        );
+
+  CheckUserProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.number,
+  }) : super.internal();
+
+  final String number;
+
+  @override
+  Override overrideWith(
+    FutureOr<CheckUserModel> Function(CheckUserRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: CheckUserProvider._internal(
+        (ref) => create(ref as CheckUserRef),
+        from: from,
+        name: name,
+        dependencies: dependencies,
+        allTransitiveDependencies: allTransitiveDependencies,
+        debugGetCreateSourceHash: debugGetCreateSourceHash,
+        number: number,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<CheckUserModel> createElement() {
+    return _CheckUserProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CheckUserProvider && other.number == number;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, number.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin CheckUserRef on AutoDisposeFutureProviderRef<CheckUserModel> {
+  /// The parameter `number` of this provider.
+  String get number;
+}
+
+class _CheckUserProviderElement
+    extends AutoDisposeFutureProviderElement<CheckUserModel>
+    with CheckUserRef {
+  _CheckUserProviderElement(super.provider);
+
+  @override
+  String get number => (origin as CheckUserProvider).number;
+}
+
+// ---------------------------------------------------------------------------
+// userRegister
+// ---------------------------------------------------------------------------
+
+String _$userRegisterHash() => r'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678';
+
+/// See also [userRegister].
+@ProviderFor(userRegister)
+const userRegisterProvider = UserRegisterFamily();
+
+/// See also [userRegister].
+class UserRegisterFamily extends Family<AsyncValue<UserRegisterResponseModel>> {
+  /// See also [userRegister].
+  const UserRegisterFamily();
+
+  /// See also [userRegister].
+  UserRegisterProvider call({
+    required String number,
+    required String userName,
+    required String fcmToken,
+    required int constitutionType,
+  }) {
+    return UserRegisterProvider(
+      number: number,
+      userName: userName,
+      fcmToken: fcmToken,
+      constitutionType: constitutionType,
+    );
+  }
+
+  @override
+  UserRegisterProvider getProviderOverride(
+    covariant UserRegisterProvider provider,
+  ) {
+    return call(
+      number: provider.number,
+      userName: provider.userName,
+      fcmToken: provider.fcmToken,
+      constitutionType: provider.constitutionType,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'userRegisterProvider';
+}
+
+/// See also [userRegister].
+class UserRegisterProvider
+    extends AutoDisposeFutureProvider<UserRegisterResponseModel> {
+  /// See also [userRegister].
+  UserRegisterProvider({
+    required String number,
+    required String userName,
+    required String fcmToken,
+    required int constitutionType,
+  }) : this._internal(
+          (ref) => userRegister(
+            ref as UserRegisterRef,
+            number: number,
+            userName: userName,
+            fcmToken: fcmToken,
+            constitutionType: constitutionType,
+          ),
+          from: userRegisterProvider,
+          name: r'userRegisterProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$userRegisterHash,
+          dependencies: UserRegisterFamily._dependencies,
+          allTransitiveDependencies:
+              UserRegisterFamily._allTransitiveDependencies,
+          number: number,
+          userName: userName,
+          fcmToken: fcmToken,
+          constitutionType: constitutionType,
+        );
+
+  UserRegisterProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.number,
+    required this.userName,
+    required this.fcmToken,
+    required this.constitutionType,
+  }) : super.internal();
+
+  final String number;
+  final String userName;
+  final String fcmToken;
+  final int constitutionType;
+
+  @override
+  Override overrideWith(
+    FutureOr<UserRegisterResponseModel> Function(UserRegisterRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: UserRegisterProvider._internal(
+        (ref) => create(ref as UserRegisterRef),
+        from: from,
+        name: name,
+        dependencies: dependencies,
+        allTransitiveDependencies: allTransitiveDependencies,
+        debugGetCreateSourceHash: debugGetCreateSourceHash,
+        number: number,
+        userName: userName,
+        fcmToken: fcmToken,
+        constitutionType: constitutionType,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<UserRegisterResponseModel> createElement() {
+    return _UserRegisterProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is UserRegisterProvider &&
+        other.number == number &&
+        other.userName == userName &&
+        other.fcmToken == fcmToken &&
+        other.constitutionType == constitutionType;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, number.hashCode);
+    hash = _SystemHash.combine(hash, userName.hashCode);
+    hash = _SystemHash.combine(hash, fcmToken.hashCode);
+    hash = _SystemHash.combine(hash, constitutionType.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin UserRegisterRef
+    on AutoDisposeFutureProviderRef<UserRegisterResponseModel> {
+  /// The parameter `number` of this provider.
+  String get number;
+
+  /// The parameter `userName` of this provider.
+  String get userName;
+
+  /// The parameter `fcmToken` of this provider.
+  String get fcmToken;
+
+  /// The parameter `constitutionType` of this provider.
+  int get constitutionType;
+}
+
+class _UserRegisterProviderElement
+    extends AutoDisposeFutureProviderElement<UserRegisterResponseModel>
+    with UserRegisterRef {
+  _UserRegisterProviderElement(super.provider);
+
+  @override
+  String get number => (origin as UserRegisterProvider).number;
+  @override
+  String get userName => (origin as UserRegisterProvider).userName;
+  @override
+  String get fcmToken => (origin as UserRegisterProvider).fcmToken;
+  @override
+  int get constitutionType =>
+      (origin as UserRegisterProvider).constitutionType;
+}
+
+// ---------------------------------------------------------------------------
+// userSendOtp
+// ---------------------------------------------------------------------------
+
+String _$userSendOtpHash() => r'b2c3d4e5f60718293a4b5c6d7e8f901234567890';
+
+/// See also [userSendOtp].
+@ProviderFor(userSendOtp)
+const userSendOtpProvider = UserSendOtpFamily();
+
+/// See also [userSendOtp].
+class UserSendOtpFamily extends Family<AsyncValue<UserSendOtpResponseModel>> {
+  /// See also [userSendOtp].
+  const UserSendOtpFamily();
+
+  /// See also [userSendOtp].
+  UserSendOtpProvider call({
+    required String userId,
+    required String fcmToken,
+  }) {
+    return UserSendOtpProvider(
+      userId: userId,
+      fcmToken: fcmToken,
+    );
+  }
+
+  @override
+  UserSendOtpProvider getProviderOverride(
+    covariant UserSendOtpProvider provider,
+  ) {
+    return call(
+      userId: provider.userId,
+      fcmToken: provider.fcmToken,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'userSendOtpProvider';
+}
+
+/// See also [userSendOtp].
+class UserSendOtpProvider
+    extends AutoDisposeFutureProvider<UserSendOtpResponseModel> {
+  /// See also [userSendOtp].
+  UserSendOtpProvider({
+    required String userId,
+    required String fcmToken,
+  }) : this._internal(
+          (ref) => userSendOtp(
+            ref as UserSendOtpRef,
+            userId: userId,
+            fcmToken: fcmToken,
+          ),
+          from: userSendOtpProvider,
+          name: r'userSendOtpProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$userSendOtpHash,
+          dependencies: UserSendOtpFamily._dependencies,
+          allTransitiveDependencies:
+              UserSendOtpFamily._allTransitiveDependencies,
+          userId: userId,
+          fcmToken: fcmToken,
+        );
+
+  UserSendOtpProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.userId,
+    required this.fcmToken,
+  }) : super.internal();
+
+  final String userId;
+  final String fcmToken;
+
+  @override
+  Override overrideWith(
+    FutureOr<UserSendOtpResponseModel> Function(UserSendOtpRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: UserSendOtpProvider._internal(
+        (ref) => create(ref as UserSendOtpRef),
+        from: from,
+        name: name,
+        dependencies: dependencies,
+        allTransitiveDependencies: allTransitiveDependencies,
+        debugGetCreateSourceHash: debugGetCreateSourceHash,
+        userId: userId,
+        fcmToken: fcmToken,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<UserSendOtpResponseModel> createElement() {
+    return _UserSendOtpProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is UserSendOtpProvider &&
+        other.userId == userId &&
+        other.fcmToken == fcmToken;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, userId.hashCode);
+    hash = _SystemHash.combine(hash, fcmToken.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin UserSendOtpRef
+    on AutoDisposeFutureProviderRef<UserSendOtpResponseModel> {
+  /// The parameter `userId` of this provider.
+  String get userId;
+
+  /// The parameter `fcmToken` of this provider.
+  String get fcmToken;
+}
+
+class _UserSendOtpProviderElement
+    extends AutoDisposeFutureProviderElement<UserSendOtpResponseModel>
+    with UserSendOtpRef {
+  _UserSendOtpProviderElement(super.provider);
+
+  @override
+  String get userId => (origin as UserSendOtpProvider).userId;
+  @override
+  String get fcmToken => (origin as UserSendOtpProvider).fcmToken;
+}
+
+// ---------------------------------------------------------------------------
+// userVerifyOtp
+// ---------------------------------------------------------------------------
+
+String _$userVerifyOtpHash() => r'c3d4e5f60718293a4b5c6d7e8f90123456789012';
+
+/// See also [userVerifyOtp].
+@ProviderFor(userVerifyOtp)
+const userVerifyOtpProvider = UserVerifyOtpFamily();
+
+/// See also [userVerifyOtp].
+class UserVerifyOtpFamily extends Family<AsyncValue<AuthenticationModel>> {
+  /// See also [userVerifyOtp].
+  const UserVerifyOtpFamily();
+
+  /// See also [userVerifyOtp].
+  UserVerifyOtpProvider call({
+    required String userId,
+    required String otp,
+    required String fcmToken,
+  }) {
+    return UserVerifyOtpProvider(
+      userId: userId,
+      otp: otp,
+      fcmToken: fcmToken,
+    );
+  }
+
+  @override
+  UserVerifyOtpProvider getProviderOverride(
+    covariant UserVerifyOtpProvider provider,
+  ) {
+    return call(
+      userId: provider.userId,
+      otp: provider.otp,
+      fcmToken: provider.fcmToken,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'userVerifyOtpProvider';
+}
+
+/// See also [userVerifyOtp].
+class UserVerifyOtpProvider
+    extends AutoDisposeFutureProvider<AuthenticationModel> {
+  /// See also [userVerifyOtp].
+  UserVerifyOtpProvider({
+    required String userId,
+    required String otp,
+    required String fcmToken,
+  }) : this._internal(
+          (ref) => userVerifyOtp(
+            ref as UserVerifyOtpRef,
+            userId: userId,
+            otp: otp,
+            fcmToken: fcmToken,
+          ),
+          from: userVerifyOtpProvider,
+          name: r'userVerifyOtpProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$userVerifyOtpHash,
+          dependencies: UserVerifyOtpFamily._dependencies,
+          allTransitiveDependencies:
+              UserVerifyOtpFamily._allTransitiveDependencies,
+          userId: userId,
+          otp: otp,
+          fcmToken: fcmToken,
+        );
+
+  UserVerifyOtpProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.userId,
+    required this.otp,
+    required this.fcmToken,
+  }) : super.internal();
+
+  final String userId;
+  final String otp;
+  final String fcmToken;
+
+  @override
+  Override overrideWith(
+    FutureOr<AuthenticationModel> Function(UserVerifyOtpRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: UserVerifyOtpProvider._internal(
+        (ref) => create(ref as UserVerifyOtpRef),
+        from: from,
+        name: name,
+        dependencies: dependencies,
+        allTransitiveDependencies: allTransitiveDependencies,
+        debugGetCreateSourceHash: debugGetCreateSourceHash,
+        userId: userId,
+        otp: otp,
+        fcmToken: fcmToken,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<AuthenticationModel> createElement() {
+    return _UserVerifyOtpProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is UserVerifyOtpProvider &&
+        other.userId == userId &&
+        other.otp == otp &&
+        other.fcmToken == fcmToken;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, userId.hashCode);
+    hash = _SystemHash.combine(hash, otp.hashCode);
+    hash = _SystemHash.combine(hash, fcmToken.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin UserVerifyOtpRef
+    on AutoDisposeFutureProviderRef<AuthenticationModel> {
+  /// The parameter `userId` of this provider.
+  String get userId;
+
+  /// The parameter `otp` of this provider.
+  String get otp;
+
+  /// The parameter `fcmToken` of this provider.
+  String get fcmToken;
+}
+
+class _UserVerifyOtpProviderElement
+    extends AutoDisposeFutureProviderElement<AuthenticationModel>
+    with UserVerifyOtpRef {
+  _UserVerifyOtpProviderElement(super.provider);
+
+  @override
+  String get userId => (origin as UserVerifyOtpProvider).userId;
+  @override
+  String get otp => (origin as UserVerifyOtpProvider).otp;
+  @override
+  String get fcmToken => (origin as UserVerifyOtpProvider).fcmToken;
+}
+
+String _$userLogoutHash() => r'userLogoutHash';
+
+/// See also [userLogout].
+@ProviderFor(userLogout)
+final userLogoutProvider = AutoDisposeFutureProvider<dynamic>.internal(
+  userLogout,
+  name: r'userLogoutProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$userLogoutHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef UserLogoutRef = AutoDisposeFutureProviderRef<dynamic>;

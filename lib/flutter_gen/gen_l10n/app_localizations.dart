@@ -7761,6 +7761,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'WSA Charge'**
   String get wsacharge;
+
+  /// No description provided for @poEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'PO Edit'**
+  String get poEdit;
+
+  /// No description provided for @poDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'PO Delete'**
+  String get poDelete;
 }
 
 class _AppLocalizationsDelegate

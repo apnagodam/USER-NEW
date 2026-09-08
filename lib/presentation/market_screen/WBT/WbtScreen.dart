@@ -40,7 +40,6 @@ class Wbtscreen extends ConsumerStatefulWidget {
 }
 
 class _WbtscreenState extends ConsumerState<Wbtscreen> {
-  final selectedTabIndex = StateProvider<int>((ref) => 0);
   List<Map<String, dynamic>> get tabs => [
         {
           "label": AppLocalizations.of(context)!.stackWise,
@@ -86,9 +85,6 @@ class _WbtscreenState extends ConsumerState<Wbtscreen> {
                     ],
                   ),
                   child: TabBar(
-                    onTap: (index) {
-                      ref.watch(selectedTabIndex.notifier).state = index;
-                    },
                     labelColor: Colors.white,
                     indicatorSize: TabBarIndicatorSize.tab,
                     labelStyle: TextStyle(
@@ -152,7 +148,7 @@ class _WbtscreenState extends ConsumerState<Wbtscreen> {
                                     ) {
                                       return GestureDetector(
                                         onTap: () async {
-                                          if (ref.watch(authProvider).value ==
+                                          if (ref.read(authProvider).value ==
                                               AuthStatus.loggedIn) {
                                             Get.to(
                                               Bidding(
@@ -693,6 +689,8 @@ class StackSellScreen extends ConsumerWidget {
     return RefreshIndicator(
       child: ref.watch(stackSellListProvider).when(
             data: (list) {
+              final currentUserId =
+                  ref.watch(sharedUtilityProvider).getUser()?.userId?.toString();
               return (list.data ?? []).isEmpty
                   ? noStockData()
                   : ListView.builder(
@@ -700,28 +698,20 @@ class StackSellScreen extends ConsumerWidget {
                       itemCount: list.data?.length ?? 0,
                       itemBuilder: (BuildContext context, int index) {
                         var isBuyer = false;
-                        var isSeller = ref
-                                .watch(sharedUtilityProvider)
-                                .getUser()
-                                ?.userId
-                                .toString() ==
-                            list.data?[index].sellerId.toString();
-                        Future.delayed(Duration(seconds: 1));
+                        var isSeller = currentUserId != null &&
+                            currentUserId ==
+                                list.data?[index].sellerId?.toString();
 
                         list.data![index].stackBuySellConver
                             ?.forEach((element) {
-                          if (element.userId.toString() ==
-                              ref
-                                  .watch(sharedUtilityProvider)
-                                  .getUser()
-                                  ?.userId
-                                  .toString()) {
+                          if (currentUserId != null &&
+                              element.userId?.toString() == currentUserId) {
                             isBuyer = true;
                           }
                         });
                         return GestureDetector(
                           onTap: () async {
-                            if (ref.watch(authProvider).value ==
+                            if (ref.read(authProvider).value ==
                                 AuthStatus.loggedIn) {
                               Get.to(StackSellBiddingScreen(index: index));
                             } else {
@@ -1131,10 +1121,10 @@ class StacksOrderListing extends ConsumerWidget {
                     itemBuilder: (BuildContext context, int index) {
                       return GestureDetector(
                         onTap: () async {
-                          if (ref.watch(authProvider).value ==
+                          if (ref.read(authProvider).value ==
                               AuthStatus.loggedIn) {
                             if (!ref
-                                .watch(sharedUtilityProvider)
+                                .read(sharedUtilityProvider)
                                 .isKycComplete()) {
                               CommanDialog(
                                 context,
@@ -1505,20 +1495,19 @@ class _StackSellBiddingScreenState
               if ((data.data ?? []).isEmpty) {
                 return noStockData();
               }
-              Future.delayed(Duration(seconds: 1)).then((_) {
-                ref.watch(isOwner.notifier).state =
-                    "${data.data![widget.index].sellerId}" ==
-                        "${ref.watch(sharedUtilityProvider).getUser()?.userId}";
-                for (var e
-                    in data.data![widget.index].stackBuySellConver ?? []) {
-                  if (e.userId.toString() ==
-                      ref
-                          .watch(sharedUtilityProvider)
-                          .getUser()
-                          ?.userId
-                          .toString()) {
-                    ref.watch(isUserBid.notifier).state = true;
-                    break;
+              final currentUserId =
+                  ref.watch(sharedUtilityProvider).getUser()?.userId?.toString();
+              final owner = "${data.data![widget.index].sellerId}" == currentUserId;
+              final userBid = (data.data![widget.index].stackBuySellConver ?? [])
+                  .any((e) => e.userId?.toString() == currentUserId);
+
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  if (ref.read(isOwner) != owner) {
+                    ref.read(isOwner.notifier).state = owner;
+                  }
+                  if (ref.read(isUserBid) != userBid) {
+                    ref.read(isUserBid.notifier).state = userBid;
                   }
                 }
               });
@@ -2900,7 +2889,17 @@ class _StackSellBiddingScreenState
                         ),
                       ),
                     ),
-                    if (ref.watch(isOwner))
+                    if (ref.watch(isOwner) &&
+                        (data.data![widget.index].stackBuySellConver == null ||
+                            data.data![widget.index].stackBuySellConver!.isEmpty) &&
+                        (data.data![widget.index].buyerPrice == null ||
+                            data.data![widget.index].buyerPrice.toString().isEmpty ||
+                            data.data![widget.index].buyerPrice.toString() == "0" ||
+                            data.data![widget.index].buyerPrice.toString() == "0.00") &&
+                        (data.data![widget.index].bestBuyerPrice == null ||
+                            data.data![widget.index].bestBuyerPrice.toString().isEmpty ||
+                            data.data![widget.index].bestBuyerPrice.toString() == "0" ||
+                            data.data![widget.index].bestBuyerPrice.toString() == "0.00")) ...[
                       Center(
                         child: ElevatedButton(
                           style: AppStyle.buttonStyle.copyWith(
@@ -2959,7 +2958,8 @@ class _StackSellBiddingScreenState
                           ),
                         ),
                       ),
-                    SizedBox(height: 20),
+                      SizedBox(height: 20),
+                    ],
 
                     // cont.apnaBiddingListModel == null ? SizedBox():
                     ListView.builder(

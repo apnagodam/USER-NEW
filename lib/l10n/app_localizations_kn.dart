@@ -3906,6 +3906,12 @@ class AppLocalizationsKn extends AppLocalizations {
   String get poDetails => 'PO Details';
 
   @override
+  String get poEdit => 'ಪಿಒ ಸಂಪಾದಿಸಿ';
+
+  @override
+  String get poDelete => 'ಪಿಒ ಅಳಿಸಿ';
+
+  @override
   String get somethingwentwrongyoumay => 'Something went wrong';
 
   @override

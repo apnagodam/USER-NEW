@@ -2,14 +2,12 @@ import 'dart:io';
 
 import 'package:apnagodam/core/utils/color_constant.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
-import 'package:apnagodam/presentation/login_screen/LoginBottomsheet.dart';
+import 'package:apnagodam/presentation/login_screen/login_screen.dart';
 import 'package:apnagodam/widgets/CommonTextField.dart';
-import 'package:apnagodam/widgets/StackBookCard.dart';
 import 'package:apnagodam/widgets/dailogs/customAlertDialog.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:elevarm_icons/elevarm_icons.dart';
 import 'package:elevarm_ui/elevarm_ui.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
@@ -21,50 +19,7 @@ export 'loaders.dart';
 export '../core/utils/no_data_found_widget.dart';
 
 showLoginBottomsheet(BuildContext context) {
-  showModalBottomSheet(
-    showDragHandle: true,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-    backgroundColor: Colors.white,
-    context: context,
-    isScrollControlled: true, // Important
-    enableDrag: true,
-    builder:
-        (bottomsheetContext) => LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: constraints.maxHeight),
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    bottom:
-                        MediaQuery.of(
-                          bottomsheetContext,
-                        ).viewInsets.bottom, // reacts to keyboard
-                  ),
-                  child: DraggableScrollableSheet(
-                    expand: false,
-                    initialChildSize: 0.6, // default height
-                    minChildSize: 0.4,
-                    maxChildSize: 0.95,
-                    builder: (_, scrollController) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 10,
-                        ),
-                        child: SingleChildScrollView(
-                          controller: scrollController,
-                          child: LoginBottomSheet(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-  );
+  Get.to(() => const LoginScreen());
 }
 
 titleWidget({

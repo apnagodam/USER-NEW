@@ -3,6 +3,7 @@ import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'package:apnagodam/core/utils/color_constant.dart';
 import 'package:apnagodam/core/utils/no_data_found_widget.dart';
 import 'package:apnagodam/core/utils/printer_helper.dart';
+import 'package:apnagodam/core/utils/progress_dialog_utils.dart';
 import 'package:apnagodam/core/utils/printer_state.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
 import 'package:apnagodam/extensions/extensions.dart';
@@ -90,6 +91,9 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
     buyWeightController = TextEditingController(text: '0');
     sellWeightController = TextEditingController(text: '0');
     _buyPrice = 0.0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(getSbtCommodityProvider);
+    });
   }
 
   @override
@@ -198,31 +202,45 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
             Expanded(
               child: TabBarView(
                 children: [
-                  commodityProvider.when(
-                    data: (data) {
-                      final dataList = data.data ?? [];
-                      return dataList.isEmpty
-                          ? Center(child: noStockData())
-                          : ListView.builder(
-                              cacheExtent: 1000,
-                              addAutomaticKeepAlives: false,
-                              addRepaintBoundaries: true,
-                              itemCount: dataList.length,
-                              itemBuilder:
-                                  (BuildContext context, int mainIndex) {
-                                final item = dataList[mainIndex];
-                                final typeColor = _sbtTypeColor(
-                                  item.sbtType?.toString(),
-                                );
-                                final bestBuyer =
-                                    currencyFormat.format(item.bestBuyer ?? 0);
-                                final bestSeller = currencyFormat.format(
-                                  item.bestSeller
-                                      .toString()
-                                      .convertToDouble(defaultValue: 0.00),
-                                );
+                  RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(getSbtCommodityProvider);
+                    },
+                    child: commodityProvider.when(
+                      data: (data) {
+                        final dataList = data.data ?? [];
+                        return dataList.isEmpty
+                            ? SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: SizedBox(
+                                  height: MediaQuery.of(context).size.height * 0.6,
+                                  child: Center(child: noStockData()),
+                                ),
+                              )
+                            : ListView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                cacheExtent: 1000,
+                                addAutomaticKeepAlives: false,
+                                addRepaintBoundaries: true,
+                                itemCount: dataList.length,
+                                itemBuilder:
+                                    (BuildContext context, int mainIndex) {
+                                  final item = dataList[mainIndex];
+                                  final typeColor = _sbtTypeColor(
+                                    item.sbtType?.toString(),
+                                  );
+                                  final bestBuyer = currencyFormat.format(
+                                    item.bestBuyer
+                                        .toString()
+                                        .convertToDouble(defaultValue: 0.00),
+                                  );
+                                  final bestSeller = currencyFormat.format(
+                                    item.bestSeller
+                                        .toString()
+                                        .convertToDouble(defaultValue: 0.00),
+                                  );
 
-                                return Card(
+                                  return Card(
                                   elevation: 2,
                                   color: Colors.white,
                                   shape: RoundedRectangleBorder(
@@ -1375,7 +1393,7 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                         ),
                                                                       ),
                                                                       builder: (
-                                                                        context,
+                                                                        sellSheetContext,
                                                                       ) {
                                                                         return Consumer(
                                                                           builder:
@@ -1722,6 +1740,7 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                                               subtitle: '${AppLocalizations.of(context)!.commodityPrice} ${sellPriceController.text}\n${AppLocalizations.of(context)!.commodityWeight}${ref.watch(sellWeight)} in Quintal',
                                                                                                               onPositiveButton: () async {
                                                                                                                  Get.back();
+                                                                                                                 ProgressDialogUtils.showProgressDialog();
                                                                                                                  await ref
                                                                                                                      .read(
                                                                                                                    postSbtProvider(
@@ -1737,6 +1756,7 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                                                    (
                                                                                                                      value,
                                                                                                                    ) async {
+                                                                                                                     ProgressDialogUtils.hideProgressDialog();
                                                                                                                      ref.invalidate(
                                                                                                                        matchedOrdersProvider,
                                                                                                                      );
@@ -1748,7 +1768,7 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                                                      );
                                                                                                                       if (value['status'].toString() == "1") {
                                                                                                                         Navigator.of(
-                                                                                                                          sheetContext,
+                                                                                                                          sellSheetContext,
                                                                                                                         ).pop();
                                                                                                                         Fluttertoast.showToast(
                                                                                                                           msg: value['message'] ?? 'Order placed successfully',
@@ -1767,7 +1787,7 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                                                       e,
                                                                                                                       s,
                                                                                                                     ) {
-                                                                                                                      context.hideloader();
+                                                                                                                      ProgressDialogUtils.hideProgressDialog();
                                                                                                                       showErrorAlertDialog(
                                                                                                                         context,
                                                                                                                         "$e",
@@ -2603,43 +2623,17 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                           onPressed: () {
                                                                                             Get.back();
                                                                                             if (dataList[mainIndex].sbtType.toString() == "1") {
-                                                                                              showModalBottomSheet(
-                                                                                                context: context,
-                                                                                                builder: (
-                                                                                                  bottomsheetContext,
-                                                                                                ) =>
-                                                                                                    ElevarmDraggableBottomSheet(
-                                                                                                  title: AppLocalizations.of(
-                                                                                                    context,
-                                                                                                  )!
-                                                                                                      .markDelivery,
-                                                                                                  onPressedClose: () => Get.back(),
-                                                                                                  initialChildSize: 1,
-                                                                                                  children: [
-                                                                                                    DeliveryMarking(
-                                                                                                      isScreen: false,
-                                                                                                    ),
-                                                                                                  ],
+                                                                                              Get.to(
+                                                                                                DeliveryMarking(
+                                                                                                  isScreen: true,
                                                                                                 ),
-                                                                                                isScrollControlled: true,
-                                                                                              ).then((_) => ref.invalidate(getSbtCommodityProvider));
+                                                                                              )?.then((_) => ref.invalidate(getSbtCommodityProvider));
                                                                                             } else {
-                                                                                              showModalBottomSheet(
-                                                                                                context: context,
-                                                                                                builder: (
-                                                                                                  bottomsheetContext,
-                                                                                                ) =>
-                                                                                                    ElevarmDraggableBottomSheet(
-                                                                                                  title: '',
-                                                                                                  onPressedClose: () => Get.back(),
-                                                                                                  children: [
-                                                                                                    FactoryDispatchRequestsScreen(
-                                                                                                      sbtOrder: data.tradeOrderData?[index].orderId ?? "",
-                                                                                                    ),
-                                                                                                  ],
+                                                                                              Get.to(
+                                                                                                FactoryDispatchRequestsScreen(
+                                                                                                  sbtOrder: data.tradeOrderData?[index].orderId ?? "",
                                                                                                 ),
-                                                                                                isScrollControlled: true,
-                                                                                              ).then((_) => ref.invalidate(getSbtCommodityProvider));
+                                                                                              )?.then((_) => ref.invalidate(getSbtCommodityProvider));
                                                                                             }
                                                                                           },
                                                                                           child: Text(
@@ -2915,9 +2909,35 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                               },
                             );
                     },
-                    error: (e, s) => noStockData(),
+                    error: (e, s) => Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          noStockData(),
+                          const SizedBox(height: 10),
+                          ElevatedButton.icon(
+                            style: AppStyle.buttonStyle,
+                            onPressed: () =>
+                                ref.invalidate(getSbtCommodityProvider),
+                            icon: const Icon(
+                              Icons.refresh,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            label: const Text(
+                              "Retry",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     loading: () => _sbttLoader(),
                   ),
+                ),
                   ref.watch(authProvider.notifier).loginStatus ==
                           AuthStatus.loggedIn
                       ? DeliveryMarking(isScreen: false)

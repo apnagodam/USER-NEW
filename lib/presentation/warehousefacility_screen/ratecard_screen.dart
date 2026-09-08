@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/utils/color_constant.dart';
 import '../../core/utils/helper.dart';
+import '../../core/utils/progress_dialog_utils.dart';
 import '../../core/utils/theme/app_style.dart';
 import '../dashboard/dashboard_screen.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
@@ -1663,9 +1664,10 @@ class _RateCardState extends ConsumerState<RateCard> {
                             final defaultSelectDate =
                                 AppLocalizations.of(context)!.selectDate2.trim();
 
-                            if (currentDate.isEmpty ||
-                                currentDate == defaultSelectDate ||
-                                currentDate == "Select Date") {
+                            if (isDedicated &&
+                                (currentDate.isEmpty ||
+                                    currentDate == defaultSelectDate ||
+                                    currentDate == "Select Date")) {
                               showErrorAlertDialog(
                                 context,
                                 "Please select commodity arrival date",
@@ -1700,6 +1702,7 @@ class _RateCardState extends ConsumerState<RateCard> {
                               return;
                             }
 
+                            ProgressDialogUtils.showProgressDialog();
                             try {
                               final value = await ref
                                   .read(warehouseFacilityprovider)
@@ -1710,11 +1713,16 @@ class _RateCardState extends ConsumerState<RateCard> {
                                     stackNum: widget.stackNumber,
                                     stackRowId: widget.stackRowId,
                                     commodityId: widget.commodityId,
-                                    lockInMonth: currentDate,
+                                    lockInMonth: (currentDate == defaultSelectDate ||
+                                            currentDate == "Select Date" ||
+                                            !isDedicated)
+                                        ? ""
+                                        : currentDate,
                                     warehouseRent: widget.whRentData,
                                   );
 
                               if (value.status.toString() == "3") {
+                                ProgressDialogUtils.hideProgressDialog();
                                 if (context.mounted) {
                                   showModalBottomSheet(
                                     context: context,
@@ -1733,6 +1741,7 @@ class _RateCardState extends ConsumerState<RateCard> {
                               }
 
                               if (value.status.toString() == "0") {
+                                ProgressDialogUtils.hideProgressDialog();
                                 if (context.mounted) {
                                   showErrorAlertDialog(
                                     context,
@@ -1762,6 +1771,8 @@ class _RateCardState extends ConsumerState<RateCard> {
                                           widget.exitLoadCharge ?? "0.0",
                                       lockInMonth: widget.lockIn ?? "0.0",
                                     );
+
+                                ProgressDialogUtils.hideProgressDialog();
 
                                 if (rateCardRes != null) {
                                   if (rateCardRes['status'].toString() == "1") {
@@ -1804,8 +1815,11 @@ class _RateCardState extends ConsumerState<RateCard> {
                                     }
                                   }
                                 }
+                              } else {
+                                ProgressDialogUtils.hideProgressDialog();
                               }
                             } catch (e) {
+                              ProgressDialogUtils.hideProgressDialog();
                               debugPrint("Error in ratecard submit: $e");
                               if (context.mounted) {
                                 showErrorAlertDialog(

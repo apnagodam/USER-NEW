@@ -347,6 +347,10 @@ const fetchStackSellTerms = 'user_api/get_stack_sell_terms';
 //purchase order apis
 const getBrokerList = 'user_api/get_broker_buyer_list';
 const getPoOutwards = 'user_api/apna_u_get_trip_offline_po';
+const String getPoWarehouseData = 'user_api/getWarehouseData';
+const String getPoCommodityData = 'user_api/getCommodityData';
+const String getPoShipToUserData = 'user_api/getShipToUserData';
+const String getPoFactoryList = 'user_api/getFactoryList';
 
 //account disable
 const disableUserAccount = 'user_api/disable_user_account';
@@ -358,6 +362,13 @@ String wallatAmount = "0";
 //get address
 const addressFromPincode = 'user_api/get_address_from_pincode';
 
+//authentication apis
+const String CHECK_USER_URL = 'user_api/check_user';
+const String USER_REGISTER_URL = 'user_api/user_register';
+const String USER_SEND_OTP_URL = 'user_api/user_send_otp';
+const String USER_VERIFY_OTP_URL = 'user_api/user_verify_otp';
+
 List<Commodites> commodityslist = [];
 
 bool connectivity = true, isNotifyConnectivity = false;
+

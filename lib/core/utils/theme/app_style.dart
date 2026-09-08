@@ -193,10 +193,15 @@ class AppStyle {
           WidgetStateProperty.resolveWith((states) => ColorConstant.whiteA700),
       textStyle: WidgetStatePropertyAll(TextStyle(
           fontWeight: FontWeight.bold, color: ColorConstant.maingreen)),
-      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-          RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0),
-      )));
+    shape: WidgetStateProperty.all(
+      RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(25.0),
+        side: BorderSide(
+          color: ColorConstant.maingreen,
+          width: 1.2,
+        ),
+      ),
+    ),);
 
   static ButtonStyle disabledButtonStyle = ButtonStyle(
       backgroundColor:

@@ -1276,6 +1276,8 @@
   "nofinancesfound": "No finances found",
   "notransactionsfound": "No transactions found",
   "poDetails": "PO Details",
+  "poEdit": "PO Edit",
+  "poDelete": "PO Delete",
   "somethingwentwrongyoumay": "Something went wrong",
   "wsacharge": "WSA Charge",
   "buycommission": "Buy Commission",

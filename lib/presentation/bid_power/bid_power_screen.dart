@@ -30,6 +30,7 @@ class _BidPowerScreenState extends ConsumerState<BidPowerScreen> {
   int _selectedType = 1; // 1 for Secure, 2 for UnSecure
   bool _isSubmitting = false;
   final TextEditingController _amountController = TextEditingController();
+  final FocusNode _amountFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -43,6 +44,7 @@ class _BidPowerScreenState extends ConsumerState<BidPowerScreen> {
   @override
   void dispose() {
     _amountController.dispose();
+    _amountFocusNode.dispose();
     super.dispose();
   }
 
@@ -691,201 +693,213 @@ class _BidPowerScreenState extends ConsumerState<BidPowerScreen> {
           const SizedBox(height: 14),
 
           // Dual Limit Badges: Total Available Limit & Last Bid
-          Row(
-            children: [
-              // Total Available Limit Badge
-              Expanded(
-                child: Material(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    onTap: () => _showAmountDetailsDialog(
-                      context,
-                      isHindi ? 'कुल उपलब्ध सीमा' : 'Total Available Limit',
-                      totalAvailableLimitStr,
-                      icon: Icons.bolt_rounded,
-                      iconColor: Colors.green.shade700,
-                      bgColor: Colors.green.shade50,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.green.shade300),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.bolt_rounded, size: 16, color: Colors.green.shade700),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  isHindi ? 'कुल उपलब्ध सीमा' : 'Total Available',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: Colors.green.shade800,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              totalAvailableLimitStr,
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                color: Colors.green.shade900,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-
-              // Last Bid / Last Limit Badge
-              Expanded(
-                child: Material(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    onTap: () => _showAmountDetailsDialog(
-                      context,
-                      isHindi ? 'अंतिम बिड (Last Bid)' : 'Last Bid',
-                      lastLimitStr.isNotEmpty ? lastLimitStr : '₹0.00',
-                      icon: Icons.history_rounded,
-                      iconColor: Colors.blue.shade700,
-                      bgColor: Colors.blue.shade50,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blue.shade300),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.history_rounded, size: 16, color: Colors.blue.shade700),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  isHindi ? 'अंतिम बिड (Last Bid)' : 'Last Bid',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: Colors.blue.shade800,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              lastLimitStr.isNotEmpty ? lastLimitStr : '₹0.00',
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                color: Colors.blue.shade900,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          // Row(
+          //   children: [
+          //     // Total Available Limit Badge
+          //     Expanded(
+          //       child: Material(
+          //         color: const Color(0xFFF0FDF4),
+          //         borderRadius: BorderRadius.circular(12),
+          //         child: InkWell(
+          //           onTap: () => _showAmountDetailsDialog(
+          //             context,
+          //             isHindi ? 'कुल उपलब्ध सीमा' : 'Total Available Limit',
+          //             totalAvailableLimitStr,
+          //             icon: Icons.bolt_rounded,
+          //             iconColor: Colors.green.shade700,
+          //             bgColor: Colors.green.shade50,
+          //           ),
+          //           borderRadius: BorderRadius.circular(12),
+          //           child: Container(
+          //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          //             decoration: BoxDecoration(
+          //               borderRadius: BorderRadius.circular(12),
+          //               border: Border.all(color: Colors.green.shade300),
+          //             ),
+          //             child: Column(
+          //               crossAxisAlignment: CrossAxisAlignment.start,
+          //               children: [
+          //                 Row(
+          //                   children: [
+          //                     Icon(Icons.bolt_rounded, size: 16, color: Colors.green.shade700),
+          //                     const SizedBox(width: 4),
+          //                     Expanded(
+          //                       child: Text(
+          //                         isHindi ? 'कुल उपलब्ध सीमा' : 'Total Available',
+          //                         maxLines: 1,
+          //                         overflow: TextOverflow.ellipsis,
+          //                         style: GoogleFonts.poppins(
+          //                           fontSize: 11,
+          //                           color: Colors.green.shade800,
+          //                           fontWeight: FontWeight.w600,
+          //                         ),
+          //                       ),
+          //                     ),
+          //                   ],
+          //                 ),
+          //                 const SizedBox(height: 4),
+          //                 FittedBox(
+          //                   fit: BoxFit.scaleDown,
+          //                   alignment: Alignment.centerLeft,
+          //                   child: Text(
+          //                     totalAvailableLimitStr,
+          //                     style: GoogleFonts.poppins(
+          //                       fontSize: 15,
+          //                       color: Colors.green.shade900,
+          //                       fontWeight: FontWeight.bold,
+          //                     ),
+          //                   ),
+          //                 ),
+          //               ],
+          //             ),
+          //           ),
+          //         ),
+          //       ),
+          //     ),
+          //     const SizedBox(width: 10),
+          //
+          //     // Last Bid / Last Limit Badge
+          //     Expanded(
+          //       child: Material(
+          //         color: Colors.blue.shade50,
+          //         borderRadius: BorderRadius.circular(12),
+          //         child: InkWell(
+          //           onTap: () => _showAmountDetailsDialog(
+          //             context,
+          //             isHindi ? 'अंतिम बिड (Last Bid)' : 'Last Bid',
+          //             lastLimitStr.isNotEmpty ? lastLimitStr : '₹0.00',
+          //             icon: Icons.history_rounded,
+          //             iconColor: Colors.blue.shade700,
+          //             bgColor: Colors.blue.shade50,
+          //           ),
+          //           borderRadius: BorderRadius.circular(12),
+          //           child: Container(
+          //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          //             decoration: BoxDecoration(
+          //               borderRadius: BorderRadius.circular(12),
+          //               border: Border.all(color: Colors.blue.shade300),
+          //             ),
+          //             child: Column(
+          //               crossAxisAlignment: CrossAxisAlignment.start,
+          //               children: [
+          //                 Row(
+          //                   children: [
+          //                     Icon(Icons.history_rounded, size: 16, color: Colors.blue.shade700),
+          //                     const SizedBox(width: 4),
+          //                     Expanded(
+          //                       child: Text(
+          //                         isHindi ? 'अंतिम बिड (Last Bid)' : 'Last Bid',
+          //                         maxLines: 1,
+          //                         overflow: TextOverflow.ellipsis,
+          //                         style: GoogleFonts.poppins(
+          //                           fontSize: 11,
+          //                           color: Colors.blue.shade800,
+          //                           fontWeight: FontWeight.w600,
+          //                         ),
+          //                       ),
+          //                     ),
+          //                   ],
+          //                 ),
+          //                 const SizedBox(height: 4),
+          //                 FittedBox(
+          //                   fit: BoxFit.scaleDown,
+          //                   alignment: Alignment.centerLeft,
+          //                   child: Text(
+          //                     lastLimitStr.isNotEmpty ? lastLimitStr : '₹0.00',
+          //                     style: GoogleFonts.poppins(
+          //                       fontSize: 15,
+          //                       color: Colors.blue.shade900,
+          //                       fontWeight: FontWeight.bold,
+          //                     ),
+          //                   ),
+          //                 ),
+          //               ],
+          //             ),
+          //           ),
+          //         ),
+          //       ),
+          //     ),
+          //   ],
+          // ),
           const SizedBox(height: 16),
 
           // Direct Input Type Amount Field
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: ColorConstant.maingreen, width: 1.5),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  isHindi ? 'बिड राशि दर्ज करें (Enter Bid Amount)' : 'Enter Bid Amount',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.grey.shade700,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      '₹ ',
-                      style: GoogleFonts.poppins(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: ColorConstant.maingreen,
-                      ),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              _amountFocusNode.requestFocus();
+              _amountController.selection = TextSelection.fromPosition(
+                TextPosition(offset: _amountController.text.length),
+              );
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: ColorConstant.maingreen, width: 1.5),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    isHindi ? 'बिड राशि दर्ज करें (Enter Bid Amount)' : 'Enter Bid Amount',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w600,
                     ),
-                    Flexible(
-                      child: IntrinsicWidth(
-                        child: TextField(
-                          controller: _amountController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                          ],
-                          textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          '₹ ',
                           style: GoogleFonts.poppins(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: ColorConstant.maingreen,
-                            letterSpacing: 0.5,
                           ),
-                          decoration: InputDecoration(
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                            border: InputBorder.none,
-                            hintText: '0',
-                            hintStyle: GoogleFonts.poppins(
+                        ),
+                        IntrinsicWidth(
+                          child: TextField(
+                            focusNode: _amountFocusNode,
+                            controller: _amountController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                            ],
+                            textAlign: TextAlign.left,
+                            style: GoogleFonts.poppins(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey.shade400,
+                              color: ColorConstant.maingreen,
+                              letterSpacing: 0.5,
+                            ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                              border: InputBorder.none,
+                              hintText: '0',
+                              hintStyle: GoogleFonts.poppins(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade400,
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -904,10 +918,7 @@ class _BidPowerScreenState extends ConsumerState<BidPowerScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildQuickAddChip('+ ₹100', 100.0),
-                const SizedBox(width: 8),
-                _buildQuickAddChip('+ ₹500', 500.0),
-                const SizedBox(width: 8),
+
                 _buildQuickAddChip('+ ₹1,000', 1000.0),
                 const SizedBox(width: 8),
                 _buildQuickAddChip('+ ₹5,000', 5000.0),
@@ -981,7 +992,7 @@ class _BidPowerScreenState extends ConsumerState<BidPowerScreen> {
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              isHindi ? 'सिक्योर (1)' : 'Secure (1)',
+                              isHindi ? 'सिक्योर' : 'Secure',
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: _selectedType == 1
@@ -1035,7 +1046,7 @@ class _BidPowerScreenState extends ConsumerState<BidPowerScreen> {
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              isHindi ? 'अनसिक्योर (2)' : 'UnSecure (2)',
+                              isHindi ? 'अनसिक्योर' : 'UnSecure',
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: _selectedType == 2
@@ -1438,76 +1449,76 @@ class _BidPowerScreenState extends ConsumerState<BidPowerScreen> {
                 const SizedBox(height: 14),
 
                 // Dual Info in Bottom Sheet: Total Available Limit & Current Amount
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0FDF4),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.green.shade300),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isHindi ? 'कुल उपलब्ध सीमा' : 'Total Available',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: Colors.green.shade800,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _formatAmount(totalAvailableLimit),
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: Colors.green.shade900,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.blue.shade300),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isHindi ? 'वर्तमान बिड' : 'Current Bid',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: Colors.blue.shade800,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _formatAmount(item.amount),
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: Colors.blue.shade900,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                // Row(
+                //   children: [
+                //     Expanded(
+                //       child: Container(
+                //         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                //         decoration: BoxDecoration(
+                //           color: const Color(0xFFF0FDF4),
+                //           borderRadius: BorderRadius.circular(10),
+                //           border: Border.all(color: Colors.green.shade300),
+                //         ),
+                //         child: Column(
+                //           crossAxisAlignment: CrossAxisAlignment.start,
+                //           children: [
+                //             Text(
+                //               isHindi ? 'कुल उपलब्ध सीमा' : 'Total Available',
+                //               style: GoogleFonts.poppins(
+                //                 fontSize: 11,
+                //                 color: Colors.green.shade800,
+                //                 fontWeight: FontWeight.w600,
+                //               ),
+                //             ),
+                //             const SizedBox(height: 2),
+                //             Text(
+                //               _formatAmount(totalAvailableLimit),
+                //               style: GoogleFonts.poppins(
+                //                 fontSize: 14,
+                //                 color: Colors.green.shade900,
+                //                 fontWeight: FontWeight.bold,
+                //               ),
+                //             ),
+                //           ],
+                //         ),
+                //       ),
+                //     ),
+                //     const SizedBox(width: 10),
+                //     Expanded(
+                //       child: Container(
+                //         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                //         decoration: BoxDecoration(
+                //           color: Colors.blue.shade50,
+                //           borderRadius: BorderRadius.circular(10),
+                //           border: Border.all(color: Colors.blue.shade300),
+                //         ),
+                //         child: Column(
+                //           crossAxisAlignment: CrossAxisAlignment.start,
+                //           children: [
+                //             Text(
+                //               isHindi ? 'वर्तमान बिड' : 'Current Bid',
+                //               style: GoogleFonts.poppins(
+                //                 fontSize: 11,
+                //                 color: Colors.blue.shade800,
+                //                 fontWeight: FontWeight.w600,
+                //               ),
+                //             ),
+                //             const SizedBox(height: 2),
+                //             Text(
+                //               _formatAmount(item.amount),
+                //               style: GoogleFonts.poppins(
+                //                 fontSize: 14,
+                //                 color: Colors.blue.shade900,
+                //                 fontWeight: FontWeight.bold,
+                //               ),
+                //             ),
+                //           ],
+                //         ),
+                //       ),
+                //     ),
+                //   ],
+                // ),
+                // const SizedBox(height: 16),
 
                 Text(
                   isHindi ? 'नई राशि दर्ज करें (₹):' : 'Enter New Amount (₹):',

@@ -51,7 +51,7 @@ class _StoragepageState extends ConsumerState<Storagepage> {
           "icon": Icons.outbox
         },
         {
-          "label": AppLocalizations.of(context)!.bookingRequests,
+          "label": AppLocalizations.of(context)!.qualityConsent,
           "index": 4,
           "icon": Icons.pending_actions
         },
@@ -82,7 +82,7 @@ class _StoragepageState extends ConsumerState<Storagepage> {
         return StackInward();
       case 3: // Outward Request
         return StackOutward();
-      case 4: // Booking Requests
+      case 4: // Quality Consent
         return Warehousebookings(isAppBarVisible: false);
       default:
         return MyStockScreen();
@@ -115,7 +115,20 @@ class _StoragepageState extends ConsumerState<Storagepage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ElevatedButton(
-                      style: AppStyle.loginButtonStyle,
+                      style: AppStyle.buttonStyle.copyWith(
+                        backgroundColor: WidgetStateProperty.resolveWith(
+                              (states) => Colors.white,
+                        ),
+                        shape: WidgetStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25.0),
+                            side: BorderSide(
+                              color: ColorConstant.maingreen,
+                              width: 1.2,
+                            ),
+                          ),
+                        ),
+                      ),
                       onPressed: () {
                         showLoginBottomsheet(context);
                       },

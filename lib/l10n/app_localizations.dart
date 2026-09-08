@@ -7756,6 +7756,18 @@ abstract class AppLocalizations {
   /// **'PO Details'**
   String get poDetails;
 
+  /// No description provided for @poEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'PO Edit'**
+  String get poEdit;
+
+  /// No description provided for @poDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'PO Delete'**
+  String get poDelete;
+
   /// No description provided for @somethingwentwrongyoumay.
   ///
   /// In en, this message translates to:

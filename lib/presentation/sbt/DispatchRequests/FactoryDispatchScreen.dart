@@ -16,6 +16,7 @@ import 'package:apnagodam/widgets/widgets.dart';
 import 'package:elevarm_ui/elevarm_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:apnagodam/core/utils/no_data_found_widget.dart';
 
@@ -28,6 +29,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
+import '../../../core/utils/helper.dart';
 import '../../warehousefacility_screen/model/InwardsTerminalResponse.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
 
@@ -206,8 +208,12 @@ class _FactoryDispatchRequestsScreenState
                                                   pinCode:
                                                       pincodeController.text,
                                                   address:
-                                                      addressData['data']['address']
-                                                          .toString(),
+                                                      (addressData['data'] != null &&
+                                                              addressData['data']['address'] != null)
+                                                          ? addressData['data']['address'].toString()
+                                                          : (locationController.text.isNotEmpty
+                                                              ? locationController.text
+                                                              : pincodeController.text),
                                                   biltyNumber:
                                                       biltyController.text,
                                                   sbtOrderId: widget.sbtOrder,
@@ -327,8 +333,12 @@ class _FactoryDispatchRequestsScreenState
                                                     locationController.text,
                                                 pinCode: pincodeController.text,
                                                 address:
-                                                    addressData['data']['address']
-                                                        .toString(),
+                                                    (addressData['data'] != null &&
+                                                            addressData['data']['address'] != null)
+                                                        ? addressData['data']['address'].toString()
+                                                        : (locationController.text.isNotEmpty
+                                                            ? locationController.text
+                                                            : pincodeController.text),
                                                 biltyNumber:
                                                     biltyController.text,
                                                 sbtOrderId: widget.sbtOrder,
@@ -424,17 +434,49 @@ class _FactoryDispatchRequestsScreenState
         controller: pincodeController,
         hintText: AppLocalizations.of(context)!.msgEnterpincode,
         label: AppLocalizations.of(context)!.msgPinCode,
+        inputType: TextInputType.number,
+        isOnlyDigit: true,
+        maxLength: 6,
         textInputAction: TextInputAction.next,
         enabled: true,
         isRequired: true,
         onEditComplete: (value) {
           if (value.length == 6) {
-            ref.watch(getAddressProvider(pinCode: value).future).then((value) {
-              addressData = value;
-              stateController.text = value['data']['state_name'];
-              districtController.text = value['data']['district_name'];
-              locationController.text = "${value['data']['address']}";
+            ref.read(getAddressProvider(pinCode: value).future).then((value) {
+              if (value != null &&
+                  value['status']?.toString() == '1' &&
+                  value['data'] != null &&
+                  value['data']['state_name'] != null) {
+                addressData = value;
+                stateController.text =
+                    value['data']['state_name']?.toString() ?? '';
+                districtController.text =
+                    value['data']['district_name']?.toString() ?? '';
+                locationController.text =
+                    "${value['data']['address'] ?? ''}";
+                setState(() {});
+              } else {
+                addressData = {};
+                stateController.clear();
+                districtController.clear();
+                locationController.clear();
+                setState(() {});
+                showErrorAlertDialog(
+                  context,
+                  value?['message']?.toString() ??
+                      "Unable to fetch location. Please change the pincode.",
+                );
+              }
+            }).catchError((e) {
+              addressData = {};
+              stateController.clear();
+              districtController.clear();
+              locationController.clear();
               setState(() {});
+              showErrorAlertDialog(
+                context,
+                "Unable to fetch location. Please change the pincode.",
+              );
             });
           }
         },
