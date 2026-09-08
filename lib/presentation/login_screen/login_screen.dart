@@ -139,6 +139,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           size: 20,
                         ),
                         padding: EdgeInsets.zero,
+
                         constraints: const BoxConstraints(),
                       )
                     else
