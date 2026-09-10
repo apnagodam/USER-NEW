@@ -84,9 +84,6 @@ class Diointerceptor extends InterceptorsWrapper {
         options.path.contains('user_register') ||
         options.path.contains('user_send_otp') ||
         options.path.contains('user_verify_otp') ||
-        options.path.contains('buyer_stack_want_to_buy') ||
-        options.path.contains('seller_stack_sell_price_update') ||
-        options.path.contains('seller_stack_sell_price_delete') ||
         options.path.contains('apna_u_loan_request') ||
         options.path.contains('sbt_trade_save') ||
         options.path.contains('check_user_wallet') ||
@@ -96,7 +93,8 @@ class Diointerceptor extends InterceptorsWrapper {
         options.path.contains('verify_otp') ||
         options.path.contains('sbt_api');
 
-    if (isPost && !isExcluded) {
+    final shouldShowLoader = options.extra['show_loader'] == true || (isPost && !isExcluded);
+    if (shouldShowLoader) {
       options.extra['show_loader'] = true;
       _loaderCount++;
       if (_loaderCount == 1) {
@@ -127,7 +125,7 @@ class Diointerceptor extends InterceptorsWrapper {
         ref.read(authProvider.notifier).logout(showToast: false);
       }
     }
-   if (status == '0') {
+   if (status == '0' && response.requestOptions.extra['silent'] != true) {
   final msg = data is Map ? (data['message']?.toString() ?? data['Message']?.toString() ?? "") : "";
   if (msg != "OTP Expired !" &&
       !msg.toLowerCase().contains("user not found") &&
@@ -164,6 +162,46 @@ class Diointerceptor extends InterceptorsWrapper {
       _decrementLoader();
     }
 
+    // 1. Completely ignore cancelled or silent background requests
+    if (err.type == DioExceptionType.cancel ||
+        err.requestOptions.extra['silent'] == true ||
+        err.requestOptions.extra['is_background'] == true) {
+      handler.next(err);
+      return;
+    }
+
+    // 2. Handle session invalidation on error response
+    final errStatus = err.response?.data is Map ? err.response?.data['status']?.toString() : null;
+    if (errStatus == '3' || err.response?.statusCode == 401) {
+      final isLogoutRequest =
+          err.requestOptions.path.contains('apna_user_logout') ||
+          err.requestOptions.path.contains('user_logout');
+      final isAuthLoggedIn =
+          ref.read(authProvider).value == AuthStatus.loggedIn;
+      if (isAuthLoggedIn && !isLogoutRequest) {
+        ref.read(authProvider.notifier).logout(showToast: false);
+      }
+      handler.next(err);
+      return;
+    }
+
+    // 3. Ignore background data fetches from opening intrusive dialogs
+    final path = err.requestOptions.path.toLowerCase();
+    final isBackgroundRequest = path.contains('apna_u_user_details') ||
+        path.contains('user_details') ||
+        path.contains('apna_user_logout') ||
+        path.contains('user_logout') ||
+        path.contains('index-data') ||
+        path.contains('sbt_product_list') ||
+        path.contains('mandi-bhav-list') ||
+        path.contains('new-taja-bhav');
+
+    if (isBackgroundRequest) {
+      handler.next(err);
+      return;
+    }
+
+    // 4. Determine user-facing error message
     String errorMessage = "Something went wrong. Please try again.";
     if (err.response?.data is Map &&
         (err.response?.data['message'] != null ||
@@ -179,8 +217,8 @@ class Diointerceptor extends InterceptorsWrapper {
     } else if (err.type == DioExceptionType.connectionError) {
       errorMessage = "No internet connection. Please check your network.";
     } else if (err.response?.statusCode == 500) {
-      if (err.requestOptions.path.contains('get_address_from_pincode') ||
-          err.requestOptions.path.contains('addressFromPincode')) {
+      if (path.contains('get_address_from_pincode') ||
+          path.contains('addressfrompincode')) {
         errorMessage = "Unable to fetch location. Please change the pincode.";
       } else {
         errorMessage = "Server error. Please try again later.";
@@ -191,22 +229,18 @@ class Diointerceptor extends InterceptorsWrapper {
       errorMessage = err.message!;
     }
 
-    final errStatus = err.response?.data is Map ? err.response?.data['status']?.toString() : null;
-    if (errStatus == '3' || err.response?.statusCode == 401) {
-      final isLogoutRequest =
-          err.requestOptions.path.contains('apna_user_logout') ||
-          err.requestOptions.path.contains('user_logout');
-      final isAuthLoggedIn =
-          ref.read(authProvider).value == AuthStatus.loggedIn;
-      if (isAuthLoggedIn && !isLogoutRequest) {
-        ref.read(authProvider.notifier).logout(showToast: false);
-      }
-    }
-
-    if (!(err.type == DioExceptionType.badResponse &&
-            err.requestOptions.path.contains('apna_u_user_details')) &&
-        !err.requestOptions.path.contains('apna_user_logout') &&
-        !err.requestOptions.path.contains('user_logout')) {
+    // 5. For network connection errors or timeouts, show a non-blocking toast instead of a blocking modal dialog
+    if (err.type == DioExceptionType.connectionError ||
+        err.type == DioExceptionType.connectionTimeout ||
+        err.type == DioExceptionType.receiveTimeout ||
+        err.type == DioExceptionType.sendTimeout) {
+      Fluttertoast.showToast(
+        msg: errorMessage,
+        toastLength: Toast.LENGTH_SHORT,
+        backgroundColor: Colors.black87,
+        textColor: Colors.white,
+      );
+    } else {
       showErrorAlertDialog(getx.Get.context, errorMessage);
     }
 

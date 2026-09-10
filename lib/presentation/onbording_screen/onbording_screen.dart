@@ -823,7 +823,7 @@ class _OnbordingState extends ConsumerState<Onbording> {
                                     ),
                                     onPressed: () {
                                       pageController.jumpToPage(4);
-                                      Get.toNamed(AppRoutes.loginScreen);
+                                      Get.to(() => const LoginScreen());
                                     },
                                     child: Container(
                                         decoration: BoxDecoration(

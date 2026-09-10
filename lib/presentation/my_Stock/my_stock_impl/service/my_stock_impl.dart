@@ -158,7 +158,7 @@ Future<Map<String, dynamic>> stackWantToSell(StackWantToSellRef ref,
     "stack_id": stackId,
     "price": price,
     "commodity_id": commodityId
-  });
+  }, options: Options(extra: {'show_loader': true}));
 
   return response.data;
 }

@@ -3,6 +3,7 @@ import 'package:apnagodam/core/constants/constants.dart';
 import 'package:apnagodam/core/utils/SharedPrefs/SharedUtility.dart';
 import 'package:apnagodam/core/utils/color_constant.dart';
 import 'package:apnagodam/core/utils/comman_dailog.dart';
+import 'package:apnagodam/core/utils/progress_dialog_utils.dart';
 import 'package:apnagodam/core/utils/no_data_found_widget.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
 import 'package:apnagodam/extensions/extensions.dart';
@@ -2245,11 +2246,12 @@ class _StackSellBiddingScreenState
                                                 );
                                                 return;
                                               } else {
-                                                if (ref.watch(
+                                                if (ref.read(
                                                   isOwner,
                                                 )) {
+                                                  ProgressDialogUtils.showProgressDialog();
                                                   ref
-                                                      .watch(
+                                                      .read(
                                                     updateSellerPriceProvider(
                                                       price: priceController
                                                           .text
@@ -2259,6 +2261,7 @@ class _StackSellBiddingScreenState
                                                     ).future,
                                                   )
                                                       .then((value) {
+                                                    ProgressDialogUtils.hideProgressDialog();
                                                     if (value['status']
                                                             .toString() ==
                                                         '1') {
@@ -2279,17 +2282,23 @@ class _StackSellBiddingScreenState
                                                             .toString(),
                                                       );
                                                     }
+                                                  }).catchError((e) {
+                                                    ProgressDialogUtils.hideProgressDialog();
+                                                    context.errorToast(
+                                                      e.toString(),
+                                                    );
                                                   });
                                                 } else {
+                                                  ProgressDialogUtils.showProgressDialog();
                                                   ref
-                                                      .watch(
+                                                      .read(
                                                     bidSellStackProvider(
                                                       price: priceController
                                                           .text
                                                           .toString(),
                                                       id: "${data.data![widget.index].id}",
                                                       walletType: ref
-                                                              .watch(
+                                                              .read(
                                                                 financeTypeProvider,
                                                               )
                                                               ?.type
@@ -2301,6 +2310,7 @@ class _StackSellBiddingScreenState
                                                     ).future,
                                                   )
                                                       .then((value) {
+                                                    ProgressDialogUtils.hideProgressDialog();
                                                     if (value['status']
                                                             .toString() ==
                                                         '1') {
@@ -2765,16 +2775,17 @@ class _StackSellBiddingScreenState
                                                                                 .pleaseSelectScheme,
                                                                           );
                                                                         } else {
+                                                                          ProgressDialogUtils.showProgressDialog();
                                                                           ref
-                                                                              .watch(
+                                                                              .read(
                                                                             bidSellStackProvider(
                                                                               price: priceController.text.toString(),
                                                                               id: "${data.data![widget.index].id}",
                                                                               liftingDays: daysController.text.toString(),
-                                                                              schemeId: "${value['data']['schemes'][ref.watch(selectedSchemeIndex)]['id']}",
+                                                                              schemeId: "${value['data']['schemes'][ref.read(selectedSchemeIndex)]['id']}",
                                                                               loanType: "1",
                                                                               walletType: ref
-                                                                                      .watch(
+                                                                                      .read(
                                                                                         financeTypeProvider,
                                                                                       )
                                                                                       ?.type
@@ -2784,15 +2795,23 @@ class _StackSellBiddingScreenState
                                                                           )
                                                                               .then(
                                                                             (
-                                                                              value,
+                                                                              financeResult,
                                                                             ) {
-                                                                              if (value['status'] == "1") {
+                                                                              ProgressDialogUtils.hideProgressDialog();
+                                                                              if (financeResult['status'] == "1") {
                                                                                 Get.back(
                                                                                   closeOverlays: true,
                                                                                 );
+                                                                              } else {
+                                                                                context.errorToast(
+                                                                                  financeResult['message']?.toString() ?? "Failed",
+                                                                                );
                                                                               }
                                                                             },
-                                                                          );
+                                                                          ).catchError((e) {
+                                                                            ProgressDialogUtils.hideProgressDialog();
+                                                                            context.errorToast(e.toString());
+                                                                          });
                                                                         }
                                                                       },
                                                                       style: AppStyle
@@ -2823,6 +2842,11 @@ class _StackSellBiddingScreenState
                                                             .toString(),
                                                       );
                                                     }
+                                                  }).catchError((e) {
+                                                    ProgressDialogUtils.hideProgressDialog();
+                                                    context.errorToast(
+                                                      e.toString(),
+                                                    );
                                                   });
                                                 }
                                               }
@@ -2914,25 +2938,31 @@ class _StackSellBiddingScreenState
                                 context,
                               )!
                                   .areYouSureYouWantToDeleteThisBid2,
-                              onPositiveButton: () {
-                                ref
-                                    .watch(
-                                  deleteSellerPriceProvider(
-                                    stackId: "${data.data![widget.index].id}",
-                                  ).future,
-                                )
-                                    .then((value) {
-                                  if (value['status'].toString() == '1') {
-                                    context.successToast(value['message']);
-                                    ref.invalidate(stackSellListProvider);
-                                    Get.close(2);
-                                  } else {
-                                    context.errorToast(
-                                      value['message'].toString(),
-                                    );
-                                  }
-                                });
-                              },
+                               onPositiveButton: () {
+                                 Get.back();
+                                 ProgressDialogUtils.showProgressDialog();
+                                 ref
+                                     .read(
+                                   deleteSellerPriceProvider(
+                                     stackId: "${data.data![widget.index].id}",
+                                   ).future,
+                                 )
+                                     .then((value) {
+                                   ProgressDialogUtils.hideProgressDialog();
+                                   if (value['status'].toString() == '1') {
+                                     context.successToast(value['message']);
+                                     ref.invalidate(stackSellListProvider);
+                                     Get.close(2);
+                                   } else {
+                                     context.errorToast(
+                                       value['message'].toString(),
+                                     );
+                                   }
+                                 }).catchError((e) {
+                                   ProgressDialogUtils.hideProgressDialog();
+                                   context.errorToast(e.toString());
+                                 });
+                               },
                               onNegativeButton: () {
                                 Get.back();
                               },

@@ -48,8 +48,8 @@ class Auth extends _$Auth {
 
   void _startSessionHeartbeat() {
     _sessionTimer?.cancel();
-    // Periodically verify token validity (every 12 seconds) so multi-device login invalidation is detected promptly
-    _sessionTimer = Timer.periodic(const Duration(seconds: 12), (timer) async {
+    // Periodically verify token validity (every 30 seconds) silently in background so multi-device login invalidation is detected without user disruption
+    _sessionTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
       if (state.value != AuthStatus.loggedIn || _isLoggingOut) {
         timer.cancel();
         return;
@@ -62,13 +62,14 @@ class Auth extends _$Auth {
           return;
         }
 
-        // Lightweight ping to check session validity
+        // Lightweight silent ping to check session validity
         final response = await ref.read(dioProvider).get(
           USER_DETAILS,
           options: Options(
             headers: {'Authorization': token},
-            sendTimeout: const Duration(seconds: 5),
-            receiveTimeout: const Duration(seconds: 5),
+            extra: {'silent': true, 'is_background': true},
+            sendTimeout: const Duration(seconds: 15),
+            receiveTimeout: const Duration(seconds: 15),
           ),
         );
 
@@ -81,7 +82,7 @@ class Auth extends _$Auth {
           }
         }
       } catch (e) {
-        // DioInterceptor will catch status 3 automatically if returned by error response
+        // Silent catch for background heartbeat - never disrupt user
         debugPrint("Session heartbeat check caught: $e");
       }
     });

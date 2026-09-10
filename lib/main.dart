@@ -36,6 +36,7 @@ import 'core/utils/SharedPrefs/SharedUtility.dart';
 import 'core/utils/notification_service.dart';
 // legacy GetX translations removed; using Flutter gen_l10n and AppLocalizations
 import 'core/providers/app_language_provider.dart';
+import 'routes/app_routes.dart';
 
 //
 
@@ -285,6 +286,7 @@ class _MyAppState extends ConsumerState<MyApp> {
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           home: SplashScreen(),
+          getPages: AppRoutes.pages,
           localeResolutionCallback: (deviceLocale, supportedLocales) {
             for (var locale in supportedLocales) {
               if (locale.languageCode == deviceLocale?.languageCode) {

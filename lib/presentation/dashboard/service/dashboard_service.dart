@@ -124,7 +124,7 @@ Future<Map<String, dynamic>> sbtBuyAndSell(SbtBuyAndSellRef ref,
     'price': price,
     'pincode': pinCode,
     'truck_no': truckNo
-  });
+  }, options: Options(extra: {'show_loader': true}));
 
   return response.data;
 }
@@ -152,7 +152,7 @@ Future<Map<String, dynamic>> updateSbt(UpdateSbtRef ref,
     "price": price,
     "district_id": district_id,
     "type": type
-  });
+  }, options: Options(extra: {'show_loader': true}));
   return response.data;
 }
 
@@ -184,7 +184,7 @@ Future<Map<String, dynamic>> postSbt(PostSbtRef ref,
     "type": type,
     "loan_type": loanType ?? "0",
     "scheme_id": schemeId ?? "0"
-  });
+  }, options: Options(extra: {'show_loader': true}));
 
   ref.invalidate(getBuyerSellerListProvider);
 

@@ -5,18 +5,18 @@
 import '../../presentation/home_screen/models/CommonIndexModel.dart';
 // const String BASEURL ='https://lionstocks.net/backend/';
 // // //TEST TEST TEST TEST TEST TEST TEST
-const String BASEURL = 'https://demoaws.apnagodam.com/';
-const String IMAGE_BASE_URL =
-    'https://demoaws.apnagodam.com/resources/assets/upload/';
-const String IMAGE_BASE_URL_FRONTEND =
-    'https://demoaws.apnagodam.com/resources/frontend_assets/uploads/';
+// const String BASEURL = 'https://demoaws.apnagodam.com/';
+// const String IMAGE_BASE_URL =
+//     'https://demoaws.apnagodam.com/resources/assets/upload/';
+// const String IMAGE_BASE_URL_FRONTEND =
+//     'https://demoaws.apnagodam.com/resources/frontend_assets/uploads/';
 
 
 // Live Live Live Live Live Live
-// const String BASEURL = 'https://apnagodam.com/';
-// const String IMAGE_BASE_URL = 'https://apnagodam.com/resources/assets/upload/';
-// const String IMAGE_BASE_URL_FRONTEND =
-//     'https://apnagodam.com/resources/frontend_assets/uploads/';
+const String BASEURL = 'https://apnagodam.com/';
+const String IMAGE_BASE_URL = 'https://apnagodam.com/resources/assets/upload/';
+const String IMAGE_BASE_URL_FRONTEND =
+    'https://apnagodam.com/resources/frontend_assets/uploads/';
 
 const String DOLOGIN = '${BASEURL}api/apna_send_otp';
 const String DOSIGNUPOTPVERIFY = '${BASEURL}user_api/apna_u_signup';

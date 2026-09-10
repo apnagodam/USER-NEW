@@ -19,6 +19,7 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../core/utils/image_constant.dart';
 import '../../routes/app_routes.dart';
 import '../login_screen/controller/login_controller.dart';
+import '../login_screen/login_screen.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
 
 
@@ -409,7 +410,7 @@ class _SingupScreenState extends ConsumerState<SingupScreen> {
                       TextButton(
                         onPressed: () {
                           mobilenumberController.clear();
-                          Get.toNamed(AppRoutes.loginScreen);
+                          Get.off(() => const LoginScreen());
                         },
                         child: Text(
                           AppLocalizations.of(context)!.msgLoging,

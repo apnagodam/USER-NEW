@@ -40,11 +40,27 @@ android {
         targetSdkVersion 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        resourceConfigurations += ["en", "hi", "kn"]
     }
 
     aaptOptions {
         cruncherEnabled = false
-        noCompress 'ttf', 'tflite', 'svg', 'png', 'css', 'js', 'html', 'frag', 't-rex'
+        noCompress 'ttf', 'tflite', 'svg', 'css', 'js', 'html', 'frag', 't-rex'
+    }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+        resources {
+            excludes += [
+                '/META-INF/{AL2.0,LGPL2.1}',
+                '/META-INF/DEPENDENCIES',
+                '/META-INF/LICENSE*',
+                '/META-INF/NOTICE*',
+                '/META-INF/*.kotlin_module'
+            ]
+        }
     }
 
     compileOptions {
@@ -79,8 +95,9 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            minifyEnabled false
-            shrinkResources false
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             signingConfig signingConfigs.debug
