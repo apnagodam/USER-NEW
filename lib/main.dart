@@ -41,19 +41,94 @@ import 'routes/app_routes.dart';
 //
 
 GlobalKey<NavigatorState> mainNavKey = GlobalKey();
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('🔔 FCM Background message received: ${message.messageId}');
+
+    // If message is a data payload (without system notification object), display it with custom sound
+    if (message.notification == null && message.data.isNotEmpty) {
+      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      
+      const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const iosInit = DarwinInitializationSettings(
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+      );
+      await flutterLocalNotificationsPlugin.initialize(
+        const InitializationSettings(android: androidInit, iOS: iosInit),
+      );
+
+      final title = message.data['title'] ?? 'Apna Godam';
+      final body = message.data['body'] ?? '';
+      final rawSound = message.data['sound'] ?? message.data['type'] ?? 'coin_dropping';
+      
+      String cleanSound = rawSound.toString().trim();
+      if (cleanSound.contains('.')) cleanSound = cleanSound.split('.').first;
+      cleanSound = cleanSound.toLowerCase();
+      if (cleanSound == 'ipl' || cleanSound == 'ipl_message' || cleanSound == 'message' || cleanSound == 'chat') {
+        cleanSound = 'ipl_message';
+      } else if (cleanSound == 'temple_bell' || cleanSound == 'bell' || cleanSound == 'price_alert' || cleanSound == 'market_update') {
+        cleanSound = 'temple_bell';
+      } else {
+        cleanSound = 'coin_dropping';
+      }
+
+      final channelId = '${cleanSound}_channel_v3';
+
+      await flutterLocalNotificationsPlugin.show(
+        (DateTime.now().millisecondsSinceEpoch % 2147483647),
+        title,
+        body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channelId,
+            'Apna Godam Notifications',
+            channelDescription: 'Notifications with sound',
+            icon: 'ic_stat_notify',
+            sound: RawResourceAndroidNotificationSound(cleanSound),
+            playSound: true,
+            enableVibration: true,
+            importance: Importance.max,
+            priority: Priority.max,
+            styleInformation: BigTextStyleInformation(
+              body,
+              contentTitle: title,
+            ),
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+            sound: '$cleanSound.caf',
+          ),
+        ),
+        payload: message.data['payload'] ?? 'background_data_payload',
+      );
+    }
+  } catch (e) {
+    debugPrint('FCM Background message error: $e');
+  }
+}
+
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse response) {
   debugPrint(response.payload);
 }
 
-// class MyHttpOverrides extends HttpOverrides {
-//   @override
-//   HttpClient createHttpClient(SecurityContext? context) {
-//     return super.createHttpClient(context)
-//       ..badCertificateCallback =
-//           (X509Certificate cert, String host, int port) => true;
-//   }
-// }
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
 
 Future<void> _initFCM() async {
   try {
@@ -95,12 +170,13 @@ Future<void> _checkAppUpdate() async {
 }
 
 void main() async {
-  // HttpOverrides.global = MyHttpOverrides();
+  HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // No need to add this line
   );
 
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   _initFCM();
 
   FlutterError.onError = (errorDetails) {
@@ -173,14 +249,25 @@ class _MyAppState extends ConsumerState<MyApp> {
   }
 
   Future<void> _handleUserAndDeviceInfo() async {
-    final deviceInfo = DeviceInfoPlugin();
-    final androidInfo = await deviceInfo.androidInfo;
-
-    if (ref.read(authProvider).value == AuthStatus.loggedIn) {
-      final userData = await ref.watch(userDetailsProvider.future);
-      if (userData.userDetails != null) {
-        await _updateDeviceId(androidInfo.id, userData);
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      String deviceId = '';
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        deviceId = androidInfo.id;
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        deviceId = iosInfo.identifierForVendor ?? '';
       }
+
+      if (ref.read(authProvider).value == AuthStatus.loggedIn) {
+        final userData = await ref.watch(userDetailsProvider.future);
+        if (userData.userDetails != null && deviceId.isNotEmpty) {
+          await _updateDeviceId(deviceId, userData);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error handling user and device info: $e");
     }
   }
 

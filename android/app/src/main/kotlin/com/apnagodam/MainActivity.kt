@@ -30,83 +30,163 @@ class MainActivity: FlutterActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             
-            // Create IPL Message notification channel
-            val iplChannelId = "ipl_message_channel"
-            val iplChannelName = "IPL Message Notifications"
-            val iplChannel = NotificationChannel(
-                iplChannelId,
-                iplChannelName,
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .build()
+
+            val coinResId = try { R.raw.coin_dropping } catch (e: Exception) { resources.getIdentifier("coin_dropping", "raw", packageName) }
+            val iplResId = try { R.raw.ipl_message } catch (e: Exception) { resources.getIdentifier("ipl_message", "raw", packageName) }
+            val templeBellResId = try { R.raw.temple_bell } catch (e: Exception) { resources.getIdentifier("temple_bell", "raw", packageName) }
+
+            val coinSoundUri = if (coinResId != 0) Uri.parse("android.resource://$packageName/$coinResId") else Uri.parse("android.resource://$packageName/raw/coin_dropping")
+            val iplSoundUri = if (iplResId != 0) Uri.parse("android.resource://$packageName/$iplResId") else Uri.parse("android.resource://$packageName/raw/ipl_message")
+            val templeBellSoundUri = if (templeBellResId != 0) Uri.parse("android.resource://$packageName/$templeBellResId") else Uri.parse("android.resource://$packageName/raw/temple_bell")
+
+            // Delete any existing stale channels so new settings with sound take effect
+            try {
+                notificationManager.deleteNotificationChannel("high_importance_channel")
+                notificationManager.deleteNotificationChannel("coin_dropping_channel")
+                notificationManager.deleteNotificationChannel("ipl_message_channel")
+                notificationManager.deleteNotificationChannel("temple_bell_channel")
+                notificationManager.deleteNotificationChannel("custom_sound_channel")
+                notificationManager.deleteNotificationChannel("high_importance_channel_v2")
+                notificationManager.deleteNotificationChannel("coin_dropping_channel_v2")
+                notificationManager.deleteNotificationChannel("ipl_message_channel_v2")
+                notificationManager.deleteNotificationChannel("temple_bell_channel_v2")
+                notificationManager.deleteNotificationChannel("custom_sound_channel_v2")
+            } catch (e: Exception) {
+                // Ignore deletion errors
+            }
+
+            // 1. High importance default channel v3
+            val highImportanceChannelV3 = NotificationChannel(
+                "high_importance_channel_v3",
+                "High Importance Notifications",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Notifications with IPL message sound"
-                
-                // Set custom sound for IPL notifications
-                val soundUri = Uri.parse("android.resource://$packageName/${R.raw.ipl_message}")
-                val audioAttributes = AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .build()
-                setSound(soundUri, audioAttributes)
+                description = "This channel is used for important notifications."
+                setSound(coinSoundUri, audioAttributes)
                 enableVibration(true)
+                enableLights(true)
             }
-            
-            // Create Temple Bell notification channel
-            val templeBellChannelId = "temple_bell_channel"
-            val templeBellChannelName = "Temple Bell Notifications"
-            val templeBellChannel = NotificationChannel(
-                templeBellChannelId,
-                templeBellChannelName,
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifications with temple bell sound"
-                
-                // Set custom sound for temple bell notifications
-                val soundUri = Uri.parse("android.resource://$packageName/${R.raw.temple_bell}")
-                val audioAttributes = AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .build()
-                setSound(soundUri, audioAttributes)
-                enableVibration(true)
-            }
-            
-            // Create Coin Dropping notification channel
-            val coinDroppingChannelId = "coin_dropping_channel"
-            val coinDroppingChannelName = "Coin Dropping Notifications"
-            val coinDroppingChannel = NotificationChannel(
-                coinDroppingChannelId,
-                coinDroppingChannelName,
+
+            // 2. Coin Dropping channel v3
+            val coinDroppingChannelV3 = NotificationChannel(
+                "coin_dropping_channel_v3",
+                "Coin Dropping Notifications",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Notifications with coin dropping sound"
-                
-                // Set custom sound for coin dropping notifications
-                val soundUri = Uri.parse("android.resource://$packageName/${R.raw.coin_dropping}")
-                val audioAttributes = AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .build()
-                setSound(soundUri, audioAttributes)
+                setSound(coinSoundUri, audioAttributes)
                 enableVibration(true)
+                enableLights(true)
+            }
+
+            // 3. IPL Message channel v3
+            val iplChannelV3 = NotificationChannel(
+                "ipl_message_channel_v3",
+                "IPL Message Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifications with IPL message sound"
+                setSound(iplSoundUri, audioAttributes)
+                enableVibration(true)
+                enableLights(true)
             }
             
-            // Create general custom sound channel
-            val customChannelId = "custom_sound_channel"
-            val customChannelName = "Custom Sound Notifications"
-            val customChannel = NotificationChannel(
-                customChannelId,
-                customChannelName,
+            // 4. Temple Bell channel v3
+            val templeBellChannelV3 = NotificationChannel(
+                "temple_bell_channel_v3",
+                "Temple Bell Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifications with temple bell sound"
+                setSound(templeBellSoundUri, audioAttributes)
+                enableVibration(true)
+                enableLights(true)
+            }
+            
+            // 5. Custom channel v3
+            val customChannelV3 = NotificationChannel(
+                "custom_sound_channel_v3",
+                "Custom Sound Notifications",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Notifications with custom sounds"
+                setSound(coinSoundUri, audioAttributes)
                 enableVibration(true)
+                enableLights(true)
             }
-            
-            // Register channels
-            notificationManager.createNotificationChannel(iplChannel)
-            notificationManager.createNotificationChannel(templeBellChannel)
-            notificationManager.createNotificationChannel(coinDroppingChannel)
-            notificationManager.createNotificationChannel(customChannel)
+
+            // Register v3 channels
+            notificationManager.createNotificationChannel(highImportanceChannelV3)
+            notificationManager.createNotificationChannel(coinDroppingChannelV3)
+            notificationManager.createNotificationChannel(iplChannelV3)
+            notificationManager.createNotificationChannel(templeBellChannelV3)
+            notificationManager.createNotificationChannel(customChannelV3)
+
+            // Re-create v2 and base channels with sound in case backend sends old channel names
+            val highImportanceChannelV2 = NotificationChannel(
+                "high_importance_channel_v2",
+                "High Importance Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "This channel is used for important notifications."
+                setSound(coinSoundUri, audioAttributes)
+                enableVibration(true)
+                enableLights(true)
+            }
+
+            val coinDroppingChannelV2 = NotificationChannel(
+                "coin_dropping_channel_v2",
+                "Coin Dropping Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifications with coin dropping sound"
+                setSound(coinSoundUri, audioAttributes)
+                enableVibration(true)
+                enableLights(true)
+            }
+
+            val iplChannelV2 = NotificationChannel(
+                "ipl_message_channel_v2",
+                "IPL Message Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifications with IPL message sound"
+                setSound(iplSoundUri, audioAttributes)
+                enableVibration(true)
+                enableLights(true)
+            }
+
+            val templeBellChannelV2 = NotificationChannel(
+                "temple_bell_channel_v2",
+                "Temple Bell Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifications with temple bell sound"
+                setSound(templeBellSoundUri, audioAttributes)
+                enableVibration(true)
+                enableLights(true)
+            }
+
+            val customChannelV2 = NotificationChannel(
+                "custom_sound_channel_v2",
+                "Custom Sound Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifications with custom sounds"
+                setSound(coinSoundUri, audioAttributes)
+                enableVibration(true)
+                enableLights(true)
+            }
+
+            notificationManager.createNotificationChannel(highImportanceChannelV2)
+            notificationManager.createNotificationChannel(coinDroppingChannelV2)
+            notificationManager.createNotificationChannel(iplChannelV2)
+            notificationManager.createNotificationChannel(templeBellChannelV2)
+            notificationManager.createNotificationChannel(customChannelV2)
         }
     }
 

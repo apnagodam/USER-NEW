@@ -24,19 +24,61 @@ class NotificationService {
   ///notification channel to handle android notifications
   static final AndroidNotificationChannel _androidNotificationChannel =
       AndroidNotificationChannel(
-    'high_importance_channel',
+    'high_importance_channel_v3',
     'High Importance Notifications',
     description: 'This channel is used for important notifications.',
     importance: Importance.max,
+    sound: const RawResourceAndroidNotificationSound('coin_dropping'),
+    playSound: true,
+    enableVibration: true,
+  );
+
+  ///notification channel with custom sound for coin dropping
+  static final AndroidNotificationChannel _coinDroppingChannel =
+      AndroidNotificationChannel(
+    'coin_dropping_channel_v3',
+    'Coin Dropping Notifications',
+    description: 'Notifications with coin dropping sound',
+    importance: Importance.max,
+    sound: const RawResourceAndroidNotificationSound('coin_dropping'),
+    playSound: true,
+    enableVibration: true,
+  );
+
+  ///notification channel with custom sound for IPL message
+  static final AndroidNotificationChannel _iplChannel =
+      AndroidNotificationChannel(
+    'ipl_message_channel_v3',
+    'IPL Message Notifications',
+    description: 'Notifications with IPL message sound',
+    importance: Importance.max,
+    sound: const RawResourceAndroidNotificationSound('ipl_message'),
+    playSound: true,
+    enableVibration: true,
+  );
+
+  ///notification channel with custom sound for temple bell
+  static final AndroidNotificationChannel _templeBellChannel =
+      AndroidNotificationChannel(
+    'temple_bell_channel_v3',
+    'Temple Bell Notifications',
+    description: 'Notifications with temple bell sound',
+    importance: Importance.max,
+    sound: const RawResourceAndroidNotificationSound('temple_bell'),
+    playSound: true,
+    enableVibration: true,
   );
 
   ///notification channel with custom sound for android notifications
   static final AndroidNotificationChannel _androidCustomSoundChannel =
       AndroidNotificationChannel(
-    'custom_sound_channel',
+    'custom_sound_channel_v3',
     'Custom Sound Notifications',
     description: 'This channel is used for notifications with custom sounds.',
     importance: Importance.max,
+    sound: const RawResourceAndroidNotificationSound('coin_dropping'),
+    playSound: true,
+    enableVibration: true,
   );
 
   /// Generate a safe notification ID that fits within 32-bit integer range
@@ -55,44 +97,54 @@ class NotificationService {
   );
 
   ///ask permission from the user to display notifications
-  static void _requestPermission() async {
-    final settings = await _messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
+  static Future<void> _requestPermission() async {
+    try {
+      final settings = await _messaging.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      /// User has granted the notification permission
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
-      /// User has only granted the provisional permission
-    } else {
-      /// User has discarded the permission popup or denied the notification permission
+      debugPrint('Notification authorization status: ${settings.authorizationStatus}');
+
+      final androidPlugin = _flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      await androidPlugin?.requestNotificationsPermission();
+    } catch (e) {
+      debugPrint('Error requesting notification permission: $e');
     }
   }
 
   ///setup the FCM token to receive notifications
-  static void _getFCMToken() async {
-    if (GetPlatform.isIOS) {
-      _token = await _messaging.getAPNSToken();
-    } else {
+  static Future<void> _getFCMToken() async {
+    try {
+      if (GetPlatform.isIOS) {
+        String? apns = await _messaging.getAPNSToken();
+        if (apns == null) {
+          await Future.delayed(const Duration(seconds: 2));
+        }
+      }
       _token = await _messaging.getToken();
+
+      ///onTokenRefresh stream allows us to listen to the token value whenever it changes
+      _messaging.onTokenRefresh.listen((newValue) {
+        _token = newValue;
+      });
+
+      debugPrint('═══════════════════════════════════════════════════════');
+      debugPrint('🔥 FCM TOKEN: $_token');
+      debugPrint('═══════════════════════════════════════════════════════');
+    } catch (e) {
+      debugPrint('Error getting FCM token: $e');
     }
-
-    ///onTokenRefresh stream allows us to listen to the token value whenever it changes
-    _messaging.onTokenRefresh.listen((newValue) {
-      _token = newValue;
-    });
-
-    debugPrint('FCM Token: $_token');
   }
 
-  static void _configureLocalNotificationPlugin(WidgetRef ref) async {
+  static Future<void> _configureLocalNotificationPlugin(WidgetRef ref) async {
     AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -151,209 +203,104 @@ class NotificationService {
     Fluttertoast.showToast(msg: response.payload ?? "");
   }
 
-  static void _createAndroidNotificationChannel() async {
-    /** we have created the android notification channels which
-      we had specified in the AndroidManifest.xml file earlier */
-    await _flutterLocalNotificationsPlugin
+  static Future<void> _createAndroidNotificationChannel() async {
+    final androidPlugin = _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_androidNotificationChannel);
-
-    await _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_androidCustomSoundChannel);
-  }
-
-  /// Create or get dynamic notification channel for specific sound
-  static AndroidNotificationChannel _createSoundSpecificChannel(
-      String soundName) {
-    return AndroidNotificationChannel(
-      'sound_${soundName}_channel',
-      'Custom Sound - ${soundName.toUpperCase()}',
-      description: 'Channel for $soundName notification sound',
-      importance: Importance.max,
-      // Don't set sound in channel - we'll set it in notification details instead
-    );
-  }
-
-  /// Ensure sound-specific channel exists
-  static Future<void> _ensureSoundChannelExists(String soundName) async {
-    final channel = _createSoundSpecificChannel(soundName);
-
-    // Force delete existing channel first to ensure sound changes take effect
-    final androidPlugin =
-        _flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
+    await androidPlugin?.createNotificationChannel(_androidNotificationChannel);
+    await androidPlugin?.createNotificationChannel(_iplChannel);
+    await androidPlugin?.createNotificationChannel(_templeBellChannel);
+    await androidPlugin?.createNotificationChannel(_coinDroppingChannel);
+    await androidPlugin?.createNotificationChannel(_androidCustomSoundChannel);
+  }
 
-    try {
-      // Delete the channel if it exists
-      await androidPlugin?.deleteNotificationChannel(channel.id);
-      debugPrint('🗑️ Deleted existing channel: ${channel.id}');
-    } catch (e) {
-      debugPrint(
-          'ℹ️ Channel ${channel.id} didn\'t exist or couldn\'t be deleted: $e');
+  /// Resolve sound filename from name/type to an existing sound file
+  static String _resolveSoundFileName(String sound) {
+    String cleanSound = sound.trim();
+    if (cleanSound.contains('.')) {
+      cleanSound = cleanSound.split('.').first;
     }
-
-    // Create the channel with fresh sound configuration
-    await androidPlugin?.createNotificationChannel(channel);
-    debugPrint(
-        '✅ Created notification channel: ${channel.id} with sound: $soundName');
+    cleanSound = cleanSound.toLowerCase();
+    if (cleanSound == 'ipl_message' || cleanSound == 'ipl' || cleanSound == 'message' || cleanSound == 'chat') {
+      return 'ipl_message';
+    } else if (cleanSound == 'temple_bell' || cleanSound == 'bell' || cleanSound == 'price_alert' || cleanSound == 'market_update') {
+      return 'temple_bell';
+    } else if (cleanSound == 'coin_dropping' || cleanSound == 'coin' || cleanSound.contains('order')) {
+      return 'coin_dropping';
+    }
+    return 'coin_dropping';
   }
 
   /// Determine notification sound based on message data
   static String _getNotificationSound(RemoteMessage message) {
-    // Check for explicit sound in data
     String? customSound = message.data['sound'];
     if (customSound != null && customSound.isNotEmpty) {
-      // Strip file extension if present (Android raw resources don't use extensions)
-      if (customSound.contains('.')) {
-        customSound = customSound.split('.').first;
-      }
-      return customSound;
+      return _resolveSoundFileName(customSound);
     }
-
-    // Determine sound based on notification type
     String? notificationType = message.data['type']?.toLowerCase();
-    switch (notificationType) {
-      case 'order':
-      case 'order_update':
-        return NotificationSounds.orderSound;
-      case 'order_received':
-        return NotificationSounds.orderReceived;
-      case 'order_confirmed':
-        return NotificationSounds.orderConfirmed;
-      case 'order_delivered':
-        return NotificationSounds.orderDelivered;
-      case 'message':
-      case 'chat':
-        return NotificationSounds.messageSound;
-      case 'ipl_message':
-      case 'ipl':
-      case 'sports':
-        return NotificationSounds.iplMessage;
-      case 'price_alert':
-      case 'market_update':
-        return NotificationSounds.priceAlert;
-      case 'urgent':
-      case 'emergency':
-        return NotificationSounds.urgentSound;
-      case 'success':
-        return NotificationSounds.success;
-      case 'warning':
-        return NotificationSounds.warning;
-      case 'error':
-        return NotificationSounds.error;
-      default:
-        return NotificationSounds.customAlert;
+    if (notificationType != null && notificationType.isNotEmpty) {
+      return _resolveSoundFileName(notificationType);
     }
+    if (message.notification?.android?.sound != null &&
+        message.notification!.android!.sound!.isNotEmpty) {
+      return _resolveSoundFileName(message.notification!.android!.sound!);
+    }
+    if (message.notification?.apple?.sound?.name != null &&
+        (message.notification?.apple?.sound?.name?.isNotEmpty ?? false)) {
+      return _resolveSoundFileName(message.notification!.apple!.sound!.name!);
+    }
+    return 'coin_dropping';
   }
 
-  static void _showForegroundNotification(RemoteMessage message) async {
-    RemoteNotification? notification = message.notification;
-
-    // Enhanced debugging for Firebase messages
-    debugPrint('🔥 Firebase message received:');
-    debugPrint('Title: ${notification?.title}');
-    debugPrint('Body: ${notification?.body}');
-    debugPrint('Data: ${message.data}');
-    debugPrint('Has notification object: ${notification != null}');
-    debugPrint('Has data: ${message.data.isNotEmpty}');
-
-    // NUCLEAR OPTION: If data contains sound info, ignore Firebase notification entirely
-    if (message.data.containsKey('sound') || message.data.containsKey('type')) {
-      debugPrint(
-          '🚨 NUCLEAR APPROACH: Data contains sound info - bypassing Firebase entirely');
-
-      final title =
-          message.data['title'] ?? notification?.title ?? 'Notification';
-      final body = message.data['body'] ?? notification?.body ?? 'New message';
-      final soundType = message.data['sound'] ?? message.data['type'] ?? '';
-
-      debugPrint('🎯 NUCLEAR: Title: $title');
-      debugPrint('🎯 NUCLEAR: Body: $body');
-      debugPrint('🎯 NUCLEAR: Sound: $soundType');
-
-      // Strip extension if present
-      String cleanSound = soundType;
-      if (cleanSound.contains('.')) {
-        cleanSound = cleanSound.split('.').first;
-      }
-
-      debugPrint('� NUCLEAR: Clean sound: $cleanSound');
-
-      // Force show with the exact same method that works for buttons
-      await _showCustomSoundNotificationForced(
-        _generateNotificationId(),
-        title,
-        body,
-        cleanSound,
-        message.data['payload'] ?? 'firebase_nuclear',
-      );
-
-      debugPrint('✅ NUCLEAR: Custom notification sent with sound: $cleanSound');
-      return; // Completely skip Firebase processing
-    }
-
-    // Original Firebase processing (fallback)
-    debugPrint('📱 Using standard Firebase processing');
-
-    String notificationSound = _getNotificationSound(message);
-    bool useCustomSound = notificationSound.isNotEmpty;
-
-    debugPrint('🔊 Sound selection:');
-    debugPrint('Selected sound: $notificationSound');
-    debugPrint('Use custom sound: $useCustomSound');
-    debugPrint('Sound from data[sound]: ${message.data['sound']}');
-    debugPrint('Sound from data[type]: ${message.data['type']}');
-
-    if (notification != null) {
-      await showCustomSoundNotification(
-        id: _generateNotificationId(),
-        title: notification.title ?? 'Notification',
-        body: notification.body ?? '',
-        customSound: useCustomSound ? notificationSound : null,
-        payload: message.data['payload'] ?? 'firebase_notification',
-      );
-
-      // Log for debugging
-      debugPrint(
-          '✅ Showed notification: ${notification.title} with sound: $notificationSound');
-    } else {
-      debugPrint('❌ No notification object in Firebase message');
-    }
-  }
 
   /// Get MainActivity channel ID based on sound name
   static String _getChannelIdFromSound(String sound) {
-    // Clean sound name (remove extension if present)
     String cleanSound = sound;
     if (cleanSound.contains('.')) {
       cleanSound = cleanSound.split('.').first;
     }
 
     switch (cleanSound.toLowerCase()) {
+      case 'coin_dropping':
+      case 'coin':
+      case 'order':
+      case 'order_received':
+      case 'order_confirmed':
+      case 'order_delivered':
+      case 'order_update':
+        return 'coin_dropping_channel_v3';
       case 'ipl_message':
       case 'ipl':
-        return 'ipl_message_channel';
+      case 'message':
+      case 'chat':
+        return 'ipl_message_channel_v3';
       case 'temple_bell':
-        return 'temple_bell_channel';
-      case 'coin_dropping':
-        return 'coin_dropping_channel';
+      case 'bell':
+      case 'price_alert':
+      case 'market_update':
+        return 'temple_bell_channel_v3';
       default:
-        return 'custom_sound_channel'; // fallback to general custom channel
+        return 'coin_dropping_channel_v3'; // fallback to coin dropping
     }
   }
 
   /// Get channel display name from channel ID
   static String _getChannelNameFromId(String channelId) {
     switch (channelId) {
-      case 'ipl_message_channel':
-        return 'IPL Message Notifications';
-      case 'temple_bell_channel':
-        return 'Temple Bell Notifications';
+      case 'coin_dropping_channel_v3':
+      case 'coin_dropping_channel_v2':
       case 'coin_dropping_channel':
         return 'Coin Dropping Notifications';
+      case 'ipl_message_channel_v3':
+      case 'ipl_message_channel_v2':
+      case 'ipl_message_channel':
+        return 'IPL Message Notifications';
+      case 'temple_bell_channel_v3':
+      case 'temple_bell_channel_v2':
+      case 'temple_bell_channel':
+        return 'Temple Bell Notifications';
+      case 'custom_sound_channel_v3':
+      case 'custom_sound_channel_v2':
       case 'custom_sound_channel':
         return 'Custom Sound Notifications';
       default:
@@ -370,49 +317,44 @@ class NotificationService {
     debugPrint('Body: ${notification?.body}');
     debugPrint('Data: ${message.data}');
 
-    if (notification != null) {
-      // Use predefined MainActivity channels directly (same approach as background)
-      debugPrint('🎯 FOREGROUND: Using MainActivity predefined channels');
+    final title = notification?.title ?? message.data['title'] ?? 'Notification';
+    final body = notification?.body ?? message.data['body'] ?? '';
 
-      // Determine which channel to use from Firebase data or default
-      String channelId = 'high_importance_channel'; // default fallback
+    final soundFileName = _getNotificationSound(message);
+    final channelId = _getChannelIdFromSound(soundFileName);
 
-      // Check for sound/type in data to determine channel
-      if (message.data.containsKey('sound') ||
-          message.data.containsKey('type')) {
-        final soundType = message.data['sound'] ?? message.data['type'] ?? '';
-        channelId = _getChannelIdFromSound(soundType);
-        debugPrint(
-            '🎯 FOREGROUND: Using channel from sound/type: $channelId for sound: $soundType');
-      }
-
-      // Show notification using the determined MainActivity channel
-      await _flutterLocalNotificationsPlugin.show(
-        _generateNotificationId(),
-        notification.title ?? 'Notification',
-        notification.body ?? '',
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            channelId,
-            _getChannelNameFromId(channelId),
-            channelDescription: 'Foreground notification with custom sound',
-            icon: 'ic_stat_notify',
-            importance: Importance.high,
-            priority: Priority.high,
-            styleInformation: BigTextStyleInformation(
-              notification.body ?? '',
-              contentTitle: notification.title,
-            ),
+    await _flutterLocalNotificationsPlugin.show(
+      _generateNotificationId(),
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          channelId,
+          _getChannelNameFromId(channelId),
+          channelDescription: 'Notification with custom sound',
+          icon: 'ic_stat_notify',
+          sound: RawResourceAndroidNotificationSound(soundFileName),
+          playSound: true,
+          enableVibration: true,
+          importance: Importance.max,
+          priority: Priority.high,
+          styleInformation: BigTextStyleInformation(
+            body,
+            contentTitle: title,
           ),
         ),
-        payload: message.data['payload'] ?? 'firebase_foreground',
-      );
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          sound: '$soundFileName.caf',
+        ),
+      ),
+      payload: message.data['payload'] ?? 'firebase_foreground',
+    );
 
-      debugPrint(
-          '✅ FOREGROUND: Notification sent using MainActivity channel: $channelId');
-    } else {
-      debugPrint('❌ FOREGROUND: No notification object in Firebase message');
-    }
+    debugPrint(
+        '✅ FOREGROUND: Notification sent using channel: $channelId with sound: $soundFileName');
   }
 
   /// Show local notification with custom sound
@@ -484,13 +426,15 @@ class NotificationService {
         // STEP 3: Wait to ensure deletion is processed
         await Future.delayed(const Duration(milliseconds: 100));
 
+        final cleanSound = _resolveSoundFileName(customSound);
+
         // STEP 4: Create completely fresh channel with sound
         final ultimateChannel = AndroidNotificationChannel(
           uniqueChannelId,
-          'Ultimate Sound - ${customSound.toUpperCase()}',
-          description: 'Ultimate fresh channel for $customSound sound',
+          'Ultimate Sound - ${cleanSound.toUpperCase()}',
+          description: 'Ultimate fresh channel for $cleanSound sound',
           importance: Importance.max,
-          sound: RawResourceAndroidNotificationSound(customSound),
+          sound: RawResourceAndroidNotificationSound(cleanSound),
           enableVibration: true,
           playSound: true,
         );
@@ -512,7 +456,8 @@ class NotificationService {
               ultimateChannel.name,
               channelDescription: ultimateChannel.description,
               icon: 'ic_stat_notify',
-              // Let the channel handle the sound completely
+              sound: RawResourceAndroidNotificationSound(cleanSound),
+              playSound: true,
               enableVibration: true,
               priority: Priority.max,
               importance: Importance.max,
@@ -521,19 +466,26 @@ class NotificationService {
                 contentTitle: title,
               ),
             ),
+            iOS: DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+              sound: '$cleanSound.caf',
+            ),
           ),
           payload: payload,
         );
 
         debugPrint(
-            '🎵 ULTIMATE notification sent with fresh channel sound: $customSound');
-        debugPrint('🎯 Channel: $uniqueChannelId should play: $customSound');
+            '🎵 ULTIMATE notification sent with fresh channel sound: $cleanSound');
+        debugPrint('🎯 Channel: $uniqueChannelId should play: $cleanSound');
       } else {
         throw Exception('Android plugin not available');
       }
     } catch (e) {
       debugPrint('❌ ULTIMATE approach failed: $e');
 
+      final cleanSound = _resolveSoundFileName(customSound);
       // Last resort: Basic notification with sound in details
       debugPrint('🆘 Last resort: Basic notification with sound');
 
@@ -547,11 +499,17 @@ class NotificationService {
             'Emergency Channel',
             channelDescription: 'Emergency fallback',
             icon: 'ic_stat_notify',
-            sound: RawResourceAndroidNotificationSound(customSound),
+            sound: RawResourceAndroidNotificationSound(cleanSound),
             playSound: true,
             enableVibration: true,
             priority: Priority.max,
             importance: Importance.max,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+            sound: '$cleanSound.caf',
           ),
         ),
         payload: payload,
@@ -571,19 +529,10 @@ class NotificationService {
       bool useCustomSound) async {
     debugPrint('📱 Using STANDARD notification approach');
 
-    // Create sound-specific channel if using custom sound
-    if (useCustomSound) {
-      debugPrint('🎵 Creating sound-specific channel for: $customSound');
-      await _ensureSoundChannelExists(customSound!);
-      await Future.delayed(const Duration(milliseconds: 500));
-    }
+    final cleanSound = customSound != null ? _resolveSoundFileName(customSound) : null;
+    final channelId = cleanSound != null ? _getChannelIdFromSound(cleanSound) : _androidNotificationChannel.id;
 
-    // Get appropriate channel
-    AndroidNotificationChannel channel = useCustomSound
-        ? _createSoundSpecificChannel(customSound!)
-        : _androidNotificationChannel;
-
-    debugPrint('📱 Using channel: ${channel.id}');
+    debugPrint('📱 Using channel: $channelId');
 
     await _flutterLocalNotificationsPlugin.show(
       id,
@@ -591,13 +540,13 @@ class NotificationService {
       body,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          channel.id,
-          channel.name,
-          channelDescription: channel.description,
+          channelId,
+          _getChannelNameFromId(channelId),
+          channelDescription: 'Notification with sound',
           icon: 'ic_stat_notify',
           largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
-          sound: useCustomSound
-              ? RawResourceAndroidNotificationSound(customSound!)
+          sound: useCustomSound && cleanSound != null
+              ? RawResourceAndroidNotificationSound(cleanSound)
               : null,
           playSound: true,
           styleInformation: BigTextStyleInformation(
@@ -609,12 +558,12 @@ class NotificationService {
           priority: Priority.high,
           importance: Importance.high,
         ),
-        iOS: useCustomSound
+        iOS: useCustomSound && cleanSound != null
             ? DarwinNotificationDetails(
                 presentAlert: true,
                 presentBadge: true,
                 presentSound: true,
-                sound: '$customSound.aiff',
+                sound: '$cleanSound.caf',
               )
             : _iOSNotificationChannel,
       ),
@@ -622,7 +571,7 @@ class NotificationService {
     );
 
     debugPrint(
-        '📱 Standard notification shown: $title with sound: ${customSound ?? "default"}');
+        '📱 Standard notification shown: $title with sound: ${cleanSound ?? "default"}');
   }
 
   /// Show notification with default sound
@@ -1070,21 +1019,34 @@ class NotificationService {
 
   static Future<void> init(WidgetRef ref) async {
     try {
-      // DON'T clear all channels - preserve MainActivity predefined channels!
-      // clearAllNotificationChannels(); // REMOVED
-      _requestPermission();
-      _getFCMToken();
-      _configureLocalNotificationPlugin(ref);
-      _createAndroidNotificationChannel();
+      await _configureLocalNotificationPlugin(ref);
+      await _createAndroidNotificationChannel();
+      await _requestPermission();
+      await _getFCMToken();
 
-      /// Foreground notification handler (NEW: uses MainActivity channels directly)
+      // Subscribe to general topic
+      try {
+        await _messaging.subscribeToTopic('all');
+        debugPrint('✅ Subscribed to topic: all');
+      } catch (e) {
+        debugPrint('⚠️ Topic subscription error: $e');
+      }
+
+      /// Foreground notification handler (uses MainActivity channels directly)
       FirebaseMessaging.onMessage.listen(_showForegroundNotificationSimple);
 
-      /// Background notification handler
+      /// Background notification handler when app is clicked
       FirebaseMessaging.onMessageOpenedApp
           .listen(_handleBackgroundNotificationOnTap);
+
+      /// Handle initial message when app is launched from terminated state via notification click
+      RemoteMessage? initialMessage = await _messaging.getInitialMessage();
+      if (initialMessage != null) {
+        debugPrint('🔔 Initial FCM message found on launch: ${initialMessage.messageId}');
+        _handleBackgroundNotificationOnTap(initialMessage);
+      }
     } catch (e, stack) {
-      debugPrint(e.toString());
+      debugPrint('NotificationService init error: $e');
       debugPrintStack(stackTrace: stack);
     }
   }

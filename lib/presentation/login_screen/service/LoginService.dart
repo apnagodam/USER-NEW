@@ -21,7 +21,8 @@ Future<OtpResponseModel> sendOtp(SendOtpRef ref,
       queryParameters: {
         'number': int.parse(number.toString()),
         'app_type': 'User',
-        "token": fcmToken
+        "token": fcmToken,
+        "fcm_token": fcmToken,
       });
   return ref.watch(dioProvider).options.baseUrl.contains('test')
       ? otpResponseModelFromMap(jsonEncode(response.data))
@@ -36,7 +37,8 @@ Future<OtpResponseModel> sendOtpV1(SendOtpV1Ref ref,
       queryParameters: {
         'number': number,
         'app_type': 'User',
-        'token': fcmToken
+        'token': fcmToken,
+        'fcm_token': fcmToken,
       });
   return otpResponseModelFromMap(jsonEncode(response.data));
 }
@@ -45,7 +47,12 @@ Future<OtpResponseModel> sendOtpV1(SendOtpV1Ref ref,
 Future<AuthenticationModel> verifyOtp(VerifyOtpRef ref,
     {String? num, String? otp, String? fcmToken}) async {
   var response = await ref.watch(dioProvider).post(DOOTPVERIFY,
-      queryParameters: {"number": num, 'otp': otp, 'token': fcmToken});
+      queryParameters: {
+        "number": num,
+        'otp': otp,
+        'token': fcmToken,
+        'fcm_token': fcmToken,
+      });
   return authenticationModelFromMap(jsonEncode(response.data));
 }
 
@@ -73,6 +80,7 @@ Future<UserRegisterResponseModel> userRegister(UserRegisterRef ref, {
     'number': number,
     'name': userName,
     'fcm_token': fcmToken,
+    'token': fcmToken,
     'ConstitutionType': constitutionType,
   });
   var response = await ref.watch(dioProvider).post(
@@ -92,6 +100,7 @@ Future<UserSendOtpResponseModel> userSendOtp(UserSendOtpRef ref, {
   final formData = FormData.fromMap({
     'user_id': userId,
     'fcm_token': fcmToken,
+    'token': fcmToken,
   });
   var response = await ref.watch(dioProvider).post(
         USER_SEND_OTP_URL,
@@ -112,6 +121,7 @@ Future<AuthenticationModel> userVerifyOtp(UserVerifyOtpRef ref, {
     'user_id': userId,
     'otp': otp,
     'token': fcmToken,
+    'fcm_token': fcmToken,
   });
   var response = await ref.watch(dioProvider).post(
         USER_VERIFY_OTP_URL,

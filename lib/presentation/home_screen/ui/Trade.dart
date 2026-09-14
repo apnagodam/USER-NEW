@@ -59,106 +59,106 @@ class _TradeState extends ConsumerState<Trade> with SingleTickerProviderStateMix
       key: _scaffoldKey,
       drawer: const AppDrawer(),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: AnimatedBuilder(
-        animation: _fabPulseCtrl,
-        builder: (context, child) {
-          final scale = 1.0 + (_fabPulseCtrl.value * 0.12);
-          final alpha = (1.0 - _fabPulseCtrl.value) * 0.45;
-
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              // Outer Glowing Pulsing Ring 1
-              Transform.scale(
-                scale: scale + 0.1,
-                child: Container(
-                  width: 146,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    color: Colors.amber.withValues(alpha: alpha * 0.5),
-                  ),
-                ),
-              ),
-              // Outer Glowing Pulsing Ring 2
-              Transform.scale(
-                scale: scale,
-                child: Container(
-                  width: 138,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    color: ColorConstant.maingreen.withValues(alpha: alpha),
-                  ),
-                ),
-              ),
-              // Main Animated Floating Action Button
-              InkWell(
-                onTap: () => showAiVoiceAssistant(context, ref),
-                borderRadius: BorderRadius.circular(28),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF12281B), // Dark forest green
-                        Color(0xFF275135), // Primary green
-                        Color(0xFF3E7251), // Vibrant green accent
-                      ],
-                    ),
-                    border: Border.all(
-                      color: Colors.amber.shade400,
-                      width: 1.6,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: ColorConstant.maingreen.withValues(alpha: 0.5),
-                        blurRadius: 12,
-                        spreadRadius: 1,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Bouncing Animated Mic Icon
-                      Transform.scale(
-                        scale: 1.0 + (_fabPulseCtrl.value * 0.15),
-                        child: Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: const BoxDecoration(
-                            color: Colors.amber,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.mic_rounded,
-                            color: Color(0xFF12281B),
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        isHindi ? 'भाव पूछें' : 'Ask Rates',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+      // floatingActionButton: AnimatedBuilder(
+      //   animation: _fabPulseCtrl,
+      //   builder: (context, child) {
+      //     final scale = 1.0 + (_fabPulseCtrl.value * 0.12);
+      //     final alpha = (1.0 - _fabPulseCtrl.value) * 0.45;
+      //
+      //     return Stack(
+      //       alignment: Alignment.center,
+      //       children: [
+      //         // Outer Glowing Pulsing Ring 1
+      //         Transform.scale(
+      //           scale: scale + 0.1,
+      //           child: Container(
+      //             width: 146,
+      //             height: 52,
+      //             decoration: BoxDecoration(
+      //               borderRadius: BorderRadius.circular(30),
+      //               color: Colors.amber.withValues(alpha: alpha * 0.5),
+      //             ),
+      //           ),
+      //         ),
+      //         // Outer Glowing Pulsing Ring 2
+      //         Transform.scale(
+      //           scale: scale,
+      //           child: Container(
+      //             width: 138,
+      //             height: 48,
+      //             decoration: BoxDecoration(
+      //               borderRadius: BorderRadius.circular(30),
+      //               color: ColorConstant.maingreen.withValues(alpha: alpha),
+      //             ),
+      //           ),
+      //         ),
+      //         // Main Animated Floating Action Button
+      //         // InkWell(
+      //         //   onTap: () => showAiVoiceAssistant(context, ref),
+      //         //   borderRadius: BorderRadius.circular(28),
+      //         //   child: Container(
+      //         //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      //         //     decoration: BoxDecoration(
+      //         //       borderRadius: BorderRadius.circular(28),
+      //         //       gradient: const LinearGradient(
+      //         //         begin: Alignment.topLeft,
+      //         //         end: Alignment.bottomRight,
+      //         //         colors: [
+      //         //           Color(0xFF12281B), // Dark forest green
+      //         //           Color(0xFF275135), // Primary green
+      //         //           Color(0xFF3E7251), // Vibrant green accent
+      //         //         ],
+      //         //       ),
+      //         //       border: Border.all(
+      //         //         color: Colors.amber.shade400,
+      //         //         width: 1.6,
+      //         //       ),
+      //         //       boxShadow: [
+      //         //         BoxShadow(
+      //         //           color: ColorConstant.maingreen.withValues(alpha: 0.5),
+      //         //           blurRadius: 12,
+      //         //           spreadRadius: 1,
+      //         //           offset: const Offset(0, 4),
+      //         //         ),
+      //         //       ],
+      //         //     ),
+      //         //     child: Row(
+      //         //       mainAxisSize: MainAxisSize.min,
+      //         //       children: [
+      //         //         // Bouncing Animated Mic Icon
+      //         //         Transform.scale(
+      //         //           scale: 1.0 + (_fabPulseCtrl.value * 0.15),
+      //         //           child: Container(
+      //         //             padding: const EdgeInsets.all(5),
+      //         //             decoration: const BoxDecoration(
+      //         //               color: Colors.amber,
+      //         //               shape: BoxShape.circle,
+      //         //             ),
+      //         //             child: const Icon(
+      //         //               Icons.mic_rounded,
+      //         //               color: Color(0xFF12281B),
+      //         //               size: 18,
+      //         //             ),
+      //         //           ),
+      //         //         ),
+      //         //         const SizedBox(width: 10),
+      //         //         Text(
+      //         //           isHindi ? 'भाव पूछें' : 'Ask Rates',
+      //         //           style: GoogleFonts.poppins(
+      //         //             color: Colors.white,
+      //         //             fontWeight: FontWeight.bold,
+      //         //             fontSize: 15,
+      //         //             letterSpacing: 0.3,
+      //         //           ),
+      //         //         ),
+      //         //       ],
+      //         //     ),
+      //         //   ),
+      //         // ),
+      //     ],
+      //     );
+      //   },
+      // ),
       appBar: AppBar(
         elevation: 4,
         shadowColor: Colors.black.withValues(alpha: 0.3),

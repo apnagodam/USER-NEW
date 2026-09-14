@@ -19,6 +19,15 @@
 		C8121FAF2F1D2F6C00A0B07E /* Flutter.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = C8121FAE2F1D2F6C00A0B07E /* Flutter.xcframework */; };
 		C8F2C1662E7D5E0E002017C1 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C8F2C1652E7D5E0E002017C1 /* GoogleService-Info.plist */; };
 		C8F2C1672E7D5E0E002017C1 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C8F2C1652E7D5E0E002017C1 /* GoogleService-Info.plist */; };
+		C8F2C1732E7D5E0E002017C1 /* coin_dropping.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C8F2C1702E7D5E0E002017C1 /* coin_dropping.mp3 */; };
+		C8F2C1742E7D5E0E002017C1 /* ipl_message.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C8F2C1712E7D5E0E002017C1 /* ipl_message.mp3 */; };
+		C8F2C1752E7D5E0E002017C1 /* temple_bell.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C8F2C1722E7D5E0E002017C1 /* temple_bell.mp3 */; };
+		C8F2C1862E7D5E0E002017C1 /* coin_dropping.caf in Resources */ = {isa = PBXBuildFile; fileRef = C8F2C1802E7D5E0E002017C1 /* coin_dropping.caf */; };
+		C8F2C1872E7D5E0E002017C1 /* ipl_message.caf in Resources */ = {isa = PBXBuildFile; fileRef = C8F2C1812E7D5E0E002017C1 /* ipl_message.caf */; };
+		C8F2C1882E7D5E0E002017C1 /* temple_bell.caf in Resources */ = {isa = PBXBuildFile; fileRef = C8F2C1822E7D5E0E002017C1 /* temple_bell.caf */; };
+		C8F2C1892E7D5E0E002017C1 /* coin_dropping.wav in Resources */ = {isa = PBXBuildFile; fileRef = C8F2C1832E7D5E0E002017C1 /* coin_dropping.wav */; };
+		C8F2C18A2E7D5E0E002017C1 /* ipl_message.wav in Resources */ = {isa = PBXBuildFile; fileRef = C8F2C1842E7D5E0E002017C1 /* ipl_message.wav */; };
+		C8F2C18B2E7D5E0E002017C1 /* temple_bell.wav in Resources */ = {isa = PBXBuildFile; fileRef = C8F2C1852E7D5E0E002017C1 /* temple_bell.wav */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +65,15 @@
 		A77922716488E2DE19780F61 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		C8121FAE2F1D2F6C00A0B07E /* Flutter.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:S8QB4VV633:FLUTTER.IO LLC"; lastKnownFileType = wrapper.xcframework; path = Flutter.xcframework; sourceTree = "<group>"; };
 		C8F2C1652E7D5E0E002017C1 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		C8F2C1702E7D5E0E002017C1 /* coin_dropping.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "coin_dropping.mp3"; sourceTree = "<group>"; };
+		C8F2C1712E7D5E0E002017C1 /* ipl_message.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "ipl_message.mp3"; sourceTree = "<group>"; };
+		C8F2C1722E7D5E0E002017C1 /* temple_bell.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "temple_bell.mp3"; sourceTree = "<group>"; };
+		C8F2C1802E7D5E0E002017C1 /* coin_dropping.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "coin_dropping.caf"; sourceTree = "<group>"; };
+		C8F2C1812E7D5E0E002017C1 /* ipl_message.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ipl_message.caf"; sourceTree = "<group>"; };
+		C8F2C1822E7D5E0E002017C1 /* temple_bell.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "temple_bell.caf"; sourceTree = "<group>"; };
+		C8F2C1832E7D5E0E002017C1 /* coin_dropping.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "coin_dropping.wav"; sourceTree = "<group>"; };
+		C8F2C1842E7D5E0E002017C1 /* ipl_message.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "ipl_message.wav"; sourceTree = "<group>"; };
+		C8F2C1852E7D5E0E002017C1 /* temple_bell.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "temple_bell.wav"; sourceTree = "<group>"; };
 		FC3D057E589C80ECDF789BF5 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -155,6 +173,15 @@
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				C8F2C1702E7D5E0E002017C1 /* coin_dropping.mp3 */,
+				C8F2C1712E7D5E0E002017C1 /* ipl_message.mp3 */,
+				C8F2C1722E7D5E0E002017C1 /* temple_bell.mp3 */,
+				C8F2C1802E7D5E0E002017C1 /* coin_dropping.caf */,
+				C8F2C1812E7D5E0E002017C1 /* ipl_message.caf */,
+				C8F2C1822E7D5E0E002017C1 /* temple_bell.caf */,
+				C8F2C1832E7D5E0E002017C1 /* coin_dropping.wav */,
+				C8F2C1842E7D5E0E002017C1 /* ipl_message.wav */,
+				C8F2C1852E7D5E0E002017C1 /* temple_bell.wav */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -259,6 +286,15 @@
 				C8F2C1662E7D5E0E002017C1 /* GoogleService-Info.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
+				C8F2C1732E7D5E0E002017C1 /* coin_dropping.mp3 in Resources */,
+				C8F2C1742E7D5E0E002017C1 /* ipl_message.mp3 in Resources */,
+				C8F2C1752E7D5E0E002017C1 /* temple_bell.mp3 in Resources */,
+				C8F2C1862E7D5E0E002017C1 /* coin_dropping.caf in Resources */,
+				C8F2C1872E7D5E0E002017C1 /* ipl_message.caf in Resources */,
+				C8F2C1882E7D5E0E002017C1 /* temple_bell.caf in Resources */,
+				C8F2C1892E7D5E0E002017C1 /* coin_dropping.wav in Resources */,
+				C8F2C18A2E7D5E0E002017C1 /* ipl_message.wav in Resources */,
+				C8F2C18B2E7D5E0E002017C1 /* temple_bell.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -473,12 +509,12 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 311;
+				CURRENT_PROJECT_VERSION = 312;
 				DEVELOPMENT_TEAM = XZR98MNVM6;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "$(inherited) arm64";
-				FLUTTER_BUILD_NAME = 3.0.0;
-				FLUTTER_BUILD_NUMBER = 311;
+				FLUTTER_BUILD_NAME = 3.0.1;
+				FLUTTER_BUILD_NUMBER = 312;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Apnagodam;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
@@ -487,7 +523,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.agtpl.apnagodam;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -508,11 +544,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 311;
+				CURRENT_PROJECT_VERSION = 312;
 				DEVELOPMENT_TEAM = XZR98MNVM6;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "$(inherited) arm64";
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.apnagodamAarifCopy.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
@@ -528,11 +564,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 311;
+				CURRENT_PROJECT_VERSION = 312;
 				DEVELOPMENT_TEAM = XZR98MNVM6;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "$(inherited) arm64";
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.apnagodamAarifCopy.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -546,11 +582,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 311;
+				CURRENT_PROJECT_VERSION = 312;
 				DEVELOPMENT_TEAM = XZR98MNVM6;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "$(inherited) arm64";
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.apnagodamAarifCopy.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -680,12 +716,12 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 311;
+				CURRENT_PROJECT_VERSION = 312;
 				DEVELOPMENT_TEAM = XZR98MNVM6;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "$(inherited) arm64";
-				FLUTTER_BUILD_NAME = 3.0.0;
-				FLUTTER_BUILD_NUMBER = 311;
+				FLUTTER_BUILD_NAME = 3.0.1;
+				FLUTTER_BUILD_NUMBER = 312;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Apnagodam;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
@@ -694,7 +730,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.agtpl.apnagodam;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -719,12 +755,12 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 311;
+				CURRENT_PROJECT_VERSION = 312;
 				DEVELOPMENT_TEAM = XZR98MNVM6;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "$(inherited) arm64";
-				FLUTTER_BUILD_NAME = 3.0.0;
-				FLUTTER_BUILD_NUMBER = 311;
+				FLUTTER_BUILD_NAME = 3.0.1;
+				FLUTTER_BUILD_NUMBER = 312;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Apnagodam;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
@@ -733,7 +769,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.agtpl.apnagodam;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
