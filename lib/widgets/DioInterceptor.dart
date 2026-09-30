@@ -114,22 +114,28 @@ class Diointerceptor extends InterceptorsWrapper {
 
     final data = response.data;
     final status = data is Map ? data['status']?.toString() : null;
+    final msg = data is Map ? (data['message']?.toString() ?? data['Message']?.toString() ?? "") : "";
 
-    if (status == '3') {
+    final isUserNotFound = msg.toLowerCase().contains("user not found") ||
+        msg.toLowerCase().contains("no user found") ||
+        msg.toLowerCase().contains("token expired") ||
+        msg.toLowerCase().contains("invalid token") ||
+        msg.toLowerCase().contains("unauthenticated");
+
+    if (status == '3' || (status == '0' && isUserNotFound)) {
       final isLogoutRequest =
           response.requestOptions.path.contains('apna_user_logout') ||
           response.requestOptions.path.contains('user_logout');
       final isAuthLoggedIn =
-          ref.read(authProvider).value == AuthStatus.loggedIn;
+          ref.read(authProvider).value == AuthStatus.loggedIn ||
+          (ref.read(sharedPreferencesProvider).getString('token')?.isNotEmpty ?? false);
       if (isAuthLoggedIn && !isLogoutRequest) {
+        debugPrint("🚨 User session invalid (status: $status, msg: $msg). Logging out.");
         ref.read(authProvider.notifier).logout(showToast: false);
       }
     }
-   if (status == '0' && response.requestOptions.extra['silent'] != true) {
-  final msg = data is Map ? (data['message']?.toString() ?? data['Message']?.toString() ?? "") : "";
+   if (status == '0' && !isUserNotFound && response.requestOptions.extra['silent'] != true) {
   if (msg != "OTP Expired !" &&
-      !msg.toLowerCase().contains("user not found") &&
-      !msg.toLowerCase().contains("no user found") &&
       !response.requestOptions.path.contains('get_user_profile') &&
       !response.requestOptions.path.contains('get_user_gst_profile') &&
       !response.requestOptions.path.contains('get_user_mandi_tax_profile') &&
@@ -171,13 +177,22 @@ class Diointerceptor extends InterceptorsWrapper {
     }
 
     // 2. Handle session invalidation on error response
-    final errStatus = err.response?.data is Map ? err.response?.data['status']?.toString() : null;
-    if (errStatus == '3' || err.response?.statusCode == 401) {
+    final errData = err.response?.data;
+    final errStatus = errData is Map ? errData['status']?.toString() : null;
+    final errMsg = errData is Map ? (errData['message']?.toString() ?? errData['Message']?.toString() ?? "") : "";
+    final isErrUserNotFound = errMsg.toLowerCase().contains("user not found") ||
+        errMsg.toLowerCase().contains("no user found") ||
+        errMsg.toLowerCase().contains("token expired") ||
+        errMsg.toLowerCase().contains("invalid token") ||
+        errMsg.toLowerCase().contains("unauthenticated");
+
+    if (errStatus == '3' || (errStatus == '0' && isErrUserNotFound) || err.response?.statusCode == 401) {
       final isLogoutRequest =
           err.requestOptions.path.contains('apna_user_logout') ||
           err.requestOptions.path.contains('user_logout');
       final isAuthLoggedIn =
-          ref.read(authProvider).value == AuthStatus.loggedIn;
+          ref.read(authProvider).value == AuthStatus.loggedIn ||
+          (ref.read(sharedPreferencesProvider).getString('token')?.isNotEmpty ?? false);
       if (isAuthLoggedIn && !isLogoutRequest) {
         ref.read(authProvider.notifier).logout(showToast: false);
       }

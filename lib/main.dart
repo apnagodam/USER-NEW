@@ -66,17 +66,51 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
       final title = message.data['title'] ?? 'Apna Godam';
       final body = message.data['body'] ?? '';
-      final rawSound = message.data['sound'] ?? message.data['type'] ?? 'coin_dropping';
+      final rawSound = message.data['sound'] ?? message.data['type'] ?? '';
       
       String cleanSound = rawSound.toString().trim();
       if (cleanSound.contains('.')) cleanSound = cleanSound.split('.').first;
       cleanSound = cleanSound.toLowerCase();
-      if (cleanSound == 'ipl' || cleanSound == 'ipl_message' || cleanSound == 'message' || cleanSound == 'chat') {
-        cleanSound = 'ipl_message';
-      } else if (cleanSound == 'temple_bell' || cleanSound == 'bell' || cleanSound == 'price_alert' || cleanSound == 'market_update') {
+      
+      if (cleanSound == 'temple_bell' ||
+          cleanSound == 'bell' ||
+          cleanSound == 'order_match' ||
+          cleanSound == 'ordermatch' ||
+          cleanSound == 'trade_match' ||
+          cleanSound == 'order' ||
+          cleanSound == 'match' ||
+          cleanSound == 'deal' ||
+          cleanSound.contains('order') ||
+          cleanSound.contains('match')) {
         cleanSound = 'temple_bell';
-      } else {
+      } else if (cleanSound == 'coin_dropping' ||
+          cleanSound == 'coin' ||
+          cleanSound == 'bid' ||
+          cleanSound == 'bid_apply' ||
+          cleanSound == 'bidapply' ||
+          cleanSound == 'bid_placed' ||
+          cleanSound == 'bidding' ||
+          cleanSound.contains('bid')) {
         cleanSound = 'coin_dropping';
+      } else if (cleanSound == 'ipl' || cleanSound == 'ipl_message' || cleanSound == 'message' || cleanSound == 'chat') {
+        cleanSound = 'ipl_message';
+      } else {
+        // Content-based check from title and body text
+        final content = '$title $body'.toLowerCase();
+        if (content.contains('match') ||
+            content.contains('order') ||
+            content.contains('सौदा') ||
+            content.contains('ऑर्डर') ||
+            content.contains('deal')) {
+          cleanSound = 'temple_bell';
+        } else if (content.contains('bid') ||
+            content.contains('बोली') ||
+            content.contains('bidding') ||
+            content.contains('apply')) {
+          cleanSound = 'coin_dropping';
+        } else {
+          cleanSound = 'temple_bell';
+        }
       }
 
       final channelId = '${cleanSound}_channel_v3';

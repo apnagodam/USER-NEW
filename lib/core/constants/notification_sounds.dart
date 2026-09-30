@@ -12,17 +12,23 @@ class NotificationSounds {
   static const String iplMessage = 'ipl_message';
   static const String templeBell = 'temple_bell';
   static const String coinDropping = 'coin_dropping';
-  static const String orderSound = 'order_notification';
+  static const String orderSound = 'temple_bell';
   static const String urgentSound = 'urgent_notification';
   
-  // Order-related sounds
-  static const String orderReceived = 'order_received';
-  static const String orderConfirmed = 'order_confirmed';
-  static const String orderDelivered = 'order_delivered';
+  // Order match sounds -> Temple Bell (Bell voice)
+  static const String orderMatch = 'temple_bell';
+  static const String orderReceived = 'temple_bell';
+  static const String orderConfirmed = 'temple_bell';
+  static const String orderDelivered = 'temple_bell';
+  
+  // Bid sounds -> Coin Dropping (Coin sound)
+  static const String bidApply = 'coin_dropping';
+  static const String bidPlaced = 'coin_dropping';
+  static const String bidding = 'coin_dropping';
   
   // Market-related sounds
-  static const String priceAlert = 'price_alert';
-  static const String marketUpdate = 'market_update';
+  static const String priceAlert = 'temple_bell';
+  static const String marketUpdate = 'coin_dropping';
   
   // System sounds
   static const String success = 'success_notification';
@@ -39,10 +45,14 @@ class NotificationSounds {
       templeBell,
       coinDropping,
       orderSound,
+      orderMatch,
       urgentSound,
       orderReceived,
       orderConfirmed,
       orderDelivered,
+      bidApply,
+      bidPlaced,
+      bidding,
       priceAlert,
       marketUpdate,
       success,

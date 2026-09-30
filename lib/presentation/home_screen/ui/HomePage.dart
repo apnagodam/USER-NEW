@@ -19,6 +19,9 @@ import 'package:apnagodam/presentation/home_screen/service/home_response_model.d
 import 'package:apnagodam/presentation/home_screen/ui/AccountSettings.dart';
 import 'package:apnagodam/presentation/home_screen/ui/Findwarehousescreen.dart';
 import 'package:apnagodam/presentation/home_screen/ui/QualityCalculationScreen.dart';
+import 'package:apnagodam/presentation/gpt_assistant/ui/gpt_voice_assistant.dart';
+import 'package:apnagodam/presentation/notice/ui/notice_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:apnagodam/presentation/market_screen/service/market_service.dart';
 import 'package:apnagodam/presentation/mybuy_screen/BuySellScreen.dart';
 import 'package:apnagodam/presentation/sbt/service/model/MatchedOrdersModel.dart';
@@ -1050,89 +1053,144 @@ class _HomepageState extends ConsumerState<Homepage> {
           ),
         ),
         actions: [
-          // InkWell(
-          //   onTap: () {
-          //     Get.to(Wallet(
-          //       isAppBarVisible: true,
-          //     ));
-          //   },
-          //   child: Padding(
-          //     padding: EdgeInsets.all(10.0),
-          //     child: Image.asset(
-          //       'assets/images/icon_wallet.png',
-          //       height: 16,
-          //       width: 16,
-          //       color: Colors.white,
-          //     ),
-          //   ),
-          // ),
-          ref.watch(authProvider).value == AuthStatus.loggedIn
-              ? IconButton(
-                  onPressed: () {
-                    Get.to(Profile());
-                  },
-                  icon: ref.watch(authProvider).value ==
-                          AuthStatus.loggedOut
-                      ? CircleAvatar(
-                          child: Icon(
-                            Icons.person_outline,
-                            color: Colors.white,
-                            size: 17,
-                          ),
-                        )
-                      : ClipOval(
-                          child: CachedNetworkImage(
-                            imageUrl:
-                                "$IMAGE_BASE_URL_FRONTEND${ref.watch(sharedUtilityProvider).getUser()?.profileImage}",
-                            fit: BoxFit.cover,
-                            width: 40,
-                            height: 50,
-                            placeholder: (context, url) =>
-                                const CircularProgressIndicator(
-                              color: Colors.transparent,
+          Builder(
+            builder: (context) {
+              final authState = ref.watch(authProvider);
+              final token = ref.watch(sharedPreferencesProvider).getString('token');
+              final isLoggedIn = authState.valueOrNull == AuthStatus.loggedIn &&
+                  (token != null && token.isNotEmpty);
+
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isLoggedIn)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                      child: Center(
+                        child: InkWell(
+                          onTap: () {
+                            Get.to(() => const NoticeScreen());
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.25),
+                              ),
                             ),
-                            errorWidget: (context, url, error) => DottedBorder(
-                              borderType: BorderType.Circle,
-                              padding: Pad(all: 10),
-                              child: Center(
-                                child: ElevarmIcon(
-                                  ElevarmIconsOutline.image_01,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.campaign_rounded,
+                                  color: Colors.white,
+                                  size: 20,
                                 ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  Get.locale?.languageCode == 'hi'
+                                      ? 'सूचना'
+                                      : 'Notice',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (isLoggedIn)
+                    IconButton(
+                      onPressed: () {
+                        Get.to(Profile());
+                      },
+                      icon: ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl:
+                              "$IMAGE_BASE_URL_FRONTEND${ref.watch(sharedUtilityProvider).getUser()?.profileImage}",
+                          fit: BoxFit.cover,
+                          width: 40,
+                          height: 50,
+                          placeholder: (context, url) =>
+                              const CircularProgressIndicator(
+                            color: Colors.transparent,
+                          ),
+                          errorWidget: (context, url, error) => DottedBorder(
+                            borderType: BorderType.Circle,
+                            padding: Pad(all: 10),
+                            child: Center(
+                              child: ElevarmIcon(
+                                ElevarmIconsOutline.image_01,
                               ),
                             ),
                           ),
                         ),
-                )
-              : Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: ElevatedButton(
-                    onPressed: () {
-                      showLoginBottomsheet(context);
-                    },
-                    style: AppStyle.buttonStyle.copyWith(
-                      backgroundColor: WidgetStateProperty.resolveWith(
-                        (states) => Colors.white,
                       ),
-                      shape: WidgetStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25.0),
-                          side: BorderSide(
-                            color: ColorConstant.maingreen,
-                            width: 1.2,
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Center(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              showLoginBottomsheet(context);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: ColorConstant.maingreen,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 6),
+                              minimumSize: const Size(0, 36),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: BorderSide(
+                                  color: Colors.amber.shade400,
+                                  width: 1.4,
+                                ),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.login_rounded,
+                              size: 17,
+                              color: Color(0xFF1B4D2E),
+                            ),
+                            label: Text(
+                              AppLocalizations.of(context)!.msgLoging,
+                              style: GoogleFonts.poppins(
+                                color: const Color(0xFF1B4D2E),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    child: Text(
-                      AppLocalizations.of(context)!.msgLoging,
-                      style: TextStyle(
-                        color: ColorConstant.maingreen,
-                        fontSize: Adaptive.sp(15),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              )],
+                ],
+              );
+            },
+          ),
+        ],
       ),
       drawer: const AppDrawer(),
       body: SafeArea(
@@ -1569,203 +1627,261 @@ class _HomepageState extends ConsumerState<Homepage> {
         ),
       ),
     ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            child: RippleAnimation(
-              color: ColorConstant.red500,
-              delay: Duration(milliseconds: 150),
-              repeat: true,
-              minRadius: 0,
-              maxRadius: 0,
-              ripplesCount: 8,
-              duration: Duration(milliseconds: 6 * 300),
-              child: IconButton(
-                icon: Image.asset(
-                  ImageConstant.imgwhatsapp,
-                  width: Adaptive.sp(30),
-                  height: Adaptive.sp(30),
-                ),
-                // onPressed: (){},
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    builder: (bottomsheetContext) => ElevarmBottomSheet(
-                      initialChildSize: 1,
-                      minChildSize: 1,
-                      onPressedClose: () {
-                        Navigator.of(bottomsheetContext).pop();
-                      },
-                      title: 'Help',
-                      children: [
-                        Column(
-                          children: [
-                            // Container(
-                            //   decoration:  BoxDecoration(
-                            //       color: ColorConstant.maingreen,
-                            //       borderRadius: BorderRadius.only(
-                            //           topLeft: Radius.circular(8),
-                            //           topRight: Radius.circular(8))),
-                            //   child: Padding(
-                            //     padding:  EdgeInsets.only(
-                            //         left: 25.0, top: 10, bottom: 10),
-                            //     child: Row(
-                            //       children: [
-                            //          Icon(
-                            //           Icons.support_agent,
-                            //           color: Colors.amber,
-                            //         ),
-                            //          SizedBox(
-                            //           width: 10,
-                            //         ),
-                            //         Text(AppLocalizations.of(context)!.msgHelp,
-                            //             style: AppStyle.lblbuydetail
-                            //                 .copyWith(
-                            //                     fontSize: Adaptive.sp(17))),
-                            //       ],
-                            //     ),
-                            //   ),
-                            // ),
-                            SizedBox(height: 8),
-                            Consumer(
-                              builder: (context, ref, child) => ref
-                                  .watch(faqProvider)
-                                  .when(
-                                    data: (faqData) => ExpansionTile(
-                                      title: Text(
-                                        AppLocalizations.of(
-                                          context,
-                                        )!
-                                            .faq,
-                                        style: AppStyle.lblalerttext.copyWith(
-                                          fontSize: Adaptive.sp(
-                                            17,
-                                          ),
-                                        ),
-                                      ),
-                                      leading: Container(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Color(0xfffcf2f0),
-                                        ),
-                                        child: Padding(
-                                          padding: EdgeInsets.all(
-                                            8.0,
-                                          ),
-                                          child: Image.asset(
-                                            ImageConstant.imgwhatsapp,
-                                            width: 28,
-                                          ),
-                                        ),
-                                      ),
-                                      children: faqData.data!
-                                          .map(
-                                            (
-                                              element,
-                                            ) =>
-                                                ListTile(
-                                              onTap: () async {
-                                                var launchUrl = element.type
-                                                            .toString()
-                                                            .toLowerCase() ==
-                                                        "other"
-                                                    ? 'https://api.whatsapp.com/send/?phone=917733901154'
-                                                    : 'https://api.whatsapp.com/send/?phone=917733901154&text=${element.type ?? ""}';
-                                                Navigator.of(
-                                                  context,
-                                                  rootNavigator: true,
-                                                ).pop();
-                                                CallLaunch(
-                                                  launchUrl,
-                                                );
-                                              },
-                                              leading: Container(
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  color: Color(
-                                                    0xfffcf2f0,
-                                                  ),
-                                                ),
-                                                child: Padding(
-                                                  padding: EdgeInsets.all(
-                                                    8.0,
-                                                  ),
-                                                  child: Image.asset(
-                                                    ImageConstant.imgwhatsapp,
-                                                    width: 28,
-                                                  ),
-                                                ),
-                                              ),
-                                              title: Text(
-                                                "${element.type}",
-                                                style: AppStyle.lblalerttext
-                                                    .copyWith(
-                                                  fontSize: Adaptive.sp(
-                                                    17,
-                                                  ),
-                                                ),
-                                              ),
-                                              trailing: Icon(
-                                                Icons.chevron_right_outlined,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
-                                    ),
-                                    error: (e, s) => Container(),
-                                    loading: () => defaultLoader(),
-                                  ),
-                            ),
-                            Divider(color: ColorConstant.grey),
-                            ListTile(
-                              onTap: () {
-                                Navigator.of(
-                                  context,
-                                  rootNavigator: true,
-                                ).pop();
-                                CallLaunch('tel:+917733901154');
-                              },
-                              leading: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Color(0xfffcf2f0),
-                                ),
-                                child: Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Icon(
-                                    Icons.phone,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                              title: Text(
-                                AppLocalizations.of(
-                                  context,
-                                )!
-                                    .msgCallforHelp,
-                                style: AppStyle.lblalerttext.copyWith(
-                                  fontSize: Adaptive.sp(17),
-                                ),
-                              ),
-                              trailing: Icon(
-                                Icons.chevron_right_outlined,
-                                color: Colors.black,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
+      // floatingActionButton: Column(
+      //   mainAxisSize: MainAxisSize.min,
+      //   crossAxisAlignment: CrossAxisAlignment.end,
+      //   children: [
+      //     // AI Voice Assistant GPT Button
+      //     InkWell(
+      //       onTap: () => showGptVoiceAssistant(context),
+      //       borderRadius: BorderRadius.circular(28),
+      //       child: Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      //         decoration: BoxDecoration(
+      //           borderRadius: BorderRadius.circular(28),
+      //           gradient: const LinearGradient(
+      //             begin: Alignment.topLeft,
+      //             end: Alignment.bottomRight,
+      //             colors: [
+      //               Color(0xFF12281B),
+      //               Color(0xFF275135),
+      //               Color(0xFF3E7251),
+      //             ],
+      //           ),
+      //           border: Border.all(
+      //             color: Colors.amber.shade400,
+      //             width: 1.5,
+      //           ),
+      //           boxShadow: [
+      //             BoxShadow(
+      //               color: ColorConstant.maingreen.withValues(alpha: 0.4),
+      //               blurRadius: 10,
+      //               offset: const Offset(0, 4),
+      //             ),
+      //           ],
+      //         ),
+      //         child: Row(
+      //           mainAxisSize: MainAxisSize.min,
+      //           children: [
+      //             Container(
+      //               padding: const EdgeInsets.all(5),
+      //               decoration: const BoxDecoration(
+      //                 color: Colors.amber,
+      //                 shape: BoxShape.circle,
+      //               ),
+      //               child: const Icon(
+      //                 Icons.mic_rounded,
+      //                 color: Color(0xFF12281B),
+      //                 size: 17,
+      //               ),
+      //             ),
+      //             const SizedBox(width: 8),
+      //             Text(
+      //               Get.locale?.languageCode == 'hi' ? 'AI से पूछें' : 'Ask AI GPT',
+      //               style: GoogleFonts.poppins(
+      //                 color: Colors.white,
+      //                 fontWeight: FontWeight.bold,
+      //                 fontSize: 13,
+      //               ),
+      //             ),
+      //           ],
+      //         ),
+      //       ),
+      //     ),
+      //     const SizedBox(height: 10),
+      //     SizedBox(
+      //       child: RippleAnimation(
+      //         color: ColorConstant.red500,
+      //         delay: Duration(milliseconds: 150),
+      //         repeat: true,
+      //         minRadius: 0,
+      //         maxRadius: 0,
+      //         ripplesCount: 8,
+      //         duration: Duration(milliseconds: 6 * 300),
+      //         child: IconButton(
+      //           icon: Image.asset(
+      //             ImageConstant.imgwhatsapp,
+      //             width: Adaptive.sp(30),
+      //             height: Adaptive.sp(30),
+      //           ),
+      //           onPressed: () {
+      //             showModalBottomSheet(
+      //               context: context,
+      //               builder: (bottomsheetContext) => ElevarmBottomSheet(
+      //                 initialChildSize: 1,
+      //                 minChildSize: 1,
+      //                 onPressedClose: () {
+      //                   Navigator.of(bottomsheetContext).pop();
+      //                 },
+      //                 title: 'Help',
+      //                 children: [
+      //                   Column(
+      //                     children: [
+      //                       // Container(
+      //                       //   decoration:  BoxDecoration(
+      //                       //       color: ColorConstant.maingreen,
+      //                       //       borderRadius: BorderRadius.only(
+      //                       //           topLeft: Radius.circular(8),
+      //                       //           topRight: Radius.circular(8))),
+      //                       //   child: Padding(
+      //                       //     padding:  EdgeInsets.only(
+      //                       //         left: 25.0, top: 10, bottom: 10),
+      //                       //     child: Row(
+      //                       //       children: [
+      //                       //          Icon(
+      //                       //           Icons.support_agent,
+      //                       //           color: Colors.amber,
+      //                       //         ),
+      //                       //          SizedBox(
+      //                       //           width: 10,
+      //                       //         ),
+      //                       //         Text(AppLocalizations.of(context)!.msgHelp,
+      //                       //             style: AppStyle.lblbuydetail
+      //                       //                 .copyWith(
+      //                       //                     fontSize: Adaptive.sp(17))),
+      //                       //       ],
+      //                       //     ),
+      //                       //   ),
+      //                       // ),
+      //                       SizedBox(height: 8),
+      //                       Consumer(
+      //                         builder: (context, ref, child) => ref
+      //                             .watch(faqProvider)
+      //                             .when(
+      //                               data: (faqData) => ExpansionTile(
+      //                                 title: Text(
+      //                                   AppLocalizations.of(
+      //                                     context,
+      //                                   )!
+      //                                       .faq,
+      //                                   style: AppStyle.lblalerttext.copyWith(
+      //                                     fontSize: Adaptive.sp(
+      //                                       17,
+      //                                     ),
+      //                                   ),
+      //                                 ),
+      //                                 leading: Container(
+      //                                   decoration: BoxDecoration(
+      //                                     shape: BoxShape.circle,
+      //                                     color: Color(0xfffcf2f0),
+      //                                   ),
+      //                                   child: Padding(
+      //                                     padding: EdgeInsets.all(
+      //                                       8.0,
+      //                                     ),
+      //                                     child: Image.asset(
+      //                                       ImageConstant.imgwhatsapp,
+      //                                       width: 28,
+      //                                     ),
+      //                                   ),
+      //                                 ),
+      //                                 children: faqData.data!
+      //                                     .map(
+      //                                       (
+      //                                         element,
+      //                                       ) =>
+      //                                           ListTile(
+      //                                         onTap: () async {
+      //                                           var launchUrl = element.type
+      //                                                       .toString()
+      //                                                       .toLowerCase() ==
+      //                                                   "other"
+      //                                               ? 'https://api.whatsapp.com/send/?phone=917733901154'
+      //                                               : 'https://api.whatsapp.com/send/?phone=917733901154&text=${element.type ?? ""}';
+      //                                           Navigator.of(
+      //                                             context,
+      //                                             rootNavigator: true,
+      //                                           ).pop();
+      //                                           CallLaunch(
+      //                                             launchUrl,
+      //                                           );
+      //                                         },
+      //                                         leading: Container(
+      //                                           decoration: BoxDecoration(
+      //                                             shape: BoxShape.circle,
+      //                                             color: Color(
+      //                                               0xfffcf2f0,
+      //                                             ),
+      //                                           ),
+      //                                           child: Padding(
+      //                                             padding: EdgeInsets.all(
+      //                                               8.0,
+      //                                             ),
+      //                                             child: Image.asset(
+      //                                               ImageConstant.imgwhatsapp,
+      //                                               width: 28,
+      //                                             ),
+      //                                           ),
+      //                                         ),
+      //                                         title: Text(
+      //                                           "${element.type}",
+      //                                           style: AppStyle.lblalerttext
+      //                                               .copyWith(
+      //                                             fontSize: Adaptive.sp(
+      //                                               17,
+      //                                             ),
+      //                                           ),
+      //                                         ),
+      //                                         trailing: Icon(
+      //                                           Icons.chevron_right_outlined,
+      //                                           color: Colors.black,
+      //                                         ),
+      //                                       ),
+      //                                     )
+      //                                     .toList(),
+      //                               ),
+      //                               error: (e, s) => Container(),
+      //                               loading: () => defaultLoader(),
+      //                             ),
+      //                       ),
+      //                       Divider(color: ColorConstant.grey),
+      //                       ListTile(
+      //                         onTap: () {
+      //                           Navigator.of(
+      //                             context,
+      //                             rootNavigator: true,
+      //                           ).pop();
+      //                           CallLaunch('tel:+917733901154');
+      //                         },
+      //                         leading: Container(
+      //                           decoration: BoxDecoration(
+      //                             shape: BoxShape.circle,
+      //                             color: Color(0xfffcf2f0),
+      //                           ),
+      //                           child: Padding(
+      //                             padding: EdgeInsets.all(8.0),
+      //                             child: Icon(
+      //                               Icons.phone,
+      //                               color: Colors.black,
+      //                             ),
+      //                           ),
+      //                         ),
+      //                         title: Text(
+      //                           AppLocalizations.of(
+      //                             context,
+      //                           )!
+      //                               .msgCallforHelp,
+      //                           style: AppStyle.lblalerttext.copyWith(
+      //                             fontSize: Adaptive.sp(17),
+      //                           ),
+      //                         ),
+      //                         trailing: Icon(
+      //                           Icons.chevron_right_outlined,
+      //                           color: Colors.black,
+      //                         ),
+      //                       ),
+      //                       SizedBox(height: 8),
+      //                     ],
+      //                   ),
+      //                 ],
+      //               ),
+      //             );
+      //           },
+      //         ),
+      //       ),
+      //     ),
+      //   ],
+      // ),
     );
   }
 

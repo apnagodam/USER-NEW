@@ -69,6 +69,7 @@ class SbtDatum {
   dynamic productId;
   dynamic districtId;
   dynamic district;
+  dynamic districtName;
   dynamic commodityId;
   dynamic commodity;
   int? upperCircuit;
@@ -79,21 +80,49 @@ class SbtDatum {
   dynamic date;
   dynamic ltp;
   dynamic sbtType;
+  dynamic warehouseId;
+  dynamic stackNo;
+  dynamic tlType;
 
-  SbtDatum(
-      {this.productId,
-      this.districtId,
-      this.district,
-      this.commodityId,
-      this.commodity,
-      this.upperCircuit,
-      this.lowerCircuit,
-      this.quantityLimit,
-      this.bestBuyer,
-      this.bestSeller,
-      this.date,
-      this.ltp,
-      this.sbtType});
+  SbtDatum({
+    this.productId,
+    this.districtId,
+    this.district,
+    this.districtName,
+    this.commodityId,
+    this.commodity,
+    this.upperCircuit,
+    this.lowerCircuit,
+    this.quantityLimit,
+    this.bestBuyer,
+    this.bestSeller,
+    this.date,
+    this.ltp,
+    this.sbtType,
+    this.warehouseId,
+    this.stackNo,
+    this.tlType,
+  });
+
+  /// Check if item is for Truck Load (sbt_type == 2 && tlType == 1)
+  bool get isTruckLoad {
+    final sbtStr = (sbtType ?? '').toString().trim();
+    final tlStr = (tlType ?? '').toString().trim();
+    return sbtStr == '2' && (tlStr == '1' || tlType == 1);
+  }
+
+  /// Check if item is for Delivery ((sbt_type == 1 || sbt_type == 2) && (tlType == null || tlType == 0))
+  bool get isDelivery {
+    final sbtStr = (sbtType ?? '').toString().trim();
+    final tlStr = (tlType ?? '').toString().trim();
+    final isSbtValid = sbtStr == '1' || sbtStr == '2';
+    final isTlNull = tlType == null ||
+        tlStr == 'null' ||
+        tlStr.isEmpty ||
+        tlStr == '0' ||
+        tlType == 0;
+    return isSbtValid && isTlNull;
+  }
 
   static int safeParseInt(dynamic value) {
     if (value == null) return 0;
@@ -112,6 +141,7 @@ class SbtDatum {
       productId: json['product_id'] ?? json['productId'] ?? json['id'] ?? '1',
       districtId: json["district_id"] ?? json["districtId"] ?? '1',
       district: json["district"] ?? json["district_name"] ?? json["districtName"] ?? '',
+      districtName: json["districtName"] ?? json["district_name"],
       commodityId: json["commodity_id"] ?? json["commodityId"] ?? json["id"] ?? '1',
       commodity: json["commodity"] ?? json["commodity_name"] ?? json["commodityName"] ?? json["crop_name"] ?? '',
       upperCircuit: safeParseInt(json["upper_circuit"] ?? json["upperCircuit"] ?? json["max_price"]),
@@ -121,12 +151,16 @@ class SbtDatum {
       bestSeller: json['best_seller'] ?? json['bestSeller'] ?? json['seller_price'] ?? json['sellerPrice'] ?? json['modal_price'] ?? 0,
       date: json["date"] ?? json["bid_date"] ?? json["bid_time"] ?? json["bidTime"] ?? json["date_time"] ?? '',
       ltp: (json['ltp'] ?? json['last_trade_price'] ?? json['lastTradePrice'] ?? json['price'] ?? json['modal_price'] ?? '0').toString(),
-      sbtType: (json['sbt_type'] ?? json['sbtType'] ?? '1').toString());
+      sbtType: (json['sbt_type'] ?? json['sbtType'] ?? '1').toString(),
+      warehouseId: json['warehouseId'] ?? json['warehouse_id'],
+      stackNo: json['stackNo'] ?? json['stack_no'],
+      tlType: json['tlType'] ?? json['tl_type']);
 
   Map<String, dynamic> toMap() => {
         "product_id": productId,
         "district_id": districtId,
         "district": district,
+        "districtName": districtName,
         "commodity_id": commodityId,
         "commodity": commodity,
         "upper_circuit": upperCircuit,
@@ -136,7 +170,10 @@ class SbtDatum {
         "best_seller": bestSeller,
         "date": date,
         "ltp": ltp,
-        "sbt_type": sbtType
+        "sbt_type": sbtType,
+        "warehouseId": warehouseId,
+        "stackNo": stackNo,
+        "tlType": tlType,
       };
 }
 

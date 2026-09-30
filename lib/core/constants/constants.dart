@@ -114,6 +114,7 @@ const String APNA_USER_ACCEPT_WEIGHT_REQUEST =
 const String USER_COMMODITY_DATA = '${BASEURL}user_api/user_commodity_data';
 const String USER_COMMODITY_LIST = '${BASEURL}user_api/user_commodity_list';
 const String SETTINGS_URL = '${BASEURL}api/settings';
+const String GET_NOTICE_DATA = '${BASEURL}user_api/getNoticeData';
 
 const String APNA_U_LOAN_REQUEST = '${BASEURL}user_api/apna_u_loan_request';
 const String WITHDRAWAL_REQUEST_LIST =
@@ -171,6 +172,13 @@ const postBid = 'sbt_api/sbt_trade_save';
 const getMatchingOrders = 'sbt_api/sbt_trade_order_list';
 
 const deleteSbtOrder = 'sbt_api/sbt_trade_order_cancelled';
+
+const storeTruckLoadRequest = 'sbt_api/storeTruckLoadRequest';
+const getSellerTruckLoadRequestList = 'sbt_api/getSellerTruckLoadRequestList';
+const getSellerTruckLoadRequestData = 'sbt_api/getSellerTruckLoadRequestData';
+const storeSellerTruckLoadRequestData = 'sbt_api/storeSellerTruckLoadRequestData';
+const approveTruckLoadRequestEndpoint = 'sbt_api/approveTruckLoadRequest';
+const rejectTruckLoadRequestEndpoint = 'sbt_api/rejectTruckLoadRequest';
 
 const getSbtRequest = 'user_api/sbt-request-list';
 

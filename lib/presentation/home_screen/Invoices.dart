@@ -978,60 +978,96 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
                   : Column(
                     children: [
                       Padding(
-                        padding: EdgeInsets.all(10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                         child: Container(
-                          height: 52,
+                          height: 50,
+                          padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.grey.withOpacity(0.18),
-                            borderRadius: BorderRadius.circular(10.0),
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(12.0),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
                               ),
                             ],
                           ),
                           child: TabBar(
                             onTap: (index) {
-                              ref.watch(selectedTabIndex.notifier).state =
+                              ref.read(selectedTabIndex.notifier).state =
                                   index;
                             },
-                            labelColor: Colors.white,
+                            dividerColor: Colors.transparent,
                             indicatorSize: TabBarIndicatorSize.tab,
+                            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+                            splashFactory: NoSplash.splashFactory,
+                            overlayColor: WidgetStateProperty.all(
+                              Colors.transparent,
+                            ),
+                            labelColor: Colors.white,
+                            unselectedLabelColor: Colors.black87,
                             labelStyle: TextStyle(
-                              fontSize: Adaptive.sp(17),
+                              fontSize: Adaptive.sp(14),
                               fontWeight: FontWeight.bold,
                             ),
-                            unselectedLabelColor: Colors.black87,
+                            unselectedLabelStyle: TextStyle(
+                              fontSize: Adaptive.sp(14),
+                              fontWeight: FontWeight.w600,
+                            ),
                             indicator: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(9),
                               color: ColorConstant.maingreen,
                               boxShadow: [
                                 BoxShadow(
                                   color: ColorConstant.maingreen.withOpacity(
-                                    0.18,
+                                    0.25,
                                   ),
-                                  blurRadius: 6,
-                                  offset: Offset(0, 2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
                             tabs: [
                               Tab(
-                                child: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.invoicesRaisedByMe,
-                                  textAlign: TextAlign.center,
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4.0,
+                                    ),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        AppLocalizations.of(
+                                          context,
+                                        )!.invoicesRaisedByMe,
+                                        maxLines: 1,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                               Tab(
-                                child: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.invoicesRaisedToMe,
-                                  textAlign: TextAlign.center,
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4.0,
+                                    ),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        AppLocalizations.of(
+                                          context,
+                                        )!.invoicesRaisedToMe,
+                                        maxLines: 1,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -1664,7 +1700,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
                                                               child: Text(
                                                                 AppLocalizations.of(
                                                                   context,
-                                                                )!.msgNote,
+                                                                )!.msgInvoices,
                                                                 style: TextStyle(
                                                                   fontSize:
                                                                       Adaptive.sp(

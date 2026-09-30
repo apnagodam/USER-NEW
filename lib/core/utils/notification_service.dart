@@ -221,26 +221,58 @@ class NotificationService {
       cleanSound = cleanSound.split('.').first;
     }
     cleanSound = cleanSound.toLowerCase();
-    if (cleanSound == 'ipl_message' || cleanSound == 'ipl' || cleanSound == 'message' || cleanSound == 'chat') {
-      return 'ipl_message';
-    } else if (cleanSound == 'temple_bell' || cleanSound == 'bell' || cleanSound == 'price_alert' || cleanSound == 'market_update') {
+
+    // 1. Order Match / Trade / Contract -> Temple Bell (Bell voice)
+    if (cleanSound == 'temple_bell' ||
+        cleanSound == 'bell' ||
+        cleanSound == 'order_match' ||
+        cleanSound == 'ordermatch' ||
+        cleanSound == 'trade_match' ||
+        cleanSound == 'match' ||
+        cleanSound == 'order' ||
+        cleanSound == 'deal' ||
+        cleanSound == 'contract' ||
+        cleanSound == 'price_alert' ||
+        cleanSound.contains('order') ||
+        cleanSound.contains('match')) {
       return 'temple_bell';
-    } else if (cleanSound == 'coin_dropping' || cleanSound == 'coin' || cleanSound.contains('order')) {
+    }
+
+    // 2. Bid Apply / Bidding -> Coin Dropping (Coin sound)
+    if (cleanSound == 'coin_dropping' ||
+        cleanSound == 'coin' ||
+        cleanSound == 'bid' ||
+        cleanSound == 'bid_apply' ||
+        cleanSound == 'bidapply' ||
+        cleanSound == 'bid_placed' ||
+        cleanSound == 'bidding' ||
+        cleanSound == 'market_update' ||
+        cleanSound.contains('bid')) {
       return 'coin_dropping';
     }
-    return 'coin_dropping';
+
+    if (cleanSound == 'ipl_message' || cleanSound == 'ipl' || cleanSound == 'message' || cleanSound == 'chat') {
+      return 'ipl_message';
+    }
+
+    return 'temple_bell';
   }
 
   /// Determine notification sound based on message data
   static String _getNotificationSound(RemoteMessage message) {
+    // 1. Explicit sound key in data payload
     String? customSound = message.data['sound'];
     if (customSound != null && customSound.isNotEmpty) {
       return _resolveSoundFileName(customSound);
     }
+
+    // 2. Explicit type key in data payload
     String? notificationType = message.data['type']?.toLowerCase();
     if (notificationType != null && notificationType.isNotEmpty) {
       return _resolveSoundFileName(notificationType);
     }
+
+    // 3. System notification sound properties
     if (message.notification?.android?.sound != null &&
         message.notification!.android!.sound!.isNotEmpty) {
       return _resolveSoundFileName(message.notification!.android!.sound!);
@@ -249,38 +281,74 @@ class NotificationService {
         (message.notification?.apple?.sound?.name?.isNotEmpty ?? false)) {
       return _resolveSoundFileName(message.notification!.apple!.sound!.name!);
     }
-    return 'coin_dropping';
+
+    // 4. Content-based inference from title and body
+    final title = (message.notification?.title ?? message.data['title'] ?? '').toString().toLowerCase();
+    final body = (message.notification?.body ?? message.data['body'] ?? '').toString().toLowerCase();
+    final content = '$title $body';
+
+    // Order Match / Trade / Contract -> Bell voice
+    if (content.contains('match') ||
+        content.contains('order') ||
+        content.contains('सौदा') ||
+        content.contains('ऑर्डर') ||
+        content.contains('deal') ||
+        content.contains('contract')) {
+      return 'temple_bell';
+    }
+
+    // Bid Apply / Bidding -> Coin sound
+    if (content.contains('bid') ||
+        content.contains('बोली') ||
+        content.contains('bidding') ||
+        content.contains('apply')) {
+      return 'coin_dropping';
+    }
+
+    return 'temple_bell';
   }
 
 
   /// Get MainActivity channel ID based on sound name
   static String _getChannelIdFromSound(String sound) {
-    String cleanSound = sound;
+    String cleanSound = sound.trim();
     if (cleanSound.contains('.')) {
       cleanSound = cleanSound.split('.').first;
     }
 
     switch (cleanSound.toLowerCase()) {
-      case 'coin_dropping':
-      case 'coin':
+      case 'temple_bell':
+      case 'bell':
+      case 'order_match':
+      case 'ordermatch':
       case 'order':
+      case 'match':
+      case 'deal':
       case 'order_received':
       case 'order_confirmed':
       case 'order_delivered':
       case 'order_update':
+      case 'price_alert':
+        return 'temple_bell_channel_v3';
+
+      case 'coin_dropping':
+      case 'coin':
+      case 'bid':
+      case 'bid_apply':
+      case 'bidapply':
+      case 'bid_placed':
+      case 'bidding':
+      case 'market_update':
         return 'coin_dropping_channel_v3';
+
       case 'ipl_message':
       case 'ipl':
       case 'message':
       case 'chat':
         return 'ipl_message_channel_v3';
-      case 'temple_bell':
-      case 'bell':
-      case 'price_alert':
-      case 'market_update':
-        return 'temple_bell_channel_v3';
+
       default:
-        return 'coin_dropping_channel_v3'; // fallback to coin dropping
+        return 'temple_bell_channel_v3';
     }
   }
 
@@ -613,34 +681,34 @@ class NotificationService {
     }
   }
 
-  /// Show order-related notification with appropriate sound
+  /// Show order-related notification with temple bell sound
   static Future<void> showOrderNotification({
     required String orderType,
     required String title,
     required String body,
     String? orderId,
   }) async {
-    String sound;
-    switch (orderType.toLowerCase()) {
-      case 'received':
-        sound = NotificationSounds.orderReceived;
-        break;
-      case 'confirmed':
-        sound = NotificationSounds.orderConfirmed;
-        break;
-      case 'delivered':
-        sound = NotificationSounds.orderDelivered;
-        break;
-      default:
-        sound = NotificationSounds.orderSound;
-    }
-
     await showCustomSoundNotification(
       id: _generateNotificationId(),
       title: title,
       body: body,
-      customSound: sound,
+      customSound: NotificationSounds.templeBell,
       payload: orderId ?? 'order_notification',
+    );
+  }
+
+  /// Show bid-related notification with coin dropping sound
+  static Future<void> showBidNotification({
+    required String title,
+    required String body,
+    String? bidId,
+  }) async {
+    await showCustomSoundNotification(
+      id: _generateNotificationId(),
+      title: title,
+      body: body,
+      customSound: NotificationSounds.coinDropping,
+      payload: bidId ?? 'bid_notification',
     );
   }
 

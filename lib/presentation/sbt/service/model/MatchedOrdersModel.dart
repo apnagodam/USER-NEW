@@ -53,6 +53,9 @@ class MatchedOrdersDatum {
   dynamic buyerName;
   dynamic commodityId;
   dynamic createdAt;
+  dynamic sbtType;
+  dynamic tlType;
+  dynamic tradeType;
 
   MatchedOrdersDatum({
     this.id,
@@ -68,7 +71,17 @@ class MatchedOrdersDatum {
     this.buyerName,
     this.commodityId,
     this.createdAt,
+    this.sbtType,
+    this.tlType,
+    this.tradeType,
   });
+
+  bool get isTruckLoad {
+    final sbtStr = (sbtType ?? '').toString().trim();
+    final tlStr = (tlType ?? '').toString().trim();
+    // Show Truck Load button only when sbt_type==2 && tlType==1
+    return sbtStr == '2' && (tlStr == '1' || tlType == 1);
+  }
 
   factory MatchedOrdersDatum.fromMap(Map<String, dynamic> json) =>
       MatchedOrdersDatum(
@@ -85,6 +98,9 @@ class MatchedOrdersDatum {
         buyerName: json['buyer_fname'],
         commodityId: json['commodity_id'],
         createdAt: json["created_at"],
+        sbtType: json["sbt_type"],
+        tlType: json["tl_type"],
+        tradeType: json["trade_type"],
       );
 
   Map<String, dynamic> toMap() => {
@@ -97,9 +113,12 @@ class MatchedOrdersDatum {
         "district_name": districtName,
         "district_id": districtId,
         "commodity_name": commodityName,
-        "seller_fname":sellerName,
-        "buyer_fname":buyerName,
+        "seller_fname": sellerName,
+        "buyer_fname": buyerName,
         "commodity_id": commodityId,
+        "sbt_type": sbtType,
+        "tl_type": tlType,
+        "trade_type": tradeType,
         "created_at":
             "${createdAt!.year.toString().padLeft(4, '0')}-${createdAt!.month.toString().padLeft(2, '0')}-${createdAt!.day.toString().padLeft(2, '0')}",
       };

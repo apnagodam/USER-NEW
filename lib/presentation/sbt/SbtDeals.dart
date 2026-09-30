@@ -5,6 +5,9 @@ import 'package:apnagodam/core/utils/no_data_found_widget.dart';
 import 'package:apnagodam/core/utils/theme/app_style.dart';
 import 'package:apnagodam/presentation/credit/credit_screen.dart';
 import 'package:apnagodam/presentation/sbt/ContractNotes/service/SbtContractNotesService.dart';
+import 'package:apnagodam/presentation/sbt/DispatchRequests/AddOutwardRequestDialog.dart';
+import 'package:apnagodam/presentation/sbt/DispatchRequests/DispatchRequestsListing.dart';
+import 'package:apnagodam/presentation/sbt/DispatchRequests/TruckLoadRequestsScreen.dart';
 import 'package:apnagodam/presentation/sbt/MarkDeliveryScreen.dart';
 import 'package:apnagodam/presentation/sbt/service/SbtService.dart';
 import 'package:apnagodam/presentation/sbt/service/model/MatchedOrdersModel.dart';
@@ -520,37 +523,79 @@ class _DeliveryMarkingState extends ConsumerState<DeliveryMarking> {
                                   ),
                                   SizedBox(
                                     width: MediaQuery.of(context).size.width,
-                                    child: ref
-                                                .watch(sellOrdersListProvider)[
-                                                    index]
-                                                .type
-                                                .toString()
-                                                .toLowerCase() ==
-                                            "sell"
-                                        ? ElevatedButton(
-                                            onPressed: () {
-                                              Get.to(Markdeliveryscreen(
-                                                id: "${ref.watch(sellOrdersListProvider)[index].id}",
-                                                price:
-                                                    "${ref.watch(sellOrdersListProvider)[index].price}",
-                                                districtId:
-                                                    "${ref.watch(sellOrdersListProvider)[index].districtId}",
-                                                commodityId:
-                                                    "${ref.watch(sellOrdersListProvider)[index].commodityId}",
-                                                isScreen: widget.isScreen,
-                                              ));
-                                            },
-                                            style: AppStyle.buttonStyle,
-                                            child: Text(
-                                              AppLocalizations.of(context)!
-                                                  .markDelivery,
-                                              style: TextStyle(
+                                    child: ref.watch(sellOrdersListProvider)[index].isTruckLoad
+                                        ? SizedBox(
+                                            height: 42,
+                                            child: ElevatedButton.icon(
+                                              onPressed: () {
+                                                Get.to(() =>
+                                                    TruckLoadRequestsScreen(
+                                                      orderId:
+                                                          "${ref.watch(sellOrdersListProvider)[index].orderId ?? ''}",
+                                                      orderType: "Sell",
+                                                      commodity:
+                                                          "${ref.watch(sellOrdersListProvider)[index].commodityName ?? ''}",
+                                                      district:
+                                                          "${ref.watch(sellOrdersListProvider)[index].districtName ?? ''}",
+                                                    ));
+                                              },
+                                              icon: const Icon(
+                                                Icons.local_shipping_outlined,
+                                                size: 20,
+                                                color: Colors.white,
+                                              ),
+                                              label: const Text(
+                                                'Truck Load Requests',
+                                                style: TextStyle(
                                                   fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
                                                   color: Colors.white,
-                                                  fontSize: Adaptive.sp(16)),
+                                                ),
+                                              ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    ColorConstant.maingreen,
+                                                foregroundColor: Colors.white,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                elevation: 0,
+                                              ),
                                             ),
                                           )
-                                        : SizedBox(),
+                                        : ref
+                                                    .watch(sellOrdersListProvider)[
+                                                        index]
+                                                    .type
+                                                    .toString()
+                                                    .toLowerCase() ==
+                                                "sell"
+                                            ? ElevatedButton(
+                                                onPressed: () {
+                                                  Get.to(Markdeliveryscreen(
+                                                    id: "${ref.watch(sellOrdersListProvider)[index].id}",
+                                                    price:
+                                                        "${ref.watch(sellOrdersListProvider)[index].price}",
+                                                    districtId:
+                                                        "${ref.watch(sellOrdersListProvider)[index].districtId}",
+                                                    commodityId:
+                                                        "${ref.watch(sellOrdersListProvider)[index].commodityId}",
+                                                    isScreen: widget.isScreen,
+                                                  ));
+                                                },
+                                                style: AppStyle.buttonStyle,
+                                                child: Text(
+                                                  AppLocalizations.of(context)!
+                                                      .markDelivery,
+                                                  style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.white,
+                                                      fontSize:
+                                                          Adaptive.sp(16)),
+                                                ),
+                                              )
+                                            : const SizedBox(),
                                   )
                                 ]),
                               ),
@@ -819,40 +864,97 @@ class _DeliveryMarkingState extends ConsumerState<DeliveryMarking> {
                                     )),
                               ],
                             ),
-                            SizedBox(height: 10),
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width,
-                              child: ref
-                                          .watch(buyOrdersListProvider)[index]
-                                          .type
-                                          .toString()
-                                          .toLowerCase() ==
-                                      "sell"
-                                  ? ElevatedButton(
-                                      onPressed: () {
-                                        Get.to(Markdeliveryscreen(
-                                          id: "${ref.watch(buyOrdersListProvider)[index].id}",
-                                          price:
-                                              "${ref.watch(buyOrdersListProvider)[index].price}",
-                                          districtId:
-                                              "${ref.watch(buyOrdersListProvider)[index].districtId}",
-                                          commodityId:
-                                              "${ref.watch(buyOrdersListProvider)[index].commodityId}",
-                                          isScreen: widget.isScreen,
-                                        ));
-                                      },
-                                      style: AppStyle.buttonStyle,
-                                      child: Text(
-                                        AppLocalizations.of(context)!
-                                            .markDelivery,
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                            fontSize: Adaptive.sp(16)),
+                            if (ref.watch(buyOrdersListProvider)[index].isTruckLoad) ...[
+                              SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 42,
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          showAddOutwardRequestDialog(
+                                            context,
+                                            orderId:
+                                                "${ref.watch(buyOrdersListProvider)[index].orderId ?? ''}",
+                                          ).then((value) {
+                                            if (value == true) {
+                                              ref.invalidate(matchedOrdersProvider);
+                                            }
+                                          });
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: ColorConstant.maingreen,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 4),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          elevation: 0,
+                                        ),
+                                        child: const FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            'Send Outward Request',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                    )
-                                  : SizedBox(),
-                            )
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 42,
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Get.to(
+                                            () => TruckLoadRequestsScreen(
+                                              orderId:
+                                                  "${ref.watch(buyOrdersListProvider)[index].orderId ?? ''}",
+                                              orderType: "Buy",
+                                              commodity:
+                                                  "${ref.watch(buyOrdersListProvider)[index].commodityName ?? ''}",
+                                              district:
+                                                  "${ref.watch(buyOrdersListProvider)[index].districtName ?? ''}",
+                                            ),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              ColorConstant.maingreen,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 4),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          elevation: 0,
+                                        ),
+                                        child: const FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            'View Outward Request',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ]
                           ]),
                         ),
                       ),

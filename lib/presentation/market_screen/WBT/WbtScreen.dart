@@ -86,6 +86,7 @@ class _WbtscreenState extends ConsumerState<Wbtscreen> {
                     ],
                   ),
                   child: TabBar(
+                    dividerColor: Colors.transparent,
                     labelColor: Colors.white,
                     indicatorSize: TabBarIndicatorSize.tab,
                     labelStyle: TextStyle(

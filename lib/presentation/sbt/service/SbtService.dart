@@ -14,6 +14,7 @@ import 'package:apnagodam/presentation/sbt/service/model/SbtHoldListModel.dart';
 import 'package:apnagodam/presentation/sbt/service/model/SbtRequestListModel.dart';
 import 'package:apnagodam/presentation/sbt/service/model/SbtStacksListModel.dart';
 import 'package:apnagodam/presentation/sbt/service/model/SbtTerminalsListModel.dart';
+import 'package:apnagodam/presentation/sbt/service/model/TruckLoadRequestModel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -360,3 +361,103 @@ Stream<Map<String, dynamic>> grnRequestList(Ref ref) async* {
 
   yield response.data;
 }
+
+final sellerTruckLoadRequestsProvider =
+    FutureProvider.family<TruckLoadRequestModel, String>((ref, orderId) async {
+  final formData = FormData.fromMap({
+    "OrderId": orderId,
+    "orderId": orderId,
+    "order_id": orderId,
+    "sbt_order_id": orderId,
+  });
+  final response = await ref.watch(dioProvider).post(
+        getSellerTruckLoadRequestList,
+        data: formData,
+      );
+  return truckLoadRequestModelFromMap(jsonEncode(response.data));
+});
+
+final getSellerTruckLoadRequestDataProvider =
+    FutureProvider.family<Map<String, dynamic>, String>((ref, id) async {
+  final formData = FormData.fromMap({
+    "id": id,
+  });
+  final response = await ref.watch(dioProvider).post(
+        getSellerTruckLoadRequestData,
+        data: formData,
+      );
+  if (response.data is Map<String, dynamic>) {
+    return response.data;
+  }
+  return {};
+});
+
+final storeSellerTruckLoadRequestDataProvider = FutureProvider.family<
+    Map<String, dynamic>,
+    ({String id, String? orderId})>((ref, params) async {
+  final formData = FormData.fromMap({
+    "id": params.id,
+    "OrderId": params.orderId,
+    "orderId": params.orderId,
+    "order_id": params.orderId,
+  });
+  final response = await ref.watch(dioProvider).post(
+        storeSellerTruckLoadRequestData,
+        data: formData,
+      );
+  if (response.data is Map<String, dynamic>) {
+    return response.data;
+  }
+  return {'status': 1, 'message': 'Request approved successfully'};
+});
+
+final approveTruckLoadRequestProvider = FutureProvider.family<
+    Map<String, dynamic>,
+    ({String id, String orderId})>((ref, params) async {
+  final formData = FormData.fromMap({
+    "id": params.id,
+    "OrderId": params.orderId,
+    "orderId": params.orderId,
+    "order_id": params.orderId,
+    "sbt_order_id": params.orderId,
+    "status": "2",
+  });
+  try {
+    final response = await ref.watch(dioProvider).post(
+          storeSellerTruckLoadRequestData,
+          data: formData,
+        );
+    if (response.data is Map<String, dynamic>) {
+      return response.data;
+    }
+  } catch (_) {
+    try {
+      final response = await ref.watch(dioProvider).post(
+            approveTruckLoadRequestEndpoint,
+            data: formData,
+          );
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+  }
+  return {'status': 1, 'message': 'Request approved successfully'};
+});
+
+final rejectTruckLoadRequestProvider = FutureProvider.family<
+    Map<String, dynamic>,
+    ({String id, String orderId, String? reason})>((ref, params) async {
+  // API: POST sbt_api/rejectTruckLoadRequest, body: id
+  final formData = FormData.fromMap({
+    "id": params.id,
+  });
+  final response = await ref.watch(dioProvider).post(
+        rejectTruckLoadRequestEndpoint,
+        data: formData,
+      );
+  if (response.data is Map<String, dynamic>) {
+    return response.data;
+  }
+  return {'status': 1, 'message': 'Request rejected successfully'};
+});
+

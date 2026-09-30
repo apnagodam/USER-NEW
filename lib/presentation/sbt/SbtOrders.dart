@@ -1,3 +1,5 @@
+import 'package:apnagodam/presentation/sbt/DispatchRequests/AddOutwardRequestDialog.dart';
+import 'package:apnagodam/presentation/sbt/DispatchRequests/TruckLoadRequestsScreen.dart';
 import 'package:apnagodam/presentation/sbt/service/SbtService.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:flutter/material.dart';
@@ -221,6 +223,79 @@ class _SbtordersState extends ConsumerState<Sbtorders> {
                                       fontSize: Adaptive.sp(16),
                                       fontWeight: FontWeight.bold),
                                 )),
+                                const SizedBox(height: 12),
+                                if (data.data![index].isTruckLoad)
+                                  Row(
+                                    children: [
+                                      // "Send Outward Request" — only for Buy orders
+                                      if (data.data![index].type.toString().toLowerCase() == 'buy') ...[
+                                        Expanded(
+                                          child: SizedBox(
+                                            height: 42,
+                                            child: ElevatedButton.icon(
+                                              onPressed: () {
+                                                showAddOutwardRequestDialog(
+                                                  context,
+                                                  orderId: "${data.data?[index].uniqueTradeId ?? ''}",
+                                                ).then((success) {
+                                                  if (success == true) {
+                                                    ref.invalidate(sbtRequestProvider);
+                                                  }
+                                                });
+                                              },
+                                              icon: const Icon(Icons.send_outlined, size: 16, color: Colors.white),
+                                              label: const FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  'Send Outward Request',
+                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                                                ),
+                                              ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: ColorConstant.maingreen,
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(horizontal: 6),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                                elevation: 0,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                      ],
+                                      // "Truck Load Request" — always shown for isTruckLoad
+                                      Expanded(
+                                        child: SizedBox(
+                                          height: 42,
+                                          child: ElevatedButton.icon(
+                                            onPressed: () {
+                                              Get.to(() => TruckLoadRequestsScreen(
+                                                    orderId: "${data.data?[index].uniqueTradeId ?? ''}",
+                                                    orderType: "${data.data?[index].type ?? 'Sell'}",
+                                                    commodity: "${data.data?[index].commodity ?? ''}",
+                                                    district: "${data.data?[index].districtId ?? ''}",
+                                                  ));
+                                            },
+                                            icon: const Icon(Icons.local_shipping_outlined, size: 16, color: Colors.white),
+                                            label: const FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(
+                                                'Truck Load Request List',
+                                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                                              ),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: ColorConstant.maingreen,
+                                              foregroundColor: Colors.white,
+                                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              elevation: 0,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                               ]),
                             ),
                           ),

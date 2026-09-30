@@ -2,7 +2,7 @@ import 'package:apnagodam/core/utils/color_constant.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
 import 'package:apnagodam/presentation/market_screen/SBT/Sbtscreen.dart';
 import 'package:apnagodam/presentation/market_screen/WBT/WbtScreen.dart';
-import 'package:apnagodam/presentation/market_screen/ai_assistant/ai_voice_assistant.dart';
+import 'package:apnagodam/presentation/gpt_assistant/ui/gpt_voice_assistant.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,7 +56,7 @@ class _MarketState extends ConsumerState<Market> {
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showAiVoiceAssistant(context, ref),
+        onPressed: () => showGptVoiceAssistant(context),
         backgroundColor: ColorConstant.maingreen,
         icon: const Icon(Icons.mic_rounded, color: Colors.white),
         label: Text(

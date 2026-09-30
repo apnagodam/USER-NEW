@@ -49,6 +49,8 @@ class Datum {
   dynamic status;
   dynamic createdAt;
   dynamic walletHold;
+  dynamic sbtType;
+  dynamic tlType;
 
   Datum({
     this.id,
@@ -60,8 +62,17 @@ class Datum {
     this.uniqueTradeId,
     this.status,
     this.createdAt,
-    this.walletHold
+    this.walletHold,
+    this.sbtType,
+    this.tlType,
   });
+
+  /// Show Truck Load button only when sbt_type==2 && tlType==1
+  bool get isTruckLoad {
+    final sbtStr = (sbtType ?? '').toString().trim();
+    final tlStr = (tlType ?? '').toString().trim();
+    return sbtStr == '2' && (tlStr == '1' || tlType == 1);
+  }
 
   factory Datum.fromMap(Map<String, dynamic> json) =>
       Datum(
@@ -76,6 +87,8 @@ class Datum {
         walletHold: json['wallet_hold'],
         createdAt: json["created_at"] == null ? null : DateTime.parse(
             json["created_at"]),
+        sbtType: json["sbt_type"],
+        tlType: json["tlType"] ?? json["tl_type"],
       );
 
   Map<String, dynamic> toMap() =>

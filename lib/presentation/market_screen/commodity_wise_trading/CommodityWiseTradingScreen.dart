@@ -30,6 +30,7 @@ import 'package:apnagodam/presentation/market_screen/market_screen.dart';
 import 'package:apnagodam/presentation/market_screen/model/wbt_model.dart';
 import 'package:apnagodam/presentation/market_screen/seller_list_screen.dart';
 import 'package:apnagodam/presentation/market_screen/service/market_service.dart';
+import 'package:apnagodam/presentation/sbt/DispatchRequests/AddOutwardRequestDialog.dart';
 import 'package:apnagodam/presentation/sbt/DispatchRequests/DispatchRequestScreen.dart';
 import 'package:apnagodam/presentation/sbt/DispatchRequests/DispatchRequestsListing.dart';
 import 'package:apnagodam/presentation/sbt/SbtDeals.dart';
@@ -1384,17 +1385,80 @@ class _CommoditywisetradingscreenState
                                                                                             ),
                                                                                             ElevarmDivider(),
 
-                                                                                             Center(
-                                                                                               child: ElevarmPrimaryButton.text(
-                                                                                                   onPressed: () {
-                                                                                                     Get.back();
-                                                                                                     Get.to(Sbtdeals(
-                                                                                                       sbtOrderId: data.tradeOrderData?[index].orderId ?? "",
-                                                                                                     ));
-                                                                                                   },
-                                                                                                   buttonThemeData: ElevarmPrimaryButtonThemeData(primaryColor: ColorConstant.maingreen),
-                                                                                                   text: AppLocalizations.of(context)!.checkDealStatus),
-                                                                                             ),
+                                                                                              Padding(
+                                                                                                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                                                                                child: Row(
+                                                                                                  children: [
+                                                                                                    Expanded(
+                                                                                                      child: SizedBox(
+                                                                                                        height: 42,
+                                                                                                        child: ElevatedButton(
+                                                                                                          onPressed: () {
+                                                                                                            Get.back();
+                                                                                                            Get.to(Sbtdeals(
+                                                                                                              sbtOrderId: data.tradeOrderData?[index].orderId ?? "",
+                                                                                                            ));
+                                                                                                          },
+                                                                                                          style: ElevatedButton.styleFrom(
+                                                                                                            backgroundColor: ColorConstant.maingreen,
+                                                                                                            foregroundColor: Colors.white,
+                                                                                                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                                                                            shape: RoundedRectangleBorder(
+                                                                                                              borderRadius: BorderRadius.circular(8),
+                                                                                                            ),
+                                                                                                            elevation: 0,
+                                                                                                          ),
+                                                                                                          child: FittedBox(
+                                                                                                            fit: BoxFit.scaleDown,
+                                                                                                            child: Text(
+                                                                                                              AppLocalizations.of(context)!.checkDealStatus,
+                                                                                                              style: const TextStyle(
+                                                                                                                fontWeight: FontWeight.bold,
+                                                                                                                fontSize: 14,
+                                                                                                              ),
+                                                                                                            ),
+                                                                                                          ),
+                                                                                                        ),
+                                                                                                      ),
+                                                                                                    ),
+                                                                                                    if (ref.watch(sharedUtilityProvider).getUser()?.firmName.toString().toLowerCase() == data.tradeOrderData?[index].buyer.toString().toLowerCase() && dataList[mainIndex].isTruckLoad) ...[
+                                                                                                      const SizedBox(width: 8),
+                                                                                                      Expanded(
+                                                                                                        child: SizedBox(
+                                                                                                          height: 42,
+                                                                                                          child: ElevatedButton(
+                                                                                                            onPressed: () {
+                                                                                                              showAddOutwardRequestDialog(
+                                                                                                                context,
+                                                                                                                orderId: "${data.tradeOrderData?[index].orderId ?? ''}",
+                                                                                                              );
+                                                                                                            },
+                                                                                                            style: ElevatedButton.styleFrom(
+                                                                                                              backgroundColor: ColorConstant.maingreen,
+                                                                                                              foregroundColor: Colors.white,
+                                                                                                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                                                                              shape: RoundedRectangleBorder(
+                                                                                                                borderRadius: BorderRadius.circular(8),
+                                                                                                              ),
+                                                                                                              elevation: 0,
+                                                                                                            ),
+                                                                                                            child: const FittedBox(
+                                                                                                              fit: BoxFit.scaleDown,
+                                                                                                              child: Text(
+                                                                                                                'Send Outward Request',
+                                                                                                                style: TextStyle(
+                                                                                                                  fontWeight: FontWeight.bold,
+                                                                                                                  fontSize: 14,
+                                                                                                                ),
+                                                                                                              ),
+                                                                                                            ),
+                                                                                                          ),
+                                                                                                        ),
+                                                                                                      ),
+                                                                                                    ],
+                                                                                                  ],
+                                                                                                ),
+                                                                                              ),
 
                                                                                             if (ref.watch(sharedUtilityProvider).getUser()?.firmName.toString().toLowerCase() == data.tradeOrderData?[index].seller.toString().toLowerCase() && dataList[mainIndex].sbtType.toString() == "1")
                                                                                               RowSuper(

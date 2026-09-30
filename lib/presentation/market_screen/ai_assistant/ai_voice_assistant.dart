@@ -351,18 +351,18 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
     final langResult = await HuggingFaceService.detectLanguageAndDialect(text: text);
     final isEnglish = langResult.languageCode == 'en';
 
-    // Get Response from AI Engine with ultra-fast 750ms response timeout
+    // Get Response from OpenAI GPT AI Engine (with Claude & local dialect fallback)
     String aiReply;
     try {
-      aiReply = await AiService.askClaude(
+      aiReply = await AiService.askGpt(
         question: text,
         marketData: _marketData,
         history: _chatHistory,
         isHindi: !isEnglish,
         userProfile: userProfileMap,
-      ).timeout(const Duration(milliseconds: 750));
+      ).timeout(const Duration(seconds: 15));
     } catch (_) {
-      // Instant local dialect response fallback (<50ms response time)
+      // Instant local dialect response fallback
       aiReply = AiService.fallbackMarketResponse(
         text,
         _marketData,
@@ -481,7 +481,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'अपना गोदाम AI वॉइस चैट',
+                  'अपना गोदाम GPT वॉइस चैट',
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontSize: Adaptive.sp(15),
@@ -503,7 +503,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                     const SizedBox(width: 5),
                     Expanded(
                       child: Text(
-                        'AI सक्रिय • मारवाड़ी, हिन्दी, English',
+                        'GPT-4o सक्रिय • मारवाड़ी, हिन्दी, English',
                         style: GoogleFonts.poppins(
                           color: Colors.white70,
                           fontSize: Adaptive.sp(11),

@@ -68,9 +68,10 @@ Future<SbtCommodityModel> getSbtCommodity(GetSbtCommodityRef ref) async {
   try {
     var response = await ref.watch(dioProvider).get(SBT_COMMODITY_LIST);
     if (response.data != null) {
-      final model = sbtCommodityModelFromMap(jsonEncode(response.data));
-      if (model.data != null && model.data!.isNotEmpty) {
-        // Save live response to cache
+      final status = response.data is Map ? response.data['status']?.toString() : null;
+      // If server returned valid status "1", trust live server data (even if empty [])
+      if (status == '1') {
+        final model = sbtCommodityModelFromMap(jsonEncode(response.data));
         prefs.setString(cacheKey, jsonEncode(response.data));
         return model;
       }
@@ -79,24 +80,22 @@ Future<SbtCommodityModel> getSbtCommodity(GetSbtCommodityRef ref) async {
     debugPrint('getSbtCommodity GET error: $e');
   }
 
-  // 2. If unauthenticated (e.g. status "0", "User not found!") or empty response, check cached data
+  // 2. Only if server failed or network error occurred, fallback to cached data
   final cachedJson = prefs.getString(cacheKey);
   if (cachedJson != null && cachedJson.isNotEmpty) {
     try {
       final cachedModel = sbtCommodityModelFromMap(cachedJson);
-      if (cachedModel.data != null && cachedModel.data!.isNotEmpty) {
-        return cachedModel;
-      }
+      return cachedModel;
     } catch (e) {
       debugPrint('Error parsing cached SBT data: $e');
     }
   }
 
-  // 3. Fallback: Return official default SBT products list so guest users always see market data
+  // 3. Fallback: Return empty list with status 1
   return SbtCommodityModel(
     status: "1",
     message: "SBT Product List",
-    data: defaultSbtCommodityList,
+    data: [],
   );
 }
 

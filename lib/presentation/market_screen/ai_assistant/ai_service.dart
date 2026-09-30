@@ -8,18 +8,99 @@ import 'qa_dataset_200.dart';
 enum AiModel { operations, sales, accounts }
 
 class AiService {
-  static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
+  static const String _openAiUrl = 'https://api.openai.com/v1/chat/completions';
+  static const String _claudeUrl = 'https://api.anthropic.com/v1/messages';
 
-  static const List<String> _modelsToTry = [
-    'claude-3-haiku-20240307',
-    'claude-3-sonnet-20240229',
-    'claude-3-5-haiku-20241022',
-    'claude-3-5-sonnet-20241022',
-    'claude-3-5-sonnet-latest',
-    'claude-3-5-haiku-latest',
+  static const List<String> _openAiModels = [
+    'gpt-4o-mini',
+    'gpt-4o',
+    'gpt-3.5-turbo',
   ];
 
-  /// Sends a farmer's question with live market data and user profile context.
+  static const List<String> _claudeModels = [
+    'claude-3-haiku-20240307',
+    'claude-3-5-haiku-20241022',
+    'claude-3-5-sonnet-20241022',
+  ];
+
+  /// Primary AI method: Queries OpenAI GPT API with live market data and user context
+  static Future<String> askGpt({
+    required String question,
+    required String marketData,
+    List<Map<String, String>>? history,
+    bool isHindi = true,
+    Map<String, dynamic>? userProfile,
+  }) async {
+    final profileContextStr = _buildProfileContextString(userProfile);
+    final fullContextData = '$marketData\n\n$profileContextStr';
+
+    final systemPrompt = _buildSystemPrompt(
+      question: question,
+      marketData: fullContextData,
+    );
+
+    final List<Map<String, String>> messages = [
+      {'role': 'system', 'content': systemPrompt},
+    ];
+
+    if (history != null && history.isNotEmpty) {
+      for (final turn in history) {
+        if (turn.containsKey('user')) {
+          messages.add({'role': 'user', 'content': turn['user']!});
+        }
+        if (turn.containsKey('assistant')) {
+          messages.add({'role': 'assistant', 'content': turn['assistant']!});
+        }
+      }
+    }
+    messages.add({'role': 'user', 'content': question});
+
+    // 1. Try OpenAI GPT API
+    if (AppConfig.openAiApiKey.isNotEmpty && !AppConfig.openAiApiKey.startsWith('YOUR_')) {
+      for (final model in _openAiModels) {
+        try {
+          final response = await http.post(
+            Uri.parse(_openAiUrl),
+            headers: {
+              'Authorization': 'Bearer ${AppConfig.openAiApiKey}',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'model': model,
+              'messages': messages,
+              'max_tokens': 512,
+              'temperature': 0.7,
+            }),
+          );
+
+          if (response.statusCode == 200) {
+            final data = jsonDecode(utf8.decode(response.bodyBytes));
+            final content = data['choices']?[0]?['message']?['content'] as String?;
+            if (content != null && content.trim().isNotEmpty) {
+              return content.trim();
+            }
+          } else {
+            if (kDebugMode) {
+              print('OpenAI GPT error ($model): ${response.statusCode} - ${response.body}');
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) print('OpenAI GPT Exception ($model): $e');
+        }
+      }
+    }
+
+    // 2. Fallback to Claude / HuggingFace
+    return askClaude(
+      question: question,
+      marketData: marketData,
+      history: history,
+      isHindi: isHindi,
+      userProfile: userProfile,
+    );
+  }
+
+  /// Sends question to Claude API if GPT is unavailable.
   static Future<String> askClaude({
     required String question,
     required String marketData,
@@ -27,11 +108,10 @@ class AiService {
     bool isHindi = true,
     Map<String, dynamic>? userProfile,
   }) async {
-    // Format profile context for system instructions
     final profileContextStr = _buildProfileContextString(userProfile);
     final fullContextData = '$marketData\n\n$profileContextStr';
 
-    // 1. Try Hugging Face Inference API Model for regional dialect across all Indian languages
+    // Try Hugging Face Inference API Model
     try {
       final hfResult = await HuggingFaceService.queryHuggingFaceModel(
         prompt: question,
@@ -59,10 +139,10 @@ class AiService {
     }
     messages.add({'role': 'user', 'content': question});
 
-    for (final modelName in _modelsToTry) {
+    for (final modelName in _claudeModels) {
       try {
         final response = await http.post(
-          Uri.parse(_apiUrl),
+          Uri.parse(_claudeUrl),
           headers: {
             'x-api-key': AppConfig.claudeApiKey,
             'anthropic-version': '2023-06-01',
@@ -77,7 +157,7 @@ class AiService {
         );
 
         if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
+          final data = jsonDecode(utf8.decode(response.bodyBytes));
           return data['content'][0]['text'] as String;
         }
       } catch (_) {}

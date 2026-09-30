@@ -19,6 +19,7 @@ import 'package:apnagodam/presentation/market_screen/service/market_service.dart
 import 'package:apnagodam/presentation/my_Stock/my_stock_impl/service/my_stock_impl.dart';
 import 'package:apnagodam/presentation/sbt/SbtDeals.dart';
 import 'package:apnagodam/presentation/warehousefacility_screen/stackinward_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:apnagodam/widgets/CommonTextField.dart';
 import 'package:apnagodam/widgets/enums.dart';
 import 'package:apnagodam/widgets/widgets.dart';
@@ -37,6 +38,7 @@ import 'package:get/get_rx/src/rx_workers/utils/debouncer.dart';
 import 'package:maps_launcher/maps_launcher.dart';
 import 'package:apnagodam/presentation/sbt/DispatchRequests/FactoryDispatchScreen.dart';
 import 'package:apnagodam/presentation/sbt/DispatchRequests/DispatchRequestsListing.dart';
+import 'package:apnagodam/presentation/sbt/DispatchRequests/AddOutwardRequestDialog.dart';
 import 'package:apnagodam/presentation/sbt/service/SbtService.dart'
     hide matchedOrdersProvider;
 import 'package:apnagodam/presentation/sbt/service/model/MatchOrderPrintModel.dart';
@@ -52,11 +54,23 @@ import 'package:thermal_printer/thermal_printer.dart';
 
 import '../../../core/constants/constants.dart';
 import 'package:apnagodam/l10n/app_localizations.dart';
+import 'package:apnagodam/presentation/dashboard/model/sbt_commodity_model.dart';
 
 import '../../../core/utils/helper.dart';
 
 class Sbtscreen extends ConsumerStatefulWidget {
-  const Sbtscreen({super.key});
+  const Sbtscreen({
+    super.key,
+    this.filterType,
+    this.selectedCommodity,
+    this.selectedLocation,
+    this.showTopTradingTabs = true,
+  });
+
+  final int? filterType;
+  final String? selectedCommodity;
+  final String? selectedLocation;
+  final bool showTopTradingTabs;
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _SbtscreenState();
@@ -140,83 +154,53 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
     super.build(context);
     final commodityProvider = ref.watch(getSbtCommodityProvider);
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
-      body: DefaultTabController(
-        length: 2,
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.all(10), // Increased padding
-              child: Container(
-                height: 52,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.18),
-                  borderRadius: BorderRadius.circular(10.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: TabBar(
-                    labelColor: Colors.white,
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    labelStyle: TextStyle(
-                      fontSize: Adaptive.sp(17),
-                      fontWeight: FontWeight.bold,
-                    ),
-                    unselectedLabelColor: Colors.black87,
-                    indicator: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: ColorConstant.maingreen,
-                      boxShadow: [
-                        BoxShadow(
-                          color: ColorConstant.maingreen.withOpacity(0.18),
-                          blurRadius: 6,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    tabs: [
-                      Tab(
-                        child: Text(
-                          l10n.trading,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      Tab(
-                        child: Text(
-                          l10n.deliveryMarking,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
+
+    List<SbtDatum> filterSbtData(List<SbtDatum> rawDataList) {
+      return rawDataList.where((item) {
+        if (widget.filterType == 0) {
+          if (!item.isDelivery) return false;
+        } else if (widget.filterType == 1) {
+          if (!item.isTruckLoad) return false;
+        }
+
+        if (widget.selectedCommodity != null &&
+            widget.selectedCommodity != 'All' &&
+            widget.selectedCommodity != 'सभी' &&
+            widget.selectedCommodity!.trim().isNotEmpty) {
+          final comm = (item.commodity ?? '').toString().toLowerCase();
+          final filterComm = widget.selectedCommodity!.trim().toLowerCase();
+          if (!comm.contains(filterComm)) return false;
+        }
+
+        if (widget.selectedLocation != null &&
+            widget.selectedLocation != 'All' &&
+            widget.selectedLocation != 'सभी' &&
+            widget.selectedLocation!.trim().isNotEmpty) {
+          final dist = (item.district ?? '').toString().toLowerCase();
+          final distName = (item.districtName ?? '').toString().toLowerCase();
+          final filterLoc = widget.selectedLocation!.trim().toLowerCase();
+          if (!dist.contains(filterLoc) && !distName.contains(filterLoc)) return false;
+        }
+
+        return true;
+      }).toList();
+    }
+
+    final mainTradingList = RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(getSbtCommodityProvider);
+      },
+      child: commodityProvider.when(
+        data: (data) {
+          final dataList = filterSbtData(data.data ?? []);
+          return dataList.isEmpty
+              ? SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: Center(child: noStockData()),
                   ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  RefreshIndicator(
-                    onRefresh: () async {
-                      ref.invalidate(getSbtCommodityProvider);
-                    },
-                    child: commodityProvider.when(
-                      data: (data) {
-                        final dataList = data.data ?? [];
-                        return dataList.isEmpty
-                            ? SingleChildScrollView(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                child: SizedBox(
-                                  height: MediaQuery.of(context).size.height * 0.6,
-                                  child: Center(child: noStockData()),
-                                ),
-                              )
+                )
                             : ListView.builder(
                                 physics: const AlwaysScrollableScrollPhysics(),
                                 cacheExtent: 1000,
@@ -226,6 +210,7 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                 itemBuilder:
                                     (BuildContext context, int mainIndex) {
                                   final item = dataList[mainIndex];
+                                  final isHindi = Get.locale?.languageCode == 'hi';
                                   final typeColor = _sbtTypeColor(
                                     item.sbtType?.toString(),
                                   );
@@ -240,190 +225,320 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                         .convertToDouble(defaultValue: 0.00),
                                   );
 
-                                  return Card(
-                                  elevation: 2,
-                                  color: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(
-                                      color: typeColor,
-                                      width: 2,
+                                  return Container(
+                                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: typeColor.withValues(alpha: 0.35),
+                                        width: 1.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.04),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  margin: const EdgeInsets.all(10),
-                                  surfaceTintColor: Colors.white,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        // Title with district
-                                        Text.rich(
-                                          TextSpan(
-                                            text: "${item.commodity} ",
-                                            style: TextStyle(
-                                              fontSize: Adaptive.sp(19),
-                                              fontWeight: FontWeight.w700,
-                                              color: typeColor,
-                                            ),
-                                            children: [],
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Text.rich(
-                                          TextSpan(
-                                            text: "${item.district}",
-                                            style: TextStyle(
-                                              fontSize: Adaptive.sp(17),
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-
-                                        const SizedBox(height: 12),
-
-                                        // Buyer/Seller best prices
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            _buildPriceRow(
-                                              label: l10n.msgBuyerBest,
-                                              value: bestBuyer,
-                                            ),
-                                            _buildPriceRow(
-                                              label: l10n.msgSellerBest,
-                                              value: bestSeller,
-                                            ),
-                                          ],
-                                        ),
-
-                                        const SizedBox(height: 10),
-
-                                        // Tap for details + Icon and Label
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            SizedBox(width: 8),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 8,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: ColorConstant.bgcolor,
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            border: Border.all(
-                                              color: Colors.grey.shade300,
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: Row(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // ── 1. Header: Commodity Title + District + Mode Badge ──
+                                          Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Icon(
-                                                Icons.access_time,
-                                                size: Adaptive.sp(16),
-                                                color: ColorConstant.maingreen,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                l10n.bidTime,
-                                                style: TextStyle(
-                                                  fontSize: Adaptive.sp(15),
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.grey.shade700,
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      "${item.commodity ?? ''}",
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 19.5,
+                                                        fontWeight: FontWeight.w800,
+                                                        color: typeColor,
+                                                        letterSpacing: 0.2,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 3),
+                                                    Row(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Padding(
+                                                          padding: const EdgeInsets.only(top: 2),
+                                                          child: Icon(
+                                                            Icons.location_on_rounded,
+                                                            size: 16,
+                                                            color: Colors.grey.shade600,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 4),
+                                                        Expanded(
+                                                          child: Text(
+                                                            "${item.district ?? ''}",
+                                                            maxLines: 2,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: GoogleFonts.inter(
+                                                              fontSize: 14,
+                                                              fontWeight: FontWeight.w600,
+                                                              color: Colors.grey.shade700,
+                                                              height: 1.25,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
-                                              Text(
-                                                ': ',
-                                                style: TextStyle(
-                                                  fontSize: Adaptive.sp(15),
-                                                  fontWeight: FontWeight.w600,
+                                              const SizedBox(width: 10),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                                                decoration: BoxDecoration(
+                                                  color: typeColor.withValues(alpha: 0.08),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: typeColor.withValues(alpha: 0.45),
+                                                    width: 1.2,
+                                                  ),
                                                 ),
-                                              ),
-                                              Text(
-                                                item.date ?? '',
-                                                style: TextStyle(
-                                                  fontSize: Adaptive.sp(15),
-                                                  fontWeight: FontWeight.bold,
-                                                  color:
-                                                      ColorConstant.maingreen,
+                                                child: Text(
+                                                  item.isTruckLoad
+                                                      ? (isHindi ? 'ट्रक लोड' : 'Truck Load')
+                                                      : (isHindi ? 'डिलीवरी' : 'Delivery'),
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12.5,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: typeColor,
+                                                  ),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 8,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: ColorConstant.bgcolor,
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            border: Border.all(
-                                              color: Colors.grey.shade300,
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: Row(
+
+                                          const SizedBox(height: 10),
+
+                                          // ── 2. Buyer & Seller Best Prices ──
+                                          Row(
                                             children: [
-                                              Icon(
-                                                Icons.currency_rupee,
-                                                size: Adaptive.sp(16),
-                                                color: ColorConstant.maingreen,
-                                              ),
-                                              SizedBox(width: 8),
-                                              Text(
-                                                l10n.lastTradePrice,
-                                                style: TextStyle(
-                                                  fontSize: Adaptive.sp(15),
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.grey.shade700,
+                                              // Buyer Best Box
+                                              Expanded(
+                                                child: Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xFFE8F5E9),
+                                                    borderRadius: BorderRadius.circular(10),
+                                                    border: Border.all(
+                                                      color: const Color(0xFFA5D6A7),
+                                                      width: 1.2,
+                                                    ),
+                                                  ),
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        l10n.msgBuyerBest,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.inter(
+                                                          fontSize: 13,
+                                                          fontWeight: FontWeight.w700,
+                                                          color: const Color(0xFF2E7D32),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        bestBuyer,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.inter(
+                                                          fontSize: 17.5,
+                                                          fontWeight: FontWeight.w800,
+                                                          color: const Color(0xFF1B5E20),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
                                               ),
-                                              Text(
-                                                ': ',
-                                                style: TextStyle(
-                                                  fontSize: Adaptive.sp(15),
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                              Text(
-                                                '₹${item.ltp ?? ''}',
-                                                style: TextStyle(
-                                                  fontSize: Adaptive.sp(16),
-                                                  fontWeight: FontWeight.bold,
-                                                  color:
-                                                      ColorConstant.maingreen,
+                                              const SizedBox(width: 10),
+                                              // Seller Best Box
+                                              Expanded(
+                                                child: Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xFFFFF3E0),
+                                                    borderRadius: BorderRadius.circular(10),
+                                                    border: Border.all(
+                                                      color: const Color(0xFFFFCC80),
+                                                      width: 1.2,
+                                                    ),
+                                                  ),
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        l10n.msgSellerBest,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.inter(
+                                                          fontSize: 13,
+                                                          fontWeight: FontWeight.w700,
+                                                          color: const Color(0xFFE65100),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        bestSeller,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.inter(
+                                                          fontSize: 17.5,
+                                                          fontWeight: FontWeight.w800,
+                                                          color: const Color(0xFFBF360C),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        ),
-                                        SizedBox(
-                                          width: Get.width,
-                                          child: ElevatedButton(
-                                            style: AppStyle.buttonStyle,
-                                            child: Text(
-                                              l10n.order,
-                                              style: TextStyle(
-                                                fontSize: Adaptive.sp(18),
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
+
+                                          const SizedBox(height: 8),
+
+                                          // ── 3. Info Strip: Bid Time & Last Trade Price in 2 Separate Lines ──
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF9FAFB),
+                                              borderRadius: BorderRadius.circular(10),
+                                              border: Border.all(
+                                                color: const Color(0xFFE5E7EB),
+                                                width: 1,
                                               ),
                                             ),
-                                            onPressed: () async {
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                // Line 1: Bid Time
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.access_time_rounded,
+                                                      size: 16,
+                                                      color: Color(0xFF1B4D2E),
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      l10n.bidTime.trim().endsWith(':')
+                                                          ? l10n.bidTime.trim()
+                                                          : '${l10n.bidTime.trim()}:',
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 13,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: Colors.grey.shade700,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Expanded(
+                                                      child: Text(
+                                                        item.date ?? '',
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.inter(
+                                                          fontSize: 13.5,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: const Color(0xFF1B4D2E),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Divider(height: 1, thickness: 0.8, color: Colors.grey.shade200),
+                                                const SizedBox(height: 6),
+                                                // Line 2: Last Trade Price
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.currency_rupee_rounded,
+                                                      size: 16,
+                                                      color: Color(0xFF1B4D2E),
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      l10n.lastTradePrice.trim().endsWith(':')
+                                                          ? l10n.lastTradePrice.trim()
+                                                          : '${l10n.lastTradePrice.trim()}:',
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 13,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: Colors.grey.shade700,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Expanded(
+                                                      child: Text(
+                                                        '₹${item.ltp ?? ''}',
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.inter(
+                                                          fontSize: 14.5,
+                                                          fontWeight: FontWeight.w800,
+                                                          color: const Color(0xFF1B4D2E),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                          const SizedBox(height: 10),
+
+                                          // ── 4. Order Button ──
+                                          SizedBox(
+                                            width: double.infinity,
+                                            height: 42,
+                                            child: ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF1B4D2E),
+                                                foregroundColor: Colors.white,
+                                                elevation: 0,
+                                                padding: EdgeInsets.zero,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.shopping_cart_checkout_rounded,
+                                                    size: 19,
+                                                    color: Colors.white,
+                                                  ),
+                                                  const SizedBox(width: 7),
+                                                  Text(
+                                                    l10n.order,
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.white,
+                                                      letterSpacing: 0.3,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              onPressed: () async {
                                               if (ref
                                                       .watch(authProvider)
                                                       .value ==
@@ -2557,6 +2672,86 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                                                                                           .toString()
                                                                                           .toLowerCase() ==
                                                                                       data.tradeOrderData?[index].buyer.toString().toLowerCase())
+                                                                                  if (dataList[mainIndex].isTruckLoad)
+                                                                                    Padding(
+                                                                                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                                                                      child: Row(
+                                                                                        children: [
+                                                                                          Expanded(
+                                                                                            child: SizedBox(
+                                                                                              height: 42,
+                                                                                              child: ElevatedButton(
+                                                                                                onPressed: () {
+                                                                                                  Get.to(
+                                                                                                    Sbtdeals(),
+                                                                                                  )?.then((_) => ref.invalidate(getSbtCommodityProvider));
+                                                                                                },
+                                                                                                style: ElevatedButton.styleFrom(
+                                                                                                  backgroundColor: ColorConstant.maingreen,
+                                                                                                  foregroundColor: Colors.white,
+                                                                                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                                                                  shape: RoundedRectangleBorder(
+                                                                                                    borderRadius: BorderRadius.circular(8),
+                                                                                                  ),
+                                                                                                  elevation: 0,
+                                                                                                ),
+                                                                                                child: FittedBox(
+                                                                                                  fit: BoxFit.scaleDown,
+                                                                                                  child: Text(
+                                                                                                    AppLocalizations.of(
+                                                                                                      context,
+                                                                                                    )!
+                                                                                                        .checkDealStatus,
+                                                                                                    style: const TextStyle(
+                                                                                                      fontWeight: FontWeight.bold,
+                                                                                                      fontSize: 14,
+                                                                                                    ),
+                                                                                                  ),
+                                                                                                ),
+                                                                                              ),
+                                                                                            ),
+                                                                                          ),
+                                                                                          const SizedBox(width: 8),
+                                                                                          Expanded(
+                                                                                            child: SizedBox(
+                                                                                              height: 42,
+                                                                                              child: ElevatedButton(
+                                                                                                onPressed: () {
+                                                                                                  showAddOutwardRequestDialog(
+                                                                                                    context,
+                                                                                                    orderId: "${data.tradeOrderData?[index].orderId ?? ''}",
+                                                                                                  ).then((value) {
+                                                                                                    if (value == true) {
+                                                                                                      ref.invalidate(getSbtCommodityProvider);
+                                                                                                    }
+                                                                                                  });
+                                                                                                },
+                                                                                                style: ElevatedButton.styleFrom(
+                                                                                                  backgroundColor: ColorConstant.maingreen,
+                                                                                                  foregroundColor: Colors.white,
+                                                                                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                                                                  shape: RoundedRectangleBorder(
+                                                                                                    borderRadius: BorderRadius.circular(8),
+                                                                                                  ),
+                                                                                                  elevation: 0,
+                                                                                                ),
+                                                                                                child: const FittedBox(
+                                                                                                  fit: BoxFit.scaleDown,
+                                                                                                  child: Text(
+                                                                                                    'Send Outward Request',
+                                                                                                    style: TextStyle(
+                                                                                                      fontWeight: FontWeight.bold,
+                                                                                                      fontSize: 14,
+                                                                                                    ),
+                                                                                                  ),
+                                                                                                ),
+                                                                                              ),
+                                                                                            ),
+                                                                                          ),
+                                                                                        ],
+                                                                                      ),
+                                                                                    )
+                                                                                  else
                                                                                     Center(
                                                                                       child: ElevarmPrimaryButton.text(
                                                                                         onPressed: () {
@@ -2937,7 +3132,77 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
                     ),
                     loading: () => _sbttLoader(),
                   ),
+                );
+
+    if (!widget.showTopTradingTabs) {
+      return Scaffold(
+        body: mainTradingList,
+      );
+    }
+
+    return Scaffold(
+      body: DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(10.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: TabBar(
+                    labelColor: Colors.white,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    labelStyle: TextStyle(
+                      fontSize: Adaptive.sp(17),
+                      fontWeight: FontWeight.bold,
+                    ),
+                    unselectedLabelColor: Colors.black87,
+                    indicator: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: ColorConstant.maingreen,
+                      boxShadow: [
+                        BoxShadow(
+                          color: ColorConstant.maingreen.withValues(alpha: 0.18),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    tabs: [
+                      Tab(
+                        child: Text(
+                          l10n.trading,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      Tab(
+                        child: Text(
+                          l10n.deliveryMarking,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  mainTradingList,
                   ref.watch(authProvider.notifier).loginStatus ==
                           AuthStatus.loggedIn
                       ? DeliveryMarking(isScreen: false)
@@ -3784,98 +4049,152 @@ class _SbtscreenState extends ConsumerState<Sbtscreen>
 
   _sbttLoader() => Skeletonizer(
         child: ListView.builder(
-          physics: NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
           itemCount: 4,
           itemBuilder: (BuildContext context, int mainIndex) {
-            return InkWell(
-              onTap: () async {
-                // Get.to();
-              },
-              child: Card(
-                elevation: 2,
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
                 color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: ColorConstant.maingreen, width: 2),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: ColorConstant.maingreen.withValues(alpha: 0.35),
+                  width: 1.5,
                 ),
-                margin: EdgeInsets.all(10),
-                surfaceTintColor: Colors.white,
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title with district
-                      Text.rich(
-                        TextSpan(
-                          text: "Barley ",
-                          style: TextStyle(
-                            fontSize: Adaptive.sp(17),
-                            fontWeight: FontWeight.w700,
-                            color: ColorConstant.maingreen,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: "- Loading....",
-                              style: TextStyle(
-                                fontSize: Adaptive.sp(17),
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Barley",
+                                style: GoogleFonts.inter(
+                                  fontSize: 19.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: ColorConstant.maingreen,
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 3),
+                              Text(
+                                "Jaipur, Rajasthan",
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-
-                      SizedBox(height: 12),
-
-                      // Buyer/Seller best prices
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildPriceRow(
-                            label: AppLocalizations.of(context)!.msgBuyerBest,
-                            value: currencyFormat.format(0),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: ColorConstant.maingreen.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          _buildPriceRow(
-                            label: AppLocalizations.of(context)!.msgSellerBest,
-                            value: currencyFormat.format(0),
-                          ),
-                        ],
-                      ),
-
-                      SizedBox(height: 10),
-
-                      // Tap for details + Icon and Label
-                      Row(
-                        children: [
-                          Text(
-                            AppLocalizations.of(context)!.tapForDetails,
-                            style: AppStyle.mystoke.copyWith(
-                              fontSize: Adaptive.sp(17),
-                              fontWeight: FontWeight.w700,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                          Spacer(),
-                          Icon(
-                            Icons.warehouse,
-                            size: 30,
-                            color: ColorConstant.maingreen,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Warehouse',
-                            style: TextStyle(
+                          child: Text(
+                            "Delivery",
+                            style: GoogleFonts.inter(
+                              fontSize: 12.5,
                               fontWeight: FontWeight.bold,
-                              fontSize: Adaptive.sp(17),
+                              color: ColorConstant.maingreen,
                             ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F5E9),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Best Buyer", style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 4),
+                                Text("₹ 2,000.00", style: GoogleFonts.inter(fontSize: 17.5, fontWeight: FontWeight.w800)),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF3E0),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Best Seller", style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 4),
+                                Text("₹ 2,050.00", style: GoogleFonts.inter(fontSize: 17.5, fontWeight: FontWeight.w800)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.access_time_rounded, size: 16, color: Color(0xFF1B4D2E)),
+                              const SizedBox(width: 6),
+                              Text("Bid Time: 12:00 PM", style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Divider(height: 1, thickness: 0.8, color: Colors.grey.shade200),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(Icons.currency_rupee_rounded, size: 16, color: Color(0xFF1B4D2E)),
+                              const SizedBox(width: 6),
+                              Text("Last Trade Price: ₹2,020", style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w800)),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 42,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1B4D2E),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () {},
+                        child: Text("Order", style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );

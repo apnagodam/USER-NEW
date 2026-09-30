@@ -65,15 +65,15 @@
 		A77922716488E2DE19780F61 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		C8121FAE2F1D2F6C00A0B07E /* Flutter.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:S8QB4VV633:FLUTTER.IO LLC"; lastKnownFileType = wrapper.xcframework; path = Flutter.xcframework; sourceTree = "<group>"; };
 		C8F2C1652E7D5E0E002017C1 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
-		C8F2C1702E7D5E0E002017C1 /* coin_dropping.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "coin_dropping.mp3"; sourceTree = "<group>"; };
-		C8F2C1712E7D5E0E002017C1 /* ipl_message.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "ipl_message.mp3"; sourceTree = "<group>"; };
-		C8F2C1722E7D5E0E002017C1 /* temple_bell.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "temple_bell.mp3"; sourceTree = "<group>"; };
-		C8F2C1802E7D5E0E002017C1 /* coin_dropping.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "coin_dropping.caf"; sourceTree = "<group>"; };
-		C8F2C1812E7D5E0E002017C1 /* ipl_message.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ipl_message.caf"; sourceTree = "<group>"; };
-		C8F2C1822E7D5E0E002017C1 /* temple_bell.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "temple_bell.caf"; sourceTree = "<group>"; };
-		C8F2C1832E7D5E0E002017C1 /* coin_dropping.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "coin_dropping.wav"; sourceTree = "<group>"; };
-		C8F2C1842E7D5E0E002017C1 /* ipl_message.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "ipl_message.wav"; sourceTree = "<group>"; };
-		C8F2C1852E7D5E0E002017C1 /* temple_bell.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "temple_bell.wav"; sourceTree = "<group>"; };
+		C8F2C1702E7D5E0E002017C1 /* coin_dropping.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = coin_dropping.mp3; sourceTree = "<group>"; };
+		C8F2C1712E7D5E0E002017C1 /* ipl_message.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ipl_message.mp3; sourceTree = "<group>"; };
+		C8F2C1722E7D5E0E002017C1 /* temple_bell.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = temple_bell.mp3; sourceTree = "<group>"; };
+		C8F2C1802E7D5E0E002017C1 /* coin_dropping.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = coin_dropping.caf; sourceTree = "<group>"; };
+		C8F2C1812E7D5E0E002017C1 /* ipl_message.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = ipl_message.caf; sourceTree = "<group>"; };
+		C8F2C1822E7D5E0E002017C1 /* temple_bell.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = temple_bell.caf; sourceTree = "<group>"; };
+		C8F2C1832E7D5E0E002017C1 /* coin_dropping.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = coin_dropping.wav; sourceTree = "<group>"; };
+		C8F2C1842E7D5E0E002017C1 /* ipl_message.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ipl_message.wav; sourceTree = "<group>"; };
+		C8F2C1852E7D5E0E002017C1 /* temple_bell.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = temple_bell.wav; sourceTree = "<group>"; };
 		FC3D057E589C80ECDF789BF5 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -513,8 +513,8 @@
 				DEVELOPMENT_TEAM = XZR98MNVM6;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "$(inherited) arm64";
-				FLUTTER_BUILD_NAME = 3.0.1;
-				FLUTTER_BUILD_NUMBER = 312;
+				FLUTTER_BUILD_NAME = 3.0.2;
+				FLUTTER_BUILD_NUMBER = 318;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Apnagodam;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
@@ -720,8 +720,8 @@
 				DEVELOPMENT_TEAM = XZR98MNVM6;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "$(inherited) arm64";
-				FLUTTER_BUILD_NAME = 3.0.1;
-				FLUTTER_BUILD_NUMBER = 312;
+				FLUTTER_BUILD_NAME = 3.0.2;
+				FLUTTER_BUILD_NUMBER = 318;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Apnagodam;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
@@ -759,8 +759,8 @@
 				DEVELOPMENT_TEAM = XZR98MNVM6;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "$(inherited) arm64";
-				FLUTTER_BUILD_NAME = 3.0.1;
-				FLUTTER_BUILD_NUMBER = 312;
+				FLUTTER_BUILD_NAME = 3.0.2;
+				FLUTTER_BUILD_NUMBER = 318;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Apnagodam;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
